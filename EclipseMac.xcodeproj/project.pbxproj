@@ -11,10 +11,12 @@
 		032DF1BD98C2B374B5A993AA /* BridgeModelsCodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72D1EDE0DF69F461606C7AAD /* BridgeModelsCodingTests.swift */; };
 		0560A778BE1F4A0F07452B05 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C8CECF42DAFE4630027895 /* MenuContentView.swift */; };
 		0FD5B233DA562CF23B9466D8 /* PermissionCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3777045C3652EFC1133DDF85 /* PermissionCenter.swift */; };
+		1A898D00447D2D4D9873AE67 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 7580D0B19920AF9C74A56209 /* libsqlite3.tbd */; };
 		1BD0067AA739616DA28B89DE /* SetTextActionPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37B5C9C35BDBC1A2622524D5 /* SetTextActionPolicyTests.swift */; };
 		1CAB9C02309AC2FA468404A5 /* ContextPrivacyPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5964EC146B72E306F8E2CD7B /* ContextPrivacyPolicy.swift */; };
 		204132CD863BD3EE2FC105D4 /* OverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839F440293B458A4B7E4333 /* OverlayView.swift */; };
 		20D826971760774818E476CE /* WindowCapturePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E0A5BE16850B68B182DDBD /* WindowCapturePolicy.swift */; };
+		30D193420027832EF16D2612 /* SQLiteBridgeResultStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878D94F238FDF87E202E4DFC /* SQLiteBridgeResultStoreTests.swift */; };
 		356BF9304CCC8773CF064727 /* ContextSnapshotCodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */; };
 		3C3800B211D8E76D348F1398 /* AssistantStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51AD2474340A8C65E271916 /* AssistantStateTests.swift */; };
 		4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770AD420C5F18D3A824363B5 /* ContextModels.swift */; };
@@ -24,6 +26,7 @@
 		609C82AB1D355DD9963F8AB9 /* SetTextActionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A1B929030D03395B07BB0C /* SetTextActionPolicy.swift */; };
 		669EE3608B5AB3C0F2EDDC0B /* BridgeJobPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1944F78613D1C0FDFF00788 /* BridgeJobPolicyTests.swift */; };
 		67CEB24FDDC2669FADAEA515 /* BridgeJobPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93F306EDDB2B65E3DC566F3 /* BridgeJobPolicy.swift */; };
+		6F3D6BD90BFDE9308857A49F /* BridgeResultStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DA7260369772FBE805F150 /* BridgeResultStore.swift */; };
 		7BEF045D9277487F832171EF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24F948C4DAEDE2D78CFF283C /* SettingsView.swift */; };
 		7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */; };
 		8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21F8AB925ED95F0619058326 /* ContextDiagnosticsModel.swift */; };
@@ -33,12 +36,14 @@
 		944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84F11827BB0332409EDBED7 /* ContextDiagnosticsView.swift */; };
 		9AB239821488E361C0242242 /* ContextPrivacyPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */; };
 		9ACB463A8F0E71FC07CD443D /* BridgeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1863B5EA0F4F3B8F18D349A /* BridgeModels.swift */; };
+		ACA395066C8F787DBA5F43D2 /* SQLiteBridgeResultStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DDC0A120E5C63FBD07826A7 /* SQLiteBridgeResultStore.swift */; };
 		B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */; };
 		B1D389E6698E3B996D20F67C /* PermissionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */; };
 		BDC8FE6C21DDC7841DF0F7C5 /* LocalBridgeProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C6CD7F1F34A544AC65CD41 /* LocalBridgeProcessorTests.swift */; };
 		BDF0673AEF9E7688C6820CB9 /* ActiveWindowCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792DCC3ED9F4409AF229B54F /* ActiveWindowCapturer.swift */; };
 		CCEFE95104A009E73A6A9D36 /* SetTextActionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22442F5AC0AA1049517254C8 /* SetTextActionController.swift */; };
 		D11A179A68D889B66D1D1CEF /* OverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6FFF593D1D464DB816D46B /* OverlayController.swift */; };
+		D34FE09C001F482BD94E8542 /* InMemoryBridgeResultStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53CDEF1B21D4A0FC8B69B9D1 /* InMemoryBridgeResultStore.swift */; };
 		D889D8BB4C4F7FC403CE5019 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761269DF84E6D2214A388CD4 /* AppDelegate.swift */; };
 		EA835672FD96A95082088364 /* PermissionDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4983A74E6734856020E39A /* PermissionDashboardView.swift */; };
 		EB72C106220450ACF5E1664A /* SetTextActionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33481BCD8C233F41CF9283FA /* SetTextActionModels.swift */; };
@@ -66,19 +71,24 @@
 		3777045C3652EFC1133DDF85 /* PermissionCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCenter.swift; sourceTree = "<group>"; };
 		37B5C9C35BDBC1A2622524D5 /* SetTextActionPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionPolicyTests.swift; sourceTree = "<group>"; };
 		3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionModels.swift; sourceTree = "<group>"; };
+		3DDC0A120E5C63FBD07826A7 /* SQLiteBridgeResultStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteBridgeResultStore.swift; sourceTree = "<group>"; };
 		46C8CECF42DAFE4630027895 /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
 		4A4983A74E6734856020E39A /* PermissionDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDashboardView.swift; sourceTree = "<group>"; };
 		502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshotCodingTests.swift; sourceTree = "<group>"; };
+		53CDEF1B21D4A0FC8B69B9D1 /* InMemoryBridgeResultStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryBridgeResultStore.swift; sourceTree = "<group>"; };
 		57B7B8B226E47E147328F409 /* EclipseMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EclipseMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		58DA7260369772FBE805F150 /* BridgeResultStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeResultStore.swift; sourceTree = "<group>"; };
 		5964EC146B72E306F8E2CD7B /* ContextPrivacyPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextPrivacyPolicy.swift; sourceTree = "<group>"; };
 		5E19A391BDF52E0D05A55238 /* SetTextActionExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionExecutor.swift; sourceTree = "<group>"; };
 		6164B203D733957F27C31156 /* LocalBridgeProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBridgeProcessor.swift; sourceTree = "<group>"; };
 		64A42AB2744E24305E16E352 /* AccessibilityContextCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityContextCollector.swift; sourceTree = "<group>"; };
 		72D1EDE0DF69F461606C7AAD /* BridgeModelsCodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeModelsCodingTests.swift; sourceTree = "<group>"; };
+		7580D0B19920AF9C74A56209 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		761269DF84E6D2214A388CD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		770AD420C5F18D3A824363B5 /* ContextModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextModels.swift; sourceTree = "<group>"; };
 		792DCC3ED9F4409AF229B54F /* ActiveWindowCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveWindowCapturer.swift; sourceTree = "<group>"; };
 		81E0A5BE16850B68B182DDBD /* WindowCapturePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapturePolicy.swift; sourceTree = "<group>"; };
+		878D94F238FDF87E202E4DFC /* SQLiteBridgeResultStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteBridgeResultStoreTests.swift; sourceTree = "<group>"; };
 		9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseTheme.swift; sourceTree = "<group>"; };
 		95B9E174095478517034A0F2 /* RuntimeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeModel.swift; sourceTree = "<group>"; };
 		A1C6CD7F1F34A544AC65CD41 /* LocalBridgeProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBridgeProcessorTests.swift; sourceTree = "<group>"; };
@@ -97,6 +107,17 @@
 		E8604FBF4D8D434C95F5755B /* WindowCapturePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapturePolicyTests.swift; sourceTree = "<group>"; };
 		E93F306EDDB2B65E3DC566F3 /* BridgeJobPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeJobPolicy.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7D436703C84246F8938732B5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1A898D00447D2D4D9873AE67 /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0385144C521790A0A45A05BB /* Products */ = {
@@ -120,6 +141,14 @@
 			path = Context;
 			sourceTree = "<group>";
 		};
+		4058FBC9B34CAE89F8108AE3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7580D0B19920AF9C74A56209 /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		70699FDB152EA7C79D071877 /* Bridge */ = {
 			isa = PBXGroup;
 			children = (
@@ -129,6 +158,16 @@
 				6164B203D733957F27C31156 /* LocalBridgeProcessor.swift */,
 			);
 			path = Bridge;
+			sourceTree = "<group>";
+		};
+		7983DA3DA6153D5ADD5BC005 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				58DA7260369772FBE805F150 /* BridgeResultStore.swift */,
+				53CDEF1B21D4A0FC8B69B9D1 /* InMemoryBridgeResultStore.swift */,
+				3DDC0A120E5C63FBD07826A7 /* SQLiteBridgeResultStore.swift */,
+			);
+			path = Storage;
 			sourceTree = "<group>";
 		};
 		8E9912F85461D2C8802FB441 /* EclipseMac */ = {
@@ -142,6 +181,7 @@
 				A7AE6D85B97EEA85ECB0670B /* Design */,
 				ED081E622C33A24CE617F4C3 /* Overlay */,
 				B0F6355023FA2A11024BE166 /* Permissions */,
+				7983DA3DA6153D5ADD5BC005 /* Storage */,
 				AEF144FE2B88D77148F80930 /* UI */,
 			);
 			path = EclipseMac;
@@ -219,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				D34546551693F4504323BBB2 /* macos-app */,
+				4058FBC9B34CAE89F8108AE3 /* Frameworks */,
 				0385144C521790A0A45A05BB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -233,6 +274,7 @@
 				502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */,
 				A1C6CD7F1F34A544AC65CD41 /* LocalBridgeProcessorTests.swift */,
 				37B5C9C35BDBC1A2622524D5 /* SetTextActionPolicyTests.swift */,
+				878D94F238FDF87E202E4DFC /* SQLiteBridgeResultStoreTests.swift */,
 				E8604FBF4D8D434C95F5755B /* WindowCapturePolicyTests.swift */,
 			);
 			path = EclipseMacTests;
@@ -274,6 +316,7 @@
 			buildConfigurationList = F6C38177B433E1BD2EED97AE /* Build configuration list for PBXNativeTarget "EclipseMac" */;
 			buildPhases = (
 				78F03E07FF4504000F4A4255 /* Sources */,
+				7D436703C84246F8938732B5 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -336,6 +379,7 @@
 				9AB239821488E361C0242242 /* ContextPrivacyPolicyTests.swift in Sources */,
 				356BF9304CCC8773CF064727 /* ContextSnapshotCodingTests.swift in Sources */,
 				BDC8FE6C21DDC7841DF0F7C5 /* LocalBridgeProcessorTests.swift in Sources */,
+				30D193420027832EF16D2612 /* SQLiteBridgeResultStoreTests.swift in Sources */,
 				1BD0067AA739616DA28B89DE /* SetTextActionPolicyTests.swift in Sources */,
 				5DEE191F292E93ACA214AC68 /* WindowCapturePolicyTests.swift in Sources */,
 			);
@@ -351,6 +395,7 @@
 				B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */,
 				67CEB24FDDC2669FADAEA515 /* BridgeJobPolicy.swift in Sources */,
 				9ACB463A8F0E71FC07CD443D /* BridgeModels.swift in Sources */,
+				6F3D6BD90BFDE9308857A49F /* BridgeResultStore.swift in Sources */,
 				8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */,
 				944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */,
 				4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */,
@@ -358,6 +403,7 @@
 				ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */,
 				7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */,
 				538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */,
+				D34FE09C001F482BD94E8542 /* InMemoryBridgeResultStore.swift in Sources */,
 				FD8587B5AD8DE21B97B3BE10 /* LocalBridgeController.swift in Sources */,
 				910D9C7235FDBDBDB79FEFD0 /* LocalBridgeProcessor.swift in Sources */,
 				0560A778BE1F4A0F07452B05 /* MenuContentView.swift in Sources */,
@@ -367,6 +413,7 @@
 				EA835672FD96A95082088364 /* PermissionDashboardView.swift in Sources */,
 				B1D389E6698E3B996D20F67C /* PermissionModels.swift in Sources */,
 				51BBD4073ABEAB1C54D3BACC /* RuntimeModel.swift in Sources */,
+				ACA395066C8F787DBA5F43D2 /* SQLiteBridgeResultStore.swift in Sources */,
 				CCEFE95104A009E73A6A9D36 /* SetTextActionController.swift in Sources */,
 				8CC6E07A36576C9EE2BE1D1A /* SetTextActionExecutor.swift in Sources */,
 				EB72C106220450ACF5E1664A /* SetTextActionModels.swift in Sources */,

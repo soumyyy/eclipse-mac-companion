@@ -17,6 +17,8 @@ targets:
   EclipseMac:
     type: application
     platform: macOS
+    dependencies:
+      - sdk: libsqlite3.tbd
     sources:
       - path: macos-app/EclipseMac
         excludes:

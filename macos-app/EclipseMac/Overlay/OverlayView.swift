@@ -151,7 +151,7 @@ struct OverlayView: View {
                     .lineLimit(1)
                 Spacer()
                 if localBridge.latestResult?.status == .succeeded {
-                    Text("bridge receipt")
+                    Text("outbox \(localBridge.outboxCount)")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }

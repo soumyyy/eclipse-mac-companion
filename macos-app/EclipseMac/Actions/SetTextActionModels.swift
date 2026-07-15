@@ -9,6 +9,16 @@ struct SetTextTargetBinding: Codable, Equatable, Sendable {
     let windowTitle: String?
     let elementRole: String
     let elementLabel: String?
+
+    enum CodingKeys: String, CodingKey {
+        case snapshotID = "snapshot_id"
+        case bundleID = "bundle_id"
+        case applicationName = "application_name"
+        case windowID = "window_id"
+        case windowTitle = "window_title"
+        case elementRole = "element_role"
+        case elementLabel = "element_label"
+    }
 }
 
 struct SetTextActionPresentation: Codable, Equatable, Sendable {
@@ -16,6 +26,13 @@ struct SetTextActionPresentation: Codable, Equatable, Sendable {
     let target: SetTextTargetBinding
     let proposedText: String
     let createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case actionID = "action_id"
+        case target
+        case proposedText = "proposed_text"
+        case createdAt = "created_at"
+    }
 }
 
 @MainActor
@@ -30,6 +47,13 @@ struct SetTextActionResult: Codable, Equatable, Sendable {
     let snapshotID: String
     let completedAt: Date
     let charactersWritten: Int
+
+    enum CodingKeys: String, CodingKey {
+        case actionID = "action_id"
+        case snapshotID = "snapshot_id"
+        case completedAt = "completed_at"
+        case charactersWritten = "characters_written"
+    }
 }
 
 enum SetTextActionError: LocalizedError, Equatable {

@@ -7,6 +7,7 @@ final class LocalBridgeController: ObservableObject {
 
     @Published private(set) var pendingJob: BridgeJobEnvelope?
     @Published private(set) var latestResult: BridgeJobResultEnvelope?
+    @Published private(set) var outboxCount = 0
 
     private let processor: LocalBridgeProcessor
     private let deviceID: String
@@ -14,14 +15,18 @@ final class LocalBridgeController: ObservableObject {
     init(
         deviceID: String = LocalBridgeController.defaultDeviceID,
         setTextActions: SetTextActionController,
-        collector: any ContextCollecting = AccessibilityContextCollector()
+        collector: any ContextCollecting = AccessibilityContextCollector(),
+        store: (any BridgeResultStoring)? = nil
     ) {
         self.deviceID = deviceID
+        let bridgeStore = store ?? Self.makeDefaultStore()
         processor = LocalBridgeProcessor(
             deviceID: deviceID,
             collector: collector,
-            textActions: setTextActions
+            textActions: setTextActions,
+            store: bridgeStore
         )
+        refreshOutboxCount()
     }
 
     func submitMockSetTextJob(text: String) {
@@ -34,6 +39,7 @@ final class LocalBridgeController: ObservableObject {
         let result = processor.process(job)
         latestResult = result
         pendingJob = result.status == .pendingApproval ? job : nil
+        refreshOutboxCount()
     }
 
     func submitMockActiveWindowJob() {
@@ -45,16 +51,36 @@ final class LocalBridgeController: ObservableObject {
         )
         latestResult = processor.process(job)
         pendingJob = nil
+        refreshOutboxCount()
     }
 
     func completePendingSetTextJob(with actionResult: SetTextActionResult?) {
         guard let pendingJob, let actionResult else { return }
         latestResult = processor.completionResult(for: pendingJob, actionResult: actionResult)
         self.pendingJob = nil
+        refreshOutboxCount()
     }
 
     func cancelPendingJob() {
         pendingJob = nil
+    }
+
+    func markLatestResultPosted() {
+        guard let latestResult else { return }
+        processor.markPosted(jobID: latestResult.jobID)
+        refreshOutboxCount()
+    }
+
+    private func refreshOutboxCount() {
+        outboxCount = processor.unpostedResults(limit: 1_000).count
+    }
+
+    private static func makeDefaultStore() -> any BridgeResultStoring {
+        do {
+            return try SQLiteBridgeResultStore.default()
+        } catch {
+            return InMemoryBridgeResultStore()
+        }
     }
 }
 

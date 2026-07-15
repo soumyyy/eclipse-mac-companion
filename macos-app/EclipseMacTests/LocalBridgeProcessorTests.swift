@@ -9,7 +9,8 @@ final class LocalBridgeProcessorTests: XCTestCase {
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
-            textActions: FakeTextActions()
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
         )
 
         let result = processor.process(
@@ -27,7 +28,8 @@ final class LocalBridgeProcessorTests: XCTestCase {
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
-            textActions: textActions
+            textActions: textActions,
+            store: InMemoryBridgeResultStore()
         )
 
         let result = processor.process(
@@ -45,7 +47,8 @@ final class LocalBridgeProcessorTests: XCTestCase {
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
-            textActions: FakeTextActions()
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
         )
         let job = job(kind: .uiSetText, risk: .reversible, input: .setText("Hello"))
         let actionResult = SetTextActionResult(
@@ -60,6 +63,50 @@ final class LocalBridgeProcessorTests: XCTestCase {
         XCTAssertEqual(result.status, .succeeded)
         XCTAssertEqual(result.output?.actionResult?.charactersWritten, 5)
         XCTAssertEqual(result.idempotencyKey, "idem_test")
+    }
+
+    func testDuplicateSetTextJobReplaysPendingApprovalWithoutPreparingAgain() {
+        let textActions = FakeTextActions()
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            textActions: textActions,
+            store: InMemoryBridgeResultStore()
+        )
+        let job = job(kind: .uiSetText, risk: .reversible, input: .setText("Hello"))
+
+        let first = processor.process(job, now: now)
+        let second = processor.process(job, now: now.addingTimeInterval(1))
+
+        XCTAssertEqual(first.status, .pendingApproval)
+        XCTAssertEqual(second.status, .pendingApproval)
+        XCTAssertEqual(first.output?.approval?.approvalID, second.output?.approval?.approvalID)
+        XCTAssertEqual(textActions.prepareCount, 1)
+    }
+
+    func testCompletedSetTextJobReplaysFinalReceipt() {
+        let textActions = FakeTextActions()
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            textActions: textActions,
+            store: InMemoryBridgeResultStore()
+        )
+        let job = job(kind: .uiSetText, risk: .reversible, input: .setText("Hello"))
+        _ = processor.process(job, now: now)
+        let actionResult = SetTextActionResult(
+            actionID: "act_test",
+            snapshotID: "ctx_test",
+            completedAt: now,
+            charactersWritten: 5
+        )
+        _ = processor.completionResult(for: job, actionResult: actionResult, completedAt: now)
+
+        let replay = processor.process(job, now: now.addingTimeInterval(2))
+
+        XCTAssertEqual(replay.status, .succeeded)
+        XCTAssertEqual(replay.output?.actionResult?.charactersWritten, 5)
+        XCTAssertEqual(textActions.prepareCount, 1)
     }
 
     private func job(
@@ -111,8 +158,10 @@ private final class FakeContextCollector: ContextCollecting {
 private final class FakeTextActions: SetTextActionControlling {
     var pendingPresentation: SetTextActionPresentation?
     var preparedText: String?
+    var prepareCount = 0
 
     func prepareAction(text: String) throws {
+        prepareCount += 1
         preparedText = text
         pendingPresentation = SetTextActionPresentation(
             actionID: "act_test",
