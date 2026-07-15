@@ -24,7 +24,7 @@ struct OverlayView: View {
             }
         }
         .padding(22)
-        .frame(width: 500, height: 310, alignment: .topLeading)
+        .frame(width: 540, height: 380, alignment: .topLeading)
         .background(.ultraThinMaterial)
         .background(EclipseTheme.canvas.opacity(0.32))
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
@@ -72,6 +72,8 @@ struct OverlayView: View {
                     .lineLimit(2)
             }
 
+            bridgeControls
+
             Spacer(minLength: 0)
             Text("Demo: \"\(SetTextActionController.demoText)\"")
                 .font(.caption)
@@ -84,6 +86,9 @@ struct OverlayView: View {
                 Button("Post Outbox") {
                     runtime.postLocalBridgeOutbox()
                 }
+                Button(localBridge.isPolling ? "Stop Polling" : "Start Polling") {
+                    runtime.toggleLocalBridgePolling()
+                }
                 Spacer()
                 Button("Prepare") {
                     runtime.prepareDemoTextAction()
@@ -93,6 +98,34 @@ struct OverlayView: View {
             }
         }
         .approvalSurface()
+    }
+
+    private var bridgeControls: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 8) {
+                TextField("Bridge URL", text: $localBridge.bridgeBaseURLString)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                    .onSubmit {
+                        runtime.saveLocalBridgeBaseURL()
+                    }
+                Button("Save") {
+                    runtime.saveLocalBridgeBaseURL()
+                }
+                .controlSize(.small)
+            }
+
+            HStack(spacing: 8) {
+                Label(localBridge.bridgeStatus, systemImage: localBridge.isPolling ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
+                    .font(.caption)
+                    .foregroundStyle(localBridge.bridgeStatus.hasPrefix("Bridge unavailable") || localBridge.bridgeStatus.hasPrefix("Invalid") ? .orange : .secondary)
+                    .lineLimit(1)
+                Spacer()
+                Text("outbox \(localBridge.outboxCount)")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.tertiary)
+            }
+        }
     }
 
     private func approvalCard(_ pending: SetTextActionPresentation) -> some View {

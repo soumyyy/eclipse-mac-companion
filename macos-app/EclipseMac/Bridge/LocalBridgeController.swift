@@ -9,20 +9,40 @@ final class LocalBridgeController: ObservableObject {
     @Published private(set) var latestResult: BridgeJobResultEnvelope?
     @Published private(set) var outboxCount = 0
     @Published private(set) var bridgeMessage = "Local bridge ready"
+    @Published private(set) var bridgeStatus = "Polling stopped"
+    @Published private(set) var isPolling = false
+    @Published var bridgeBaseURLString: String
 
     private let processor: LocalBridgeProcessor
-    private let transport: any LocalBridgeTransporting
+    private let configurationStore: LocalBridgeConfigurationStore
+    private var transport: any LocalBridgeTransporting
     private let deviceID: String
+    private var pollingTask: Task<Void, Never>?
+    private var consecutiveFailures = 0
+    private var lastTransportRequestFailed = false
+    private let normalPollingInterval: TimeInterval = 3
+    private let failurePollingInterval: TimeInterval = 8
 
     init(
         deviceID: String = LocalBridgeController.defaultDeviceID,
         setTextActions: SetTextActionController,
         collector: any ContextCollecting = AccessibilityContextCollector(),
         store: (any BridgeResultStoring)? = nil,
-        transport: any LocalBridgeTransporting = LocalBridgeHTTPClient()
+        configurationStore: LocalBridgeConfigurationStore = LocalBridgeConfigurationStore(),
+        transport: (any LocalBridgeTransporting)? = nil
     ) {
         self.deviceID = deviceID
-        self.transport = transport
+        self.configurationStore = configurationStore
+        let configuration = configurationStore.load()
+        bridgeBaseURLString = configuration.baseURLString
+        if let transport {
+            self.transport = transport
+        } else if let url = configuration.baseURL {
+            self.transport = LocalBridgeHTTPClient(baseURL: url)
+        } else {
+            self.transport = LocalBridgeHTTPClient()
+            bridgeBaseURLString = LocalBridgeConfiguration.defaultBaseURLString
+        }
         let bridgeStore = store ?? Self.makeDefaultStore()
         processor = LocalBridgeProcessor(
             deviceID: deviceID,
@@ -31,6 +51,10 @@ final class LocalBridgeController: ObservableObject {
             store: bridgeStore
         )
         refreshOutboxCount()
+    }
+
+    deinit {
+        pollingTask?.cancel()
     }
 
     func submitMockSetTextJob(text: String) {
@@ -76,9 +100,87 @@ final class LocalBridgeController: ObservableObject {
         refreshOutboxCount()
     }
 
+    @discardableResult
+    func saveBridgeBaseURL() -> Bool {
+        let trimmed = bridgeBaseURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: trimmed),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              url.host != nil else {
+            bridgeStatus = "Invalid bridge URL"
+            bridgeMessage = "Use an http:// or https:// bridge URL"
+            return false
+        }
+
+        bridgeBaseURLString = trimmed
+        configurationStore.save(LocalBridgeConfiguration(baseURLString: trimmed))
+        transport = LocalBridgeHTTPClient(baseURL: url)
+        consecutiveFailures = 0
+        bridgeStatus = isPolling ? "Polling \(trimmed)" : "Bridge URL saved"
+        bridgeMessage = "Bridge URL saved"
+        return true
+    }
+
+    func startPolling() {
+        guard pollingTask == nil else { return }
+        guard saveBridgeBaseURL() else { return }
+        isPolling = true
+        bridgeStatus = "Polling \(bridgeBaseURLString)"
+        bridgeMessage = "Local bridge polling started"
+        pollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let delay = await self.pollOnce()
+                do {
+                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                } catch {
+                    return
+                }
+            }
+        }
+    }
+
+    func stopPolling() {
+        pollingTask?.cancel()
+        pollingTask = nil
+        isPolling = false
+        bridgeStatus = "Polling stopped"
+        bridgeMessage = "Local bridge polling stopped"
+    }
+
+    @discardableResult
+    func pollOnce() async -> TimeInterval {
+        lastTransportRequestFailed = false
+
+        if pendingJob == nil {
+            _ = await fetchNextRemoteJob()
+        } else {
+            bridgeMessage = "Waiting for approval before fetching another job"
+        }
+
+        if outboxCount > 0 {
+            _ = await postOutbox()
+        }
+
+        if lastTransportRequestFailed {
+            consecutiveFailures += 1
+            bridgeStatus = "Bridge unavailable; retrying in \(Int(failurePollingInterval))s"
+            return failurePollingInterval
+        }
+
+        consecutiveFailures = 0
+        if pendingJob != nil {
+            bridgeStatus = "Waiting for approval"
+        } else {
+            bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Connected"
+        }
+        return normalPollingInterval
+    }
+
     func fetchNextRemoteJob() async -> BridgeJobResultEnvelope? {
         do {
             guard let job = try await transport.fetchNextJob(deviceID: deviceID) else {
+                lastTransportRequestFailed = false
                 bridgeMessage = "No queued local bridge job"
                 return nil
             }
@@ -99,6 +201,7 @@ final class LocalBridgeController: ObservableObject {
 
             return result
         } catch {
+            lastTransportRequestFailed = true
             bridgeMessage = error.localizedDescription
             return nil
         }
@@ -118,9 +221,11 @@ final class LocalBridgeController: ObservableObject {
             }
             refreshOutboxCount()
             let postedCount = response.accepted + response.duplicates
+            lastTransportRequestFailed = false
             bridgeMessage = "Posted \(postedCount) receipt(s) to local bridge"
             return postedCount
         } catch {
+            lastTransportRequestFailed = true
             bridgeMessage = error.localizedDescription
             refreshOutboxCount()
             return 0

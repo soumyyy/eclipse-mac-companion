@@ -98,4 +98,38 @@ final class RuntimeModel: ObservableObject {
             debugMessage = localBridge.bridgeMessage
         }
     }
+
+    func saveLocalBridgeBaseURL() {
+        if localBridge.saveBridgeBaseURL() {
+            state = .idle
+        } else {
+            state = .error
+        }
+        debugMessage = localBridge.bridgeMessage
+    }
+
+    func toggleLocalBridgePolling() {
+        if localBridge.isPolling {
+            localBridge.stopPolling()
+            state = .idle
+        } else {
+            localBridge.startPolling()
+            state = localBridge.isPolling ? .thinking : .error
+        }
+        debugMessage = localBridge.bridgeMessage
+    }
+
+    func pollLocalBridgeOnce() {
+        state = .thinking
+        debugMessage = "Polling local bridge once"
+        Task {
+            _ = await localBridge.pollOnce()
+            if localBridge.pendingJob != nil {
+                state = .waitingForApproval
+            } else {
+                state = localBridge.bridgeStatus.hasPrefix("Bridge unavailable") ? .error : .idle
+            }
+            debugMessage = localBridge.bridgeMessage
+        }
+    }
 }

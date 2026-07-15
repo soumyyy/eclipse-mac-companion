@@ -41,6 +41,73 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertEqual(transport.replayedResults.count, 1)
     }
 
+    func testSaveBridgeBaseURLPersistsValidHTTPURL() {
+        let defaults = makeDefaults()
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            configurationStore: LocalBridgeConfigurationStore(defaults: defaults),
+            transport: FakeLocalBridgeTransport(nextJob: nil)
+        )
+        controller.bridgeBaseURLString = " https://bridge.example.test "
+
+        XCTAssertTrue(controller.saveBridgeBaseURL())
+        XCTAssertEqual(controller.bridgeBaseURLString, "https://bridge.example.test")
+        XCTAssertEqual(defaults.string(forKey: "localBridge.baseURL"), "https://bridge.example.test")
+        XCTAssertEqual(controller.bridgeStatus, "Bridge URL saved")
+    }
+
+    func testSaveBridgeBaseURLRejectsInvalidURL() {
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: FakeLocalBridgeTransport(nextJob: nil)
+        )
+        controller.bridgeBaseURLString = "not a url"
+
+        XCTAssertFalse(controller.saveBridgeBaseURL())
+        XCTAssertEqual(controller.bridgeStatus, "Invalid bridge URL")
+    }
+
+    func testPollOnceFetchesJobThenPostsOutboxReceipt() async {
+        let transport = FakeLocalBridgeTransport(nextJob: job(kind: .contextGetActiveWindow, risk: .read, input: .empty))
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+
+        let nextDelay = await controller.pollOnce()
+
+        XCTAssertEqual(nextDelay, 3)
+        XCTAssertEqual(transport.fetchCount, 1)
+        XCTAssertEqual(transport.replayedResults.count, 1)
+        XCTAssertEqual(controller.outboxCount, 0)
+        XCTAssertEqual(controller.bridgeStatus, "Connected")
+    }
+
+    func testPollOnceBacksOffWhenBridgeFetchFails() async {
+        let transport = FakeLocalBridgeTransport(nextJob: nil, fetchError: URLError(.cannotConnectToHost))
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+
+        let nextDelay = await controller.pollOnce()
+
+        XCTAssertEqual(nextDelay, 8)
+        XCTAssertEqual(controller.bridgeStatus, "Bridge unavailable; retrying in 8s")
+    }
+
     private func job(
         kind: BridgeJobKind,
         risk: BridgeRisk,
@@ -71,18 +138,32 @@ final class LocalBridgeControllerTests: XCTestCase {
             redactions: []
         )
     }
+
+    private func makeDefaults() -> UserDefaults {
+        let suiteName = "EclipseMacTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        return defaults
+    }
 }
 
 private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecked Sendable {
     private let nextJob: BridgeJobEnvelope?
+    private let fetchError: Error?
+    private(set) var fetchCount = 0
     private(set) var replayedResults: [BridgeJobResultEnvelope] = []
 
-    init(nextJob: BridgeJobEnvelope?) {
+    init(nextJob: BridgeJobEnvelope?, fetchError: Error? = nil) {
         self.nextJob = nextJob
+        self.fetchError = fetchError
     }
 
     func fetchNextJob(deviceID: String) async throws -> BridgeJobEnvelope? {
-        nextJob
+        fetchCount += 1
+        if let fetchError {
+            throw fetchError
+        }
+        return nextJob
     }
 
     func postResult(_ result: BridgeJobResultEnvelope) async throws -> BridgePostResultResponse {

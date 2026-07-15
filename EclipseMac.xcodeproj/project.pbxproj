@@ -24,6 +24,7 @@
 		4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770AD420C5F18D3A824363B5 /* ContextModels.swift */; };
 		51BBD4073ABEAB1C54D3BACC /* RuntimeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B9E174095478517034A0F2 /* RuntimeModel.swift */; };
 		538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */; };
+		5DB85E598687FC4B65AA037D /* LocalBridgeConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814A331916F49DDE2107CECE /* LocalBridgeConfiguration.swift */; };
 		5DEE191F292E93ACA214AC68 /* WindowCapturePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8604FBF4D8D434C95F5755B /* WindowCapturePolicyTests.swift */; };
 		609C82AB1D355DD9963F8AB9 /* SetTextActionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A1B929030D03395B07BB0C /* SetTextActionPolicy.swift */; };
 		669EE3608B5AB3C0F2EDDC0B /* BridgeJobPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1944F78613D1C0FDFF00788 /* BridgeJobPolicyTests.swift */; };
@@ -91,6 +92,7 @@
 		761269DF84E6D2214A388CD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		770AD420C5F18D3A824363B5 /* ContextModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextModels.swift; sourceTree = "<group>"; };
 		792DCC3ED9F4409AF229B54F /* ActiveWindowCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveWindowCapturer.swift; sourceTree = "<group>"; };
+		814A331916F49DDE2107CECE /* LocalBridgeConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBridgeConfiguration.swift; sourceTree = "<group>"; };
 		81E0A5BE16850B68B182DDBD /* WindowCapturePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapturePolicy.swift; sourceTree = "<group>"; };
 		878D94F238FDF87E202E4DFC /* SQLiteBridgeResultStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteBridgeResultStoreTests.swift; sourceTree = "<group>"; };
 		9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseTheme.swift; sourceTree = "<group>"; };
@@ -161,6 +163,7 @@
 				E93F306EDDB2B65E3DC566F3 /* BridgeJobPolicy.swift */,
 				18CFAEDCC31BF31B9CAAF324 /* BridgeJSONCoding.swift */,
 				D1863B5EA0F4F3B8F18D349A /* BridgeModels.swift */,
+				814A331916F49DDE2107CECE /* LocalBridgeConfiguration.swift */,
 				C99455F06418B360B866DFE0 /* LocalBridgeController.swift */,
 				ECE672A6B80CF41B4103B4FE /* LocalBridgeHTTPClient.swift */,
 				6164B203D733957F27C31156 /* LocalBridgeProcessor.swift */,
@@ -415,6 +418,7 @@
 				7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */,
 				538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */,
 				D34FE09C001F482BD94E8542 /* InMemoryBridgeResultStore.swift in Sources */,
+				5DB85E598687FC4B65AA037D /* LocalBridgeConfiguration.swift in Sources */,
 				FD8587B5AD8DE21B97B3BE10 /* LocalBridgeController.swift in Sources */,
 				6A31EFB75558EF739F4A209E /* LocalBridgeHTTPClient.swift in Sources */,
 				910D9C7235FDBDBDB79FEFD0 /* LocalBridgeProcessor.swift in Sources */,
