@@ -3,8 +3,8 @@ import SQLite3
 
 @MainActor
 final class SQLiteBridgeResultStore: BridgeResultStoring {
-    private let encoder = JSONEncoder()
-    private let decoder = JSONDecoder()
+    private let encoder = BridgeJSONCoding.makeEncoder()
+    private let decoder = BridgeJSONCoding.makeDecoder()
     private let connection: SQLiteConnection
 
     static func `default`() throws -> SQLiteBridgeResultStore {

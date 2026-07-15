@@ -72,4 +72,30 @@ final class RuntimeModel: ObservableObject {
         state = .idle
         debugMessage = "Ready on this Mac"
     }
+
+    func fetchLocalBridgeJob() {
+        state = .thinking
+        debugMessage = "Fetching next local bridge job"
+        Task {
+            let result = await localBridge.fetchNextRemoteJob()
+            if localBridge.pendingJob != nil {
+                state = .waitingForApproval
+            } else if result?.status == .failed || result?.status == .rejected || result?.status == .expired {
+                state = .error
+            } else {
+                state = .idle
+            }
+            debugMessage = localBridge.bridgeMessage
+        }
+    }
+
+    func postLocalBridgeOutbox() {
+        state = .acting
+        debugMessage = "Posting local bridge outbox"
+        Task {
+            _ = await localBridge.postOutbox()
+            state = .idle
+            debugMessage = localBridge.bridgeMessage
+        }
+    }
 }

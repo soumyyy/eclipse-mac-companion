@@ -15,7 +15,7 @@ final class BridgeModelsCodingTests: XCTestCase {
         )
 
         let object = try XCTUnwrap(
-            JSONSerialization.jsonObject(with: JSONEncoder().encode(job)) as? [String: Any]
+            JSONSerialization.jsonObject(with: BridgeJSONCoding.makeEncoder().encode(job)) as? [String: Any]
         )
         let input = try XCTUnwrap(object["input"] as? [String: Any])
 
@@ -25,6 +25,7 @@ final class BridgeModelsCodingTests: XCTestCase {
         XCTAssertEqual(object["kind"] as? String, "ui.set_text")
         XCTAssertEqual(object["risk"] as? String, "reversible")
         XCTAssertEqual(input["text"] as? String, "Hello")
+        XCTAssertEqual(object["expires_at"] as? String, "1970-01-01T00:16:40Z")
         XCTAssertEqual(object["idempotency_key"] as? String, "idem_test")
     }
 
@@ -41,13 +42,34 @@ final class BridgeModelsCodingTests: XCTestCase {
         )
 
         let object = try XCTUnwrap(
-            JSONSerialization.jsonObject(with: JSONEncoder().encode(result)) as? [String: Any]
+            JSONSerialization.jsonObject(with: BridgeJSONCoding.makeEncoder().encode(result)) as? [String: Any]
         )
 
         XCTAssertEqual(object["job_id"] as? String, "job_test")
         XCTAssertEqual(object["protocol_version"] as? String, "0.1")
         XCTAssertEqual(object["device_id"] as? String, "mac_test")
         XCTAssertEqual(object["status"] as? String, "pending_approval")
+        XCTAssertEqual(object["completed_at"] as? String, "1970-01-01T00:33:20Z")
         XCTAssertEqual(object["idempotency_key"] as? String, "idem_test")
+    }
+
+    func testDecoderAcceptsWholeSecondISODateFromMockBridge() throws {
+        let json = """
+        {
+          "job_id": "job_test",
+          "protocol_version": "0.1",
+          "device_id": "mac_test",
+          "kind": "context.get_active_window",
+          "risk": "read",
+          "input": {},
+          "expires_at": "2026-07-15T12:00:30Z",
+          "idempotency_key": "idem_test"
+        }
+        """.data(using: .utf8)!
+
+        let job = try BridgeJSONCoding.makeDecoder().decode(BridgeJobEnvelope.self, from: json)
+
+        XCTAssertEqual(job.kind, .contextGetActiveWindow)
+        XCTAssertEqual(job.expiresAt.timeIntervalSince1970, 1_784_116_830)
     }
 }

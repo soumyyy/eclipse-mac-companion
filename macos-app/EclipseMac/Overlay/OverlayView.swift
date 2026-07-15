@@ -73,12 +73,19 @@ struct OverlayView: View {
             }
 
             Spacer(minLength: 0)
-            HStack {
-                Text("Demo: \"\(SetTextActionController.demoText)\"")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+            Text("Demo: \"\(SetTextActionController.demoText)\"")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
+            HStack(spacing: 8) {
+                Button("Fetch Job") {
+                    runtime.fetchLocalBridgeJob()
+                }
+                Button("Post Outbox") {
+                    runtime.postLocalBridgeOutbox()
+                }
                 Spacer()
-                Button("Prepare Action") {
+                Button("Prepare") {
                     runtime.prepareDemoTextAction()
                 }
                 .buttonStyle(.borderedProminent)
