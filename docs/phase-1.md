@@ -6,7 +6,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
-- Global `Command-Option-Space` hotkey
+- Global `Option-Space` hotkey
 - Explicit assistant UI states
 - Live Accessibility, Screen Recording, and Microphone permission status
 - Buttons to request access or open the relevant System Settings pane

@@ -36,7 +36,7 @@ struct MenuContentView: View {
             Divider().opacity(0.55)
 
             VStack(spacing: 7) {
-                MenuActionButton(title: "Show Eclipse", symbol: "sparkles", shortcut: "⌘⌥ Space") {
+                MenuActionButton(title: "Show Eclipse", symbol: "sparkles", shortcut: "⌥ Space") {
                     NotificationCenter.default.post(name: .toggleEclipseOverlay, object: nil)
                 }
                 SettingsLink {

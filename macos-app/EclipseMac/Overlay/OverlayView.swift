@@ -85,7 +85,7 @@ struct OverlayView: View {
                 .buttonStyle(.borderless)
                 .help("Collapse to buddy")
             }
-            Text("⌘⌥ Space")
+            Text("⌥ Space")
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 9)
