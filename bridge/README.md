@@ -48,7 +48,7 @@ Without `ECLIPSE_BRIDGE_DB`, the server stores jobs, results, and device heartbe
 
 The Mac app can also create bridge jobs from **Settings → Bridge**. The command composer supports `context.get_active_window`, `context.capture_window`, `notification.show`, `ui.set_text`, `ui.press_key`, and `ui.click_element`. Text jobs require Mac-side approval before typing. Key jobs require Mac-side approval before posting one of the allowed key events. Click jobs require Mac-side approval, exact Accessibility role/label matching, and pass the local risky-label blocklist before `AXPress`. The same Settings panel can refresh bridge activity to show queued jobs, recent remote results, device presence, copyable raw JSON, cancel still-queued jobs, and post `expired` receipts for fetched jobs whose Mac-side approval window lapses.
 
-The companion ask flow uses `POST /ask` with the user prompt and sanitized active-window context. By default the development bridge returns a scaffold response proving the handoff. Set `ECLIPSE_HERMES_ASK_URL` and optional `ECLIPSE_HERMES_ASK_TOKEN` on the bridge to forward ask requests to the real Hermes brain.
+The companion ask flow uses `POST /ask` with the user prompt and sanitized active-window context. By default the development bridge returns a scaffold response proving the handoff. Set `ECLIPSE_HERMES_ASK_URL` and optional `ECLIPSE_HERMES_ASK_TOKEN` on the bridge to forward ask requests to the real Hermes brain. If `ECLIPSE_HERMES_ASK_URL` points to `/v1/chat/completions` or `ECLIPSE_HERMES_ASK_FORMAT=openai`, the bridge converts the Mac context into an OpenAI-compatible chat-completions request and normalizes the assistant response back to `{ answer, mode, context_summary }`.
 
 Operator CLI:
 

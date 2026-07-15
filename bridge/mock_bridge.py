@@ -534,15 +534,8 @@ def companion_ask_response(request: dict[str, Any]) -> dict[str, Any]:
     if backend_url:
         return forward_companion_ask(backend_url, request)
 
-    context = request["context"]
-    active_app = context.get("active_app") or {}
-    window = context.get("window") or {}
-    focused = context.get("focused_element") or {}
-    app_name = active_app.get("name") or "your Mac"
-    window_title = window.get("title") or "the active window"
-    focus_label = focused.get("label") or focused.get("role") or "no focused element"
+    context_summary = companion_context_summary(request["context"])
     prompt = request["prompt"]
-    context_summary = f"{app_name} · {window_title} · {focus_label}"
     return {
         "response_id": prefixed_id("ask"),
         "answer": (
@@ -556,7 +549,21 @@ def companion_ask_response(request: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def companion_context_summary(context: dict[str, Any]) -> str:
+    active_app = context.get("active_app") or {}
+    window = context.get("window") or {}
+    focused = context.get("focused_element") or {}
+    app_name = active_app.get("name") or "your Mac"
+    window_title = window.get("title") or "the active window"
+    focus_label = focused.get("label") or focused.get("role") or "no focused element"
+    return f"{app_name} · {window_title} · {focus_label}"
+
+
 def forward_companion_ask(backend_url: str, request_body: dict[str, Any]) -> dict[str, Any]:
+    payload = request_body
+    if should_use_openai_chat_completions(backend_url):
+        payload = openai_chat_completions_payload(request_body)
+
     headers = {
         "content-type": "application/json",
         "accept": "application/json",
@@ -567,7 +574,7 @@ def forward_companion_ask(backend_url: str, request_body: dict[str, Any]) -> dic
         headers["authorization"] = f"Bearer {token}"
     request = Request(
         backend_url,
-        data=encode_json(request_body).encode("utf-8"),
+        data=encode_json(payload).encode("utf-8"),
         headers=headers,
         method="POST",
     )
@@ -576,14 +583,96 @@ def forward_companion_ask(backend_url: str, request_body: dict[str, Any]) -> dic
     value = json.loads(raw.decode("utf-8")) if raw else {}
     if not isinstance(value, dict):
         raise ValueError("Hermes ask backend must return a JSON object")
-    if "answer" not in value:
-        raise ValueError("Hermes ask backend response requires answer")
+    return normalize_companion_ask_backend_response(value, request_body["context"])
+
+
+def should_use_openai_chat_completions(backend_url: str) -> bool:
+    forced_format = os.environ.get("ECLIPSE_HERMES_ASK_FORMAT", "").strip().lower()
+    if forced_format in {"openai", "chat_completions", "chat-completions"}:
+        return True
+    return "/v1/chat/completions" in backend_url
+
+
+def openai_chat_completions_payload(request_body: dict[str, Any]) -> dict[str, Any]:
+    context = request_body["context"]
+    active_app = context.get("active_app") or {}
+    window = context.get("window") or {}
+    focused = context.get("focused_element") or {}
+    visible_elements = context.get("visible_elements") or []
+    selected_text = context.get("selected_text")
+    focused_preview = focused.get("value_preview")
+    element_labels = []
+    if isinstance(visible_elements, list):
+        for element in visible_elements[:12]:
+            if not isinstance(element, dict):
+                continue
+            label = element.get("label") or element.get("role")
+            if label:
+                element_labels.append(str(label))
+
+    context_lines = [
+        f"Device: {request_body['device_id']}",
+        f"Active app: {active_app.get('name') or 'unknown'} ({active_app.get('bundle_id') or 'unknown bundle'})",
+        f"Window: {window.get('title') or 'unknown'}",
+        f"Focused element: {focused.get('label') or focused.get('role') or 'unknown'}",
+    ]
+    if focused_preview:
+        context_lines.append(f"Focused value preview: {focused_preview}")
+    if selected_text:
+        context_lines.append(f"Selected text: {selected_text}")
+    if element_labels:
+        context_lines.append("Visible elements: " + ", ".join(element_labels))
+
+    system_prompt = (
+        "You are Hermes, the brain behind Eclipse Mac. "
+        "Answer from the user's current Mac context. Be concise, useful, and action-oriented. "
+        "If you need the Mac tool to act, say exactly what action should happen next."
+    )
+    user_prompt = (
+        "User prompt:\n"
+        f"{request_body['prompt']}\n\n"
+        "Current Mac context:\n"
+        + "\n".join(context_lines)
+    )
     return {
-        "response_id": str(value.get("response_id") or prefixed_id("ask")),
-        "answer": str(value["answer"]),
-        "mode": str(value.get("mode") or "hermes"),
-        "created_at": str(value.get("created_at") or isoformat(utc_now())),
-        "context_summary": value.get("context_summary"),
+        "model": os.environ.get("ECLIPSE_HERMES_ASK_MODEL", "eclipse-mac"),
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "stream": False,
+    }
+
+
+def normalize_companion_ask_backend_response(value: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+    if "answer" in value:
+        answer = value["answer"]
+        response_id = value.get("response_id")
+        mode = value.get("mode") or "hermes"
+        created_at = value.get("created_at")
+        context_summary = value.get("context_summary")
+    elif "choices" in value and isinstance(value["choices"], list) and value["choices"]:
+        first_choice = value["choices"][0]
+        if not isinstance(first_choice, dict):
+            raise ValueError("Hermes chat completion choice must be a JSON object")
+        message = first_choice.get("message") or {}
+        if not isinstance(message, dict):
+            raise ValueError("Hermes chat completion message must be a JSON object")
+        answer = message.get("content") or first_choice.get("text")
+        response_id = value.get("id")
+        mode = "hermes"
+        created_at = value.get("created_at")
+        context_summary = None
+    else:
+        raise ValueError("Hermes ask backend response requires answer or choices")
+    if answer is None:
+        raise ValueError("Hermes ask backend response requires non-empty answer")
+    return {
+        "response_id": str(response_id or prefixed_id("ask")),
+        "answer": str(answer),
+        "mode": str(mode),
+        "created_at": str(created_at or isoformat(utc_now())),
+        "context_summary": context_summary or companion_context_summary(context),
     }
 
 

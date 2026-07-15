@@ -10,7 +10,12 @@ from urllib.request import Request, urlopen
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from mock_bridge import SQLiteBridgeState, make_server  # noqa: E402
+from mock_bridge import (  # noqa: E402
+    SQLiteBridgeState,
+    normalize_companion_ask_backend_response,
+    openai_chat_completions_payload,
+    make_server,
+)
 
 
 class MockBridgeTests(unittest.TestCase):
@@ -177,6 +182,53 @@ class MockBridgeTests(unittest.TestCase):
 
         self.assertEqual(response["mode"], "scaffold")
         self.assertIn("What am I looking at?", response["answer"])
+        self.assertEqual(response["context_summary"], "Notes · Meeting notes · Body")
+
+    def test_builds_openai_chat_completion_payload_from_companion_ask(self):
+        payload = openai_chat_completions_payload({
+            "protocol_version": "0.1",
+            "device_id": "mac_ask_test",
+            "prompt": "Summarize this",
+            "sent_at": "2026-07-15T12:00:00Z",
+            "context": {
+                "active_app": {"bundle_id": "com.apple.Notes", "name": "Notes"},
+                "window": {"title": "Meeting notes"},
+                "focused_element": {"role": "AXTextArea", "label": "Body", "value_preview": "Launch plan"},
+                "selected_text": "Important selected text",
+                "visible_elements": [{"label": "Share"}, {"role": "AXButton"}],
+            },
+        })
+
+        self.assertEqual(payload["model"], "eclipse-mac")
+        self.assertFalse(payload["stream"])
+        self.assertEqual(payload["messages"][0]["role"], "system")
+        self.assertIn("Summarize this", payload["messages"][1]["content"])
+        self.assertIn("Active app: Notes", payload["messages"][1]["content"])
+        self.assertIn("Selected text: Important selected text", payload["messages"][1]["content"])
+
+    def test_normalizes_openai_chat_completion_response(self):
+        response = normalize_companion_ask_backend_response(
+            {
+                "id": "chatcmpl_test",
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": "This is the Hermes answer.",
+                        }
+                    }
+                ],
+            },
+            {
+                "active_app": {"name": "Notes"},
+                "window": {"title": "Meeting notes"},
+                "focused_element": {"label": "Body"},
+            },
+        )
+
+        self.assertEqual(response["response_id"], "chatcmpl_test")
+        self.assertEqual(response["answer"], "This is the Hermes answer.")
+        self.assertEqual(response["mode"], "hermes")
         self.assertEqual(response["context_summary"], "Notes · Meeting notes · Body")
 
     def test_replays_outbox_batch(self):
