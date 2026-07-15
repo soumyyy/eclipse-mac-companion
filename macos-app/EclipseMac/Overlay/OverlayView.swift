@@ -4,6 +4,9 @@ struct OverlayView: View {
     @ObservedObject var runtime: RuntimeModel
     @ObservedObject private var textActions: SetTextActionController
     @ObservedObject private var localBridge: LocalBridgeController
+    @State private var now = Date()
+
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     init(runtime: RuntimeModel) {
         self.runtime = runtime
@@ -33,6 +36,9 @@ struct OverlayView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 26, style: .continuous)
                 .stroke(.white.opacity(0.18), lineWidth: 1)
+        }
+        .onReceive(timer) { value in
+            now = value
         }
         .padding(8)
     }
@@ -113,14 +119,16 @@ struct OverlayView: View {
     }
 
     private func approvalCard(_ pending: SetTextActionPresentation) -> some View {
-        VStack(alignment: .leading, spacing: 11) {
+        let expiresAt = pending.createdAt.addingTimeInterval(SetTextActionPolicy.default.maximumApprovalAge)
+        let expired = approvalExpired(expiresAt)
+        return VStack(alignment: .leading, spacing: 11) {
             HStack {
                 Label("Approval required", systemImage: "hand.raised.fill")
                     .font(.headline)
                 Spacer()
-                Text("Expires in 10 seconds")
+                Text(expiryLabel(expiresAt))
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(expired ? .red : .orange)
             }
 
             VStack(alignment: .leading, spacing: 5) {
@@ -141,6 +149,9 @@ struct OverlayView: View {
                     .padding(9)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 8))
+                Label("Approval is bound to this app, window, focused field, and a short freshness window.", systemImage: "lock.shield")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             HStack {
@@ -154,20 +165,22 @@ struct OverlayView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(EclipseTheme.violet)
+                .disabled(expired)
             }
         }
         .approvalSurface()
     }
 
     private func automationApprovalCard(_ pending: BridgeAutomationApprovalRequest) -> some View {
-        VStack(alignment: .leading, spacing: 11) {
+        let expired = approvalExpired(pending.expiresAt)
+        return VStack(alignment: .leading, spacing: 11) {
             HStack {
                 Label("Approval required", systemImage: "hand.raised.fill")
                     .font(.headline)
                 Spacer()
-                Text(pending.risk.rawValue)
+                Text("\(pending.risk.rawValue) · \(expiryLabel(pending.expiresAt))")
                     .font(.caption)
-                    .foregroundStyle(pending.risk == .consequential ? .orange : .secondary)
+                    .foregroundStyle(expired || pending.risk == .consequential ? .orange : .secondary)
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -194,6 +207,10 @@ struct OverlayView: View {
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
+
+                Label("Approval is target-bound. If the app, window, or element changes, the action is rejected locally.", systemImage: "lock.shield")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             HStack {
@@ -208,6 +225,7 @@ struct OverlayView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(EclipseTheme.violet)
+                    .disabled(expired)
                 }
             }
         }
@@ -256,6 +274,18 @@ struct OverlayView: View {
             return "\(windowTitle) · window \(windowID)"
         }
         return windowTitle
+    }
+
+    private func approvalExpired(_ expiresAt: Date) -> Bool {
+        expiresAt <= now
+    }
+
+    private func expiryLabel(_ expiresAt: Date) -> String {
+        let seconds = Int(ceil(expiresAt.timeIntervalSince(now)))
+        if seconds <= 0 {
+            return "Expired"
+        }
+        return "Expires in \(seconds)s"
     }
 }
 

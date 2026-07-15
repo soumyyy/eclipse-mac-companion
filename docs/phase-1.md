@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1T
+## Current increment: Phase 1V
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O added an in-app bridge command composer. Phase 1P added in-app bridge activity/history. Phase 1Q expanded the typed bridge primitives and added the first local command surface. Phase 1R enabled approved `ui.press_key` execution. Phase 1S enabled strict approved `ui.click_element` execution. Phase 1T adds Hermes/tool-facing timeout and cancellation behavior.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O added an in-app bridge command composer. Phase 1P added in-app bridge activity/history. Phase 1Q expanded the typed bridge primitives and added the first local command surface. Phase 1R enabled approved `ui.press_key` execution. Phase 1S enabled strict approved `ui.click_element` execution. Phase 1T added Hermes/tool-facing timeout and cancellation behavior. Phase 1U wired queued-job cancellation and fetched-job expiry into the Mac app. Phase 1V adds a concrete JSON Hermes tool host, device heartbeats/presence, copyable activity details, and safer approval countdown UX.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -56,13 +56,19 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Authenticated queued-job cancellation endpoint that removes undelivered jobs and stores rejected cancellation receipts
 - Mac Settings activity UI can cancel still-queued bridge jobs through the configured bridge
 - Fetched jobs waiting on Mac-side approval now expire locally and post an `expired` receipt through the outbox
+- Authenticated heartbeat endpoint for Mac/device presence, persisted by the SQLite bridge
+- Mac polling loop posts device presence with status, capabilities, pending job, outbox count, and bridge status
+- Settings shows device presence and copyable raw JSON for jobs, results, and devices
+- Overlay approvals show live expiry countdowns and disable stale approval buttons
 - `bridge/bridge_cli.py` operator CLI for health, stats, jobs, results, context, capture, notification, text, key, and click job creation
 - Operator CLI support for `wait-result` and queued-job `cancel`
+- Operator CLI support for listing devices and posting a test heartbeat
 - In-app command composer for queueing typed jobs to the configured bridge
 - Local phrase command box mapping simple commands like `capture window`, `notify Title | Body`, `press escape`, and `type Hello` to typed bridge jobs
 - In-app bridge activity panel showing queued jobs and recent remote results from the configured bridge, with expandable details
 - Automatic bridge activity refresh after polling/outbox cycles without overwriting the primary bridge status
 - `bridge/hermes_adapter.py` thin Hermes-facing scaffold that translates Hermes tool calls into typed bridge jobs, optional result waits, timeout reporting, and queued-job cancellation on timeout
+- `bridge/hermes_tool_host.py` JSON-in/JSON-out executable for Hermes-style tool listing and one-shot tool invocation
 
 ## Privacy defaults
 
@@ -73,7 +79,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1U check
+## Manual Phase 1V check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
@@ -89,10 +95,13 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 12. Timeout/cancel check: queue a job, run `python3 bridge/bridge_cli.py cancel <job_id>`, and confirm `GET /results/<job_id>` returns a `rejected` cancellation receipt.
 13. In-app cancel check: queue a job, refresh **Settings → Bridge → Activity**, expand the queued job, click **Cancel Queued Job**, and confirm the remote result is `rejected` with `cancelled_before_delivery`.
 14. Expiry check: fetch a text/key/click job that needs approval, wait past the approval window, then poll once. Confirm the app clears the pending approval, queues an `expired` outbox receipt, and posts it on the next outbox replay.
+15. Presence check: while polling, click **Refresh Activity** and confirm **Devices** shows `mac_soumya_local`, status, capabilities, outbox count, and last heartbeat time.
+16. Tool host check: run `python3 bridge/hermes_tool_host.py list-tools`, then `python3 bridge/hermes_tool_host.py call mac.get_active_window --wait --timeout-seconds 10` with bridge URL/token configured.
+17. Approval UX check: queue a key/text/click job and confirm the overlay shows a countdown and disables approval after expiry.
 
 ## Next increment
 
-Add a real Hermes host/tool integration around the adapter, or wire the adapter into the actual Hermes process if its local interface is available.
+Wire `bridge/hermes_tool_host.py` into the actual Hermes process/plugin interface when that runtime is available, then add a WebSocket event stream for lower-latency presence, progress, and cancellation.
 
 ## UI development launch arguments
 

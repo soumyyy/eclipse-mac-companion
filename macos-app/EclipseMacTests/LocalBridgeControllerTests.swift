@@ -198,7 +198,33 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertEqual(controller.bridgeStats, BridgeStats(queuedJobs: 1, results: 2))
         XCTAssertEqual(controller.remoteQueuedJobs.map(\.jobID), ["job_created_1"])
         XCTAssertEqual(controller.remoteResults.map(\.jobID), ["job_result_1", "job_result_2"])
+        XCTAssertEqual(controller.devicePresences.map(\.deviceID), ["mac_test"])
         XCTAssertEqual(controller.bridgeMessage, "Bridge activity refreshed")
+    }
+
+    func testPostHeartbeatSendsDevicePresence() async {
+        let transport = FakeLocalBridgeTransport(nextJob: nil)
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+
+        let posted = await controller.postHeartbeat()
+
+        XCTAssertTrue(posted)
+        XCTAssertEqual(transport.heartbeats.first?.deviceID, "mac_test")
+        XCTAssertEqual(transport.heartbeats.first?.capabilities, [
+            .contextGetActiveWindow,
+            .contextCaptureWindow,
+            .notificationShow,
+            .uiSetText,
+            .uiPressKey,
+            .uiClickElement,
+        ])
+        XCTAssertNotNil(controller.lastHeartbeatAt)
     }
 
     func testFetchPressKeyJobExposesAutomationApproval() async {
@@ -393,6 +419,7 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
     private(set) var createdRequests: [BridgeCreateJobRequest] = []
     private(set) var createdJobs: [BridgeJobEnvelope] = []
     private(set) var cancelledJobIDs: [String] = []
+    private(set) var heartbeats: [BridgeHeartbeatRequest] = []
     private var cancelledResults: [BridgeJobResultEnvelope] = []
 
     init(nextJob: BridgeJobEnvelope?, fetchError: Error? = nil) {
@@ -460,6 +487,37 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
         return [
             result(jobID: "job_result_1", status: .succeeded),
             result(jobID: "job_result_2", status: .failed)
+        ]
+    }
+
+    func postHeartbeat(_ heartbeat: BridgeHeartbeatRequest) async throws -> BridgeHeartbeatResponse {
+        heartbeats.append(heartbeat)
+        return BridgeHeartbeatResponse(heartbeat: BridgeDevicePresence(
+            protocolVersion: heartbeat.protocolVersion,
+            deviceID: heartbeat.deviceID,
+            sentAt: heartbeat.sentAt,
+            capabilities: heartbeat.capabilities,
+            status: heartbeat.status,
+            appVersion: heartbeat.appVersion,
+            pendingJobID: heartbeat.pendingJobID,
+            outboxCount: heartbeat.outboxCount,
+            bridgeStatus: heartbeat.bridgeStatus
+        ))
+    }
+
+    func fetchDevices() async throws -> [BridgeDevicePresence] {
+        [
+            BridgeDevicePresence(
+                protocolVersion: BridgeProtocol.currentVersion,
+                deviceID: "mac_test",
+                sentAt: Date(),
+                capabilities: [.contextGetActiveWindow, .uiSetText],
+                status: "polling",
+                appVersion: "test",
+                pendingJobID: nil,
+                outboxCount: 0,
+                bridgeStatus: "Connected"
+            )
         ]
     }
 

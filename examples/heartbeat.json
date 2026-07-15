@@ -4,7 +4,15 @@
   "sent_at": "2026-07-15T12:00:00Z",
   "capabilities": [
     "context.get_active_window",
-    "ui.set_text"
+    "context.capture_window",
+    "notification.show",
+    "ui.set_text",
+    "ui.press_key",
+    "ui.click_element"
   ],
-  "app_version": "debug"
+  "status": "polling",
+  "app_version": "debug",
+  "pending_job_id": null,
+  "outbox_count": 0,
+  "bridge_status": "Connected; polling every 3s"
 }

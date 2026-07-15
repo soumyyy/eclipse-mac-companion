@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct BridgeSettingsView: View {
@@ -54,10 +55,32 @@ struct BridgeSettingsView: View {
                 if let refreshedAt = localBridge.lastActivityRefreshAt {
                     LabeledContent("Activity refreshed", value: refreshedAt.formatted(date: .omitted, time: .standard))
                 }
+                if let heartbeatAt = localBridge.lastHeartbeatAt {
+                    LabeledContent("Last heartbeat", value: heartbeatAt.formatted(date: .omitted, time: .standard))
+                }
                 LabeledContent("Device ID", value: LocalBridgeController.defaultDeviceID)
                 Button("Refresh Activity") {
                     Task {
                         _ = await localBridge.refreshRemoteActivity()
+                    }
+                }
+            }
+
+            Section("Devices") {
+                if localBridge.devicePresences.isEmpty {
+                    Text("No device heartbeats visible yet.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(localBridge.devicePresences, id: \.deviceID) { device in
+                        DisclosureGroup {
+                            deviceDetail(device)
+                        } label: {
+                            activityLabel(
+                                title: device.deviceID,
+                                subtitle: "\(device.status ?? "unknown") · \(relativeAge(device.sentAt))"
+                            )
+                        }
                     }
                 }
             }
@@ -131,6 +154,10 @@ struct BridgeSettingsView: View {
                     ForEach(Array(localBridge.remoteQueuedJobs.prefix(5)), id: \.jobID) { job in
                         DisclosureGroup {
                             jobDetail(job)
+                            Button("Copy Job JSON") {
+                                copyJSON(job)
+                            }
+                            .buttonStyle(.bordered)
                             Button("Cancel Queued Job") {
                                 cancelQueuedJob(job)
                             }
@@ -150,6 +177,10 @@ struct BridgeSettingsView: View {
                     ForEach(Array(localBridge.remoteResults.suffix(5).reversed()), id: \.jobID) { result in
                         DisclosureGroup {
                             resultDetail(result)
+                            Button("Copy Result JSON") {
+                                copyJSON(result)
+                            }
+                            .buttonStyle(.bordered)
                         } label: {
                             activityLabel(title: result.status.rawValue, subtitle: result.jobID)
                         }
@@ -230,7 +261,35 @@ struct BridgeSettingsView: View {
             if let error = result.error {
                 LabeledContent("Error", value: "\(error.code): \(error.message)")
             }
+            LabeledContent("Device", value: result.deviceID)
             LabeledContent("Idempotency", value: result.idempotencyKey)
+        }
+        .font(.caption)
+        .textSelection(.enabled)
+    }
+
+    private func deviceDetail(_ device: BridgeDevicePresence) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            LabeledContent("Device ID", value: device.deviceID)
+            LabeledContent("Status", value: device.status ?? "unknown")
+            LabeledContent("Last seen", value: "\(device.sentAt.formatted(date: .omitted, time: .standard)) · \(relativeAge(device.sentAt))")
+            LabeledContent("Capabilities", value: device.capabilities.map(\.rawValue).joined(separator: ", "))
+            if let pendingJobID = device.pendingJobID {
+                LabeledContent("Pending job", value: pendingJobID)
+            }
+            if let outboxCount = device.outboxCount {
+                LabeledContent("Outbox", value: "\(outboxCount)")
+            }
+            if let bridgeStatus = device.bridgeStatus {
+                LabeledContent("Bridge status", value: bridgeStatus)
+            }
+            if let appVersion = device.appVersion, !appVersion.isEmpty {
+                LabeledContent("App", value: appVersion)
+            }
+            Button("Copy Device JSON") {
+                copyJSON(device)
+            }
+            .buttonStyle(.bordered)
         }
         .font(.caption)
         .textSelection(.enabled)
@@ -257,5 +316,25 @@ struct BridgeSettingsView: View {
         if let keyPress = output.keyPress { return "pressed \(((keyPress.modifiers) + [keyPress.key]).joined(separator: "+"))" }
         if let click = output.click { return "clicked \(click.elementRole) · \(click.elementLabel)" }
         return "none"
+    }
+
+    private func relativeAge(_ date: Date) -> String {
+        let seconds = max(0, Int(Date().timeIntervalSince(date)))
+        if seconds < 60 { return "\(seconds)s ago" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m ago" }
+        return "\(minutes / 60)h ago"
+    }
+
+    private func copyJSON<T: Encodable>(_ value: T) {
+        let encoder = BridgeJSONCoding.makeEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(value),
+              let string = String(data: data, encoding: .utf8) else {
+            return
+        }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(string, forType: .string)
     }
 }

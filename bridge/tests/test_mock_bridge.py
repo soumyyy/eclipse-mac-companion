@@ -130,6 +130,32 @@ class MockBridgeTests(unittest.TestCase):
         self.assertEqual(result["error"]["message"], "No longer needed")
         self.assertFalse(any(item["job_id"] == job["job_id"] for item in jobs["jobs"]))
 
+    def test_accepts_heartbeat_and_lists_device_presence(self):
+        heartbeat = {
+            "protocol_version": "0.1",
+            "device_id": "mac_presence_test",
+            "sent_at": "2026-07-15T12:00:00Z",
+            "capabilities": [
+                "context.get_active_window",
+                "context.capture_window",
+                "notification.show",
+                "ui.set_text",
+                "ui.press_key",
+                "ui.click_element",
+            ],
+            "status": "polling",
+            "outbox_count": 2,
+        }
+
+        posted = self.post("/heartbeats", heartbeat, expected_status=201)
+        devices = self.get("/devices")
+
+        self.assertEqual(posted["heartbeat"]["device_id"], "mac_presence_test")
+        listed = [device for device in devices["devices"] if device["device_id"] == "mac_presence_test"]
+        self.assertEqual(len(listed), 1)
+        self.assertEqual(listed[0]["status"], "polling")
+        self.assertEqual(listed[0]["outbox_count"], 2)
+
     def test_replays_outbox_batch(self):
         body = {
             "results": [
@@ -223,6 +249,32 @@ class MockBridgeTests(unittest.TestCase):
             self.assertEqual(result["status"], "rejected")
             self.assertEqual(second.stats(), {"queued_jobs": 0, "results": 1})
             self.assertEqual(second.result(job["job_id"])["error"]["message"], "Timed out")
+
+    def test_sqlite_state_persists_latest_heartbeat(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = str(Path(directory) / "bridge.sqlite3")
+            first = SQLiteBridgeState(path)
+            first.save_heartbeat({
+                "protocol_version": "0.1",
+                "device_id": "mac_sqlite_presence",
+                "sent_at": "2026-07-15T12:00:00Z",
+                "capabilities": ["context.get_active_window"],
+                "status": "online",
+            })
+            first.save_heartbeat({
+                "protocol_version": "0.1",
+                "device_id": "mac_sqlite_presence",
+                "sent_at": "2026-07-15T12:00:05Z",
+                "capabilities": ["context.get_active_window", "ui.set_text"],
+                "status": "polling",
+            })
+
+            second = SQLiteBridgeState(path)
+            devices = second.all_devices()
+
+            self.assertEqual(len(devices), 1)
+            self.assertEqual(devices[0]["status"], "polling")
+            self.assertEqual(devices[0]["capabilities"], ["context.get_active_window", "ui.set_text"])
 
     def test_token_protected_bridge_rejects_and_accepts_authorized_requests(self):
         server = make_server(port=0, token="secret_test_token")

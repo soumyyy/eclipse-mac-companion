@@ -62,6 +62,7 @@ class BridgeState:
     jobs: list[dict[str, Any]] = field(default_factory=list)
     results_by_job_id: dict[str, dict[str, Any]] = field(default_factory=dict)
     results_by_idempotency_key: dict[str, dict[str, Any]] = field(default_factory=dict)
+    heartbeats_by_device_id: dict[str, dict[str, Any]] = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock)
 
     def create_job(self, request: dict[str, Any]) -> dict[str, Any]:
@@ -127,6 +128,16 @@ class BridgeState:
     def all_jobs(self) -> list[dict[str, Any]]:
         with self.lock:
             return list(self.jobs)
+
+    def save_heartbeat(self, heartbeat: dict[str, Any]) -> dict[str, Any]:
+        validate_heartbeat(heartbeat)
+        with self.lock:
+            self.heartbeats_by_device_id[heartbeat["device_id"]] = heartbeat
+        return heartbeat
+
+    def all_devices(self) -> list[dict[str, Any]]:
+        with self.lock:
+            return sorted(self.heartbeats_by_device_id.values(), key=lambda item: item["device_id"])
 
     def stats(self) -> dict[str, int]:
         with self.lock:
@@ -313,6 +324,37 @@ class SQLiteBridgeState:
             ).fetchall()
             return [json.loads(row["job_json"]) for row in rows]
 
+    def save_heartbeat(self, heartbeat: dict[str, Any]) -> dict[str, Any]:
+        validate_heartbeat(heartbeat)
+        with self.lock, self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO heartbeats (
+                    device_id, heartbeat_json, updated_at
+                ) VALUES (?, ?, ?)
+                ON CONFLICT(device_id) DO UPDATE SET
+                    heartbeat_json = excluded.heartbeat_json,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    heartbeat["device_id"],
+                    encode_json(heartbeat),
+                    isoformat(utc_now()),
+                ),
+            )
+        return heartbeat
+
+    def all_devices(self) -> list[dict[str, Any]]:
+        with self.lock, self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT heartbeat_json
+                FROM heartbeats
+                ORDER BY device_id
+                """
+            ).fetchall()
+            return [json.loads(row["heartbeat_json"]) for row in rows]
+
     def stats(self) -> dict[str, int]:
         with self.lock, self._connect() as connection:
             queued_jobs = connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
@@ -352,6 +394,12 @@ class SQLiteBridgeState:
                 ON results(job_id);
                 CREATE INDEX IF NOT EXISTS results_idempotency_key_idx
                 ON results(idempotency_key);
+
+                CREATE TABLE IF NOT EXISTS heartbeats (
+                    device_id TEXT NOT NULL PRIMARY KEY,
+                    heartbeat_json TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
                 """
             )
 
@@ -458,6 +506,27 @@ def validate_result(result: dict[str, Any]) -> None:
         raise ValueError("unsupported status")
 
 
+def validate_heartbeat(heartbeat: dict[str, Any]) -> None:
+    required = {
+        "protocol_version",
+        "device_id",
+        "sent_at",
+        "capabilities",
+    }
+    missing = required - heartbeat.keys()
+    if missing:
+        raise ValueError(f"heartbeat missing fields: {', '.join(sorted(missing))}")
+    if heartbeat["protocol_version"] != PROTOCOL_VERSION:
+        raise ValueError("unsupported protocol_version")
+    if not isinstance(heartbeat["device_id"], str) or not heartbeat["device_id"]:
+        raise ValueError("heartbeat device_id must be a non-empty string")
+    if not isinstance(heartbeat["capabilities"], list):
+        raise ValueError("heartbeat capabilities must be a list")
+    unsupported = sorted(set(heartbeat["capabilities"]) - JOB_KINDS)
+    if unsupported:
+        raise ValueError(f"unsupported heartbeat capabilities: {', '.join(unsupported)}")
+
+
 class BridgeHandler(BaseHTTPRequestHandler):
     server: "BridgeHTTPServer"
 
@@ -478,6 +547,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/stats":
             self.respond(self.server.state.stats())
+            return
+        if parsed.path == "/devices":
+            self.respond({"devices": self.server.state.all_devices()})
             return
         if parsed.path == "/jobs/next":
             query = parse_qs(parsed.query)
@@ -512,6 +584,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
             if parsed.path == "/jobs":
                 job = self.server.state.create_job(body)
                 self.respond(job, status=201)
+                return
+            if parsed.path == "/heartbeats":
+                heartbeat = self.server.state.save_heartbeat(body)
+                self.respond({"heartbeat": heartbeat}, status=201)
                 return
             if parsed.path.startswith("/jobs/") and parsed.path.endswith("/cancel"):
                 job_id = parsed.path.split("/")[-2]

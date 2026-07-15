@@ -1,6 +1,8 @@
+import json
 import threading
 import unittest
 from pathlib import Path
+from subprocess import run
 
 import sys
 
@@ -37,6 +39,62 @@ class HermesAdapterTests(unittest.TestCase):
         self.assertEqual(response["job"]["device_id"], "mac_adapter_test")
         self.assertIsNone(response["result"])
         self.assertFalse(response["timed_out"])
+
+    def test_adapter_lists_and_invokes_tool_contract(self):
+        adapter = EclipseMacHermesAdapter(
+            bridge_url=self.base_url,
+            token="adapter_test_token",
+            device_id="mac_adapter_tools",
+        )
+
+        tool_names = [tool["name"] for tool in adapter.list_tools()]
+        response = adapter.invoke_tool("mac.show_notification", {"title": "Tool hello", "body": "Body"}, wait=False)
+
+        self.assertIn("mac.get_active_window", tool_names)
+        self.assertIn("mac.press_key", tool_names)
+        self.assertEqual(response["job"]["kind"], "notification.show")
+        self.assertEqual(response["job"]["input"]["title"], "Tool hello")
+
+    def test_adapter_posts_heartbeat_and_lists_devices(self):
+        adapter = EclipseMacHermesAdapter(
+            bridge_url=self.base_url,
+            token="adapter_test_token",
+            device_id="mac_adapter_presence",
+        )
+
+        heartbeat = adapter.post_heartbeat(status="online")
+        devices = adapter.list_devices()
+
+        self.assertEqual(heartbeat["heartbeat"]["device_id"], "mac_adapter_presence")
+        self.assertTrue(any(device["device_id"] == "mac_adapter_presence" for device in devices["devices"]))
+
+    def test_tool_host_invokes_tool_as_json_command(self):
+        script = Path(__file__).resolve().parents[1] / "hermes_tool_host.py"
+
+        completed = run(
+            [
+                sys.executable,
+                str(script),
+                "--url",
+                self.base_url,
+                "--token",
+                "adapter_test_token",
+                "--device-id",
+                "mac_tool_host",
+                "call",
+                "mac.press_key",
+                "--arguments",
+                '{"key":"escape"}',
+                "--no-wait",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        body = json.loads(completed.stdout)
+        self.assertEqual(body["job"]["kind"], "ui.press_key")
+        self.assertEqual(body["job"]["input"]["key"], "escape")
 
     def test_adapter_cancels_queued_job_on_timeout(self):
         adapter = EclipseMacHermesAdapter(

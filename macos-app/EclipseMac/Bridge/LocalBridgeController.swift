@@ -15,7 +15,9 @@ final class LocalBridgeController: ObservableObject {
     @Published private(set) var lastQueuedJob: BridgeJobEnvelope?
     @Published private(set) var remoteQueuedJobs: [BridgeJobEnvelope] = []
     @Published private(set) var remoteResults: [BridgeJobResultEnvelope] = []
+    @Published private(set) var devicePresences: [BridgeDevicePresence] = []
     @Published private(set) var lastActivityRefreshAt: Date?
+    @Published private(set) var lastHeartbeatAt: Date?
     @Published var bridgeBaseURLString: String
     @Published var bridgeBearerToken: String
 
@@ -321,10 +323,12 @@ final class LocalBridgeController: ObservableObject {
             async let stats = transport.fetchStats()
             async let queuedJobs = transport.fetchQueuedJobs()
             async let results = transport.fetchResults()
+            async let devices = transport.fetchDevices()
 
             bridgeStats = try await stats
             remoteQueuedJobs = try await queuedJobs
             remoteResults = try await results
+            devicePresences = try await devices
             lastActivityRefreshAt = Date()
             if updateMessage {
                 bridgeMessage = "Bridge activity refreshed"
@@ -333,6 +337,31 @@ final class LocalBridgeController: ObservableObject {
                 bridgeMessage = previousMessage
                 bridgeStatus = previousStatus
             }
+            return true
+        } catch {
+            lastTransportRequestFailed = true
+            bridgeMessage = error.localizedDescription
+            bridgeStatus = "Bridge unavailable"
+            return false
+        }
+    }
+
+    @discardableResult
+    func postHeartbeat() async -> Bool {
+        do {
+            let heartbeat = BridgeHeartbeatRequest(
+                protocolVersion: BridgeProtocol.currentVersion,
+                deviceID: deviceID,
+                sentAt: Date(),
+                capabilities: Self.capabilities,
+                status: heartbeatStatus,
+                appVersion: Self.appVersion,
+                pendingJobID: pendingJob?.jobID,
+                outboxCount: outboxCount,
+                bridgeStatus: bridgeStatus
+            )
+            let response = try await transport.postHeartbeat(heartbeat)
+            lastHeartbeatAt = response.heartbeat.sentAt
             return true
         } catch {
             lastTransportRequestFailed = true
@@ -468,6 +497,8 @@ final class LocalBridgeController: ObservableObject {
             _ = await postOutbox()
         }
 
+        _ = await postHeartbeat()
+
         if lastTransportRequestFailed {
             consecutiveFailures += 1
             bridgeStatus = "Bridge unavailable; retrying in \(Int(failurePollingInterval))s"
@@ -564,6 +595,31 @@ final class LocalBridgeController: ObservableObject {
         } catch {
             return InMemoryBridgeResultStore()
         }
+    }
+
+    private var heartbeatStatus: String {
+        if pendingJob != nil {
+            return "waiting_for_approval"
+        }
+        if isPolling {
+            return "polling"
+        }
+        return "idle"
+    }
+
+    private static let capabilities: [BridgeJobKind] = [
+        .contextGetActiveWindow,
+        .contextCaptureWindow,
+        .notificationShow,
+        .uiSetText,
+        .uiPressKey,
+        .uiClickElement,
+    ]
+
+    private static var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        return [version, build].compactMap { $0 }.joined(separator: " ")
     }
 }
 

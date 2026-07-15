@@ -9,6 +9,8 @@ protocol LocalBridgeTransporting: Sendable {
     func fetchStats() async throws -> BridgeStats
     func fetchQueuedJobs() async throws -> [BridgeJobEnvelope]
     func fetchResults() async throws -> [BridgeJobResultEnvelope]
+    func postHeartbeat(_ heartbeat: BridgeHeartbeatRequest) async throws -> BridgeHeartbeatResponse
+    func fetchDevices() async throws -> [BridgeDevicePresence]
 }
 
 struct BridgePostResultResponse: Codable, Equatable, Sendable {
@@ -49,6 +51,58 @@ struct BridgeCreateJobRequest: Codable, Equatable, Sendable {
     }
 }
 
+struct BridgeHeartbeatRequest: Codable, Equatable, Sendable {
+    let protocolVersion: String
+    let deviceID: String
+    let sentAt: Date
+    let capabilities: [BridgeJobKind]
+    let status: String
+    let appVersion: String
+    let pendingJobID: String?
+    let outboxCount: Int
+    let bridgeStatus: String
+
+    enum CodingKeys: String, CodingKey {
+        case protocolVersion = "protocol_version"
+        case deviceID = "device_id"
+        case sentAt = "sent_at"
+        case capabilities
+        case status
+        case appVersion = "app_version"
+        case pendingJobID = "pending_job_id"
+        case outboxCount = "outbox_count"
+        case bridgeStatus = "bridge_status"
+    }
+}
+
+struct BridgeHeartbeatResponse: Codable, Equatable, Sendable {
+    let heartbeat: BridgeDevicePresence
+}
+
+struct BridgeDevicePresence: Codable, Equatable, Sendable {
+    let protocolVersion: String
+    let deviceID: String
+    let sentAt: Date
+    let capabilities: [BridgeJobKind]
+    let status: String?
+    let appVersion: String?
+    let pendingJobID: String?
+    let outboxCount: Int?
+    let bridgeStatus: String?
+
+    enum CodingKeys: String, CodingKey {
+        case protocolVersion = "protocol_version"
+        case deviceID = "device_id"
+        case sentAt = "sent_at"
+        case capabilities
+        case status
+        case appVersion = "app_version"
+        case pendingJobID = "pending_job_id"
+        case outboxCount = "outbox_count"
+        case bridgeStatus = "bridge_status"
+    }
+}
+
 struct BridgeStats: Codable, Equatable, Sendable {
     let queuedJobs: Int
     let results: Int
@@ -65,6 +119,10 @@ private struct BridgeJobsResponse: Decodable {
 
 private struct BridgeResultsResponse: Decodable {
     let results: [BridgeJobResultEnvelope]
+}
+
+private struct BridgeDevicesResponse: Decodable {
+    let devices: [BridgeDevicePresence]
 }
 
 final class LocalBridgeHTTPClient: LocalBridgeTransporting {
@@ -135,6 +193,16 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
     func fetchResults() async throws -> [BridgeJobResultEnvelope] {
         let data = try await get(path: "results")
         return try decoder.decode(BridgeResultsResponse.self, from: data).results
+    }
+
+    func postHeartbeat(_ heartbeat: BridgeHeartbeatRequest) async throws -> BridgeHeartbeatResponse {
+        let data = try await post(path: "heartbeats", body: heartbeat)
+        return try decoder.decode(BridgeHeartbeatResponse.self, from: data)
+    }
+
+    func fetchDevices() async throws -> [BridgeDevicePresence] {
+        let data = try await get(path: "devices")
+        return try decoder.decode(BridgeDevicesResponse.self, from: data).devices
     }
 
     private func get(path: String) async throws -> Data {

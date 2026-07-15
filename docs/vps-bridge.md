@@ -89,6 +89,8 @@ export ECLIPSE_BRIDGE_TOKEN="$(ssh e 'cat ~/eclipse-mac-bridge/.bridge-token')"
 
 python3 bridge/bridge_cli.py health
 python3 bridge/bridge_cli.py stats
+python3 bridge/bridge_cli.py devices
+python3 bridge/bridge_cli.py heartbeat --status polling
 python3 bridge/bridge_cli.py create-context
 python3 bridge/bridge_cli.py create-capture-window
 python3 bridge/bridge_cli.py create-notification 'Hello from Eclipse'
@@ -96,6 +98,18 @@ python3 bridge/bridge_cli.py create-set-text 'Hello from the bridge'
 python3 bridge/bridge_cli.py create-press-key escape
 python3 bridge/bridge_cli.py wait-result job_abc --timeout-seconds 30
 python3 bridge/bridge_cli.py cancel job_abc --message 'No longer needed'
+```
+
+Hermes-style tool host:
+
+```bash
+export ECLIPSE_BRIDGE_URL='https://bridge.eclipsn.com'
+export ECLIPSE_BRIDGE_TOKEN="$(ssh e 'cat ~/eclipse-mac-bridge/.bridge-token')"
+
+python3 bridge/hermes_tool_host.py list-tools --pretty
+python3 bridge/hermes_tool_host.py call mac.get_active_window --wait --timeout-seconds 10 --pretty
+python3 bridge/hermes_tool_host.py call mac.press_key --arguments '{"key":"escape"}' --no-wait
+python3 bridge/hermes_tool_host.py devices --pretty
 ```
 
 Read remote results:

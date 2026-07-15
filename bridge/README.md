@@ -40,10 +40,12 @@ Useful endpoints:
 - `GET /results`
 - `GET /results/{job_id}`
 - `GET /stats`
+- `POST /heartbeats`
+- `GET /devices`
 
-Without `ECLIPSE_BRIDGE_DB`, the server stores jobs and results in memory. With `ECLIPSE_BRIDGE_DB`, queued jobs and results are stored in SQLite. It validates the same MVP constraints as the Swift local bridge: protocol `0.1`, supported job kinds, risk matching, and required inputs for typed jobs.
+Without `ECLIPSE_BRIDGE_DB`, the server stores jobs, results, and device heartbeats in memory. With `ECLIPSE_BRIDGE_DB`, queued jobs, results, and latest device heartbeats are stored in SQLite. It validates the same MVP constraints as the Swift local bridge: protocol `0.1`, supported job kinds, risk matching, and required inputs for typed jobs.
 
-The Mac app can also create bridge jobs from **Settings → Bridge**. The command composer supports `context.get_active_window`, `context.capture_window`, `notification.show`, `ui.set_text`, `ui.press_key`, and `ui.click_element`. Text jobs require Mac-side approval before typing. Key jobs require Mac-side approval before posting one of the allowed key events. Click jobs require Mac-side approval, exact Accessibility role/label matching, and pass the local risky-label blocklist before `AXPress`. The same Settings panel can refresh bridge activity to show queued jobs and recent results, cancel still-queued jobs, and post `expired` receipts for fetched jobs whose Mac-side approval window lapses.
+The Mac app can also create bridge jobs from **Settings → Bridge**. The command composer supports `context.get_active_window`, `context.capture_window`, `notification.show`, `ui.set_text`, `ui.press_key`, and `ui.click_element`. Text jobs require Mac-side approval before typing. Key jobs require Mac-side approval before posting one of the allowed key events. Click jobs require Mac-side approval, exact Accessibility role/label matching, and pass the local risky-label blocklist before `AXPress`. The same Settings panel can refresh bridge activity to show queued jobs, recent remote results, device presence, copyable raw JSON, cancel still-queued jobs, and post `expired` receipts for fetched jobs whose Mac-side approval window lapses.
 
 Operator CLI:
 
@@ -55,6 +57,8 @@ python3 bridge/bridge_cli.py health
 python3 bridge/bridge_cli.py stats
 python3 bridge/bridge_cli.py jobs
 python3 bridge/bridge_cli.py results
+python3 bridge/bridge_cli.py devices
+python3 bridge/bridge_cli.py heartbeat --status polling
 python3 bridge/bridge_cli.py create-context
 python3 bridge/bridge_cli.py create-capture-window
 python3 bridge/bridge_cli.py create-notification 'Hello from Eclipse' --body 'Bridge notification test'
@@ -77,6 +81,19 @@ adapter.type_text_with_approval("Hello", wait=False)
 # If wait=True times out, queued jobs are cancelled by default when the Mac has
 # not fetched them yet. The return shape includes timed_out and cancellation.
 adapter.press_key_with_approval("escape", wait=True, timeout_seconds=10)
+```
+
+Hermes-style JSON tool host:
+
+```bash
+export ECLIPSE_BRIDGE_URL='https://bridge.eclipsn.com'
+export ECLIPSE_BRIDGE_TOKEN='replace-with-the-vps-token'
+
+python3 bridge/hermes_tool_host.py list-tools --pretty
+python3 bridge/hermes_tool_host.py heartbeat
+python3 bridge/hermes_tool_host.py devices --pretty
+python3 bridge/hermes_tool_host.py call mac.get_active_window --wait --timeout-seconds 10 --pretty
+python3 bridge/hermes_tool_host.py call mac.press_key --arguments '{"key":"escape"}' --no-wait
 ```
 
 Minimal VPS profile:

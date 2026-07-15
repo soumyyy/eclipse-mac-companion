@@ -37,6 +37,15 @@ def main() -> int:
     subparsers.add_parser("stats", help="Show queued job/result counts.")
     subparsers.add_parser("jobs", help="List queued jobs without consuming them.")
     subparsers.add_parser("results", help="List stored results.")
+    subparsers.add_parser("devices", help="List devices with recent heartbeats.")
+
+    heartbeat_parser = subparsers.add_parser("heartbeat", help="Post a development device heartbeat.")
+    heartbeat_parser.add_argument("--device-id", default="mac_soumya_local")
+    heartbeat_parser.add_argument(
+        "--status",
+        default="online",
+        choices=["online", "polling", "waiting_for_approval", "idle"],
+    )
 
     result_parser = subparsers.add_parser("result", help="Fetch one result by job ID.")
     result_parser.add_argument("job_id")
@@ -116,6 +125,10 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
         return request_json(args, "GET", "/jobs")
     if args.command == "results":
         return request_json(args, "GET", "/results")
+    if args.command == "devices":
+        return request_json(args, "GET", "/devices")
+    if args.command == "heartbeat":
+        return request_json(args, "POST", "/heartbeats", body=heartbeat_body(args))
     if args.command == "result":
         return request_json(args, "GET", f"/results/{args.job_id}")
     if args.command == "wait-result":
@@ -216,6 +229,28 @@ def job_body(
     if args.idempotency_key:
         body["idempotency_key"] = args.idempotency_key
     return body
+
+
+def heartbeat_body(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "protocol_version": "0.1",
+        "device_id": args.device_id,
+        "sent_at": iso_now(),
+        "capabilities": [
+            "context.get_active_window",
+            "context.capture_window",
+            "notification.show",
+            "ui.set_text",
+            "ui.press_key",
+            "ui.click_element",
+        ],
+        "status": args.status,
+        "app_version": "bridge-cli",
+    }
+
+
+def iso_now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
 def request_json(
