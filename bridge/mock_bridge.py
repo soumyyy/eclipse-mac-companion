@@ -91,6 +91,17 @@ class BridgeState:
         with self.lock:
             return list(self.results_by_job_id.values())
 
+    def all_jobs(self) -> list[dict[str, Any]]:
+        with self.lock:
+            return list(self.jobs)
+
+    def stats(self) -> dict[str, int]:
+        with self.lock:
+            return {
+                "queued_jobs": len(self.jobs),
+                "results": len(self.results_by_job_id),
+            }
+
 
 class SQLiteBridgeState:
     def __init__(self, path: str):
@@ -214,6 +225,26 @@ class SQLiteBridgeState:
             ).fetchall()
             return [json.loads(row["result_json"]) for row in rows]
 
+    def all_jobs(self) -> list[dict[str, Any]]:
+        with self.lock, self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT job_json
+                FROM jobs
+                ORDER BY id
+                """
+            ).fetchall()
+            return [json.loads(row["job_json"]) for row in rows]
+
+    def stats(self) -> dict[str, int]:
+        with self.lock, self._connect() as connection:
+            queued_jobs = connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
+            results = connection.execute("SELECT COUNT(*) FROM results").fetchone()[0]
+            return {
+                "queued_jobs": int(queued_jobs),
+                "results": int(results),
+            }
+
     def _initialize(self) -> None:
         parent = os.path.dirname(self.path)
         if parent:
@@ -319,6 +350,12 @@ class BridgeHandler(BaseHTTPRequestHandler):
             return
         if not self.authorized():
             self.auth_error()
+            return
+        if parsed.path == "/jobs":
+            self.respond({"jobs": self.server.state.all_jobs()})
+            return
+        if parsed.path == "/stats":
+            self.respond(self.server.state.stats())
             return
         if parsed.path == "/jobs/next":
             query = parse_qs(parsed.query)

@@ -32,13 +32,29 @@ Useful endpoints:
 
 - `GET /health`
 - `POST /jobs`
+- `GET /jobs`
 - `GET /jobs/next?device_id=mac_soumya_local`
 - `POST /results`
 - `POST /outbox/replay`
 - `GET /results`
 - `GET /results/{job_id}`
+- `GET /stats`
 
 The server stores jobs and results in memory. It validates the same MVP constraints as the Swift local bridge: protocol `0.1`, supported job kinds, risk matching, and required `input.text` for `ui.set_text`.
+
+Operator CLI:
+
+```bash
+export ECLIPSE_BRIDGE_URL='https://bridge.eclipsn.com'
+export ECLIPSE_BRIDGE_TOKEN='replace-with-the-vps-token'
+
+python3 bridge/bridge_cli.py health
+python3 bridge/bridge_cli.py stats
+python3 bridge/bridge_cli.py jobs
+python3 bridge/bridge_cli.py results
+python3 bridge/bridge_cli.py create-context
+python3 bridge/bridge_cli.py create-set-text 'Hello from the bridge'
+```
 
 Minimal VPS profile:
 

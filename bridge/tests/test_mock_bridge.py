@@ -109,6 +109,23 @@ class MockBridgeTests(unittest.TestCase):
         self.assertTrue(health["ok"])
         self.assertFalse(health["auth_required"])
 
+    def test_lists_jobs_and_stats_without_consuming_queue(self):
+        job = self.post("/jobs", {
+            "device_id": "mac_list_test",
+            "kind": "context.get_active_window",
+            "risk": "read",
+            "input": {},
+        }, expected_status=201)
+
+        jobs = self.get("/jobs")
+        stats = self.get("/stats")
+        delivered = self.get("/jobs/next", {"device_id": "mac_list_test"})
+
+        self.assertTrue(any(item["job_id"] == job["job_id"] for item in jobs["jobs"]))
+        self.assertGreaterEqual(stats["queued_jobs"], 1)
+        self.assertGreaterEqual(stats["results"], 0)
+        self.assertEqual(delivered["job_id"], job["job_id"])
+
     def test_sqlite_state_persists_queued_jobs_and_results(self):
         with tempfile.TemporaryDirectory() as directory:
             path = str(Path(directory) / "bridge.sqlite3")
@@ -131,6 +148,8 @@ class MockBridgeTests(unittest.TestCase):
 
             second = SQLiteBridgeState(path)
 
+            self.assertEqual(second.stats(), {"queued_jobs": 1, "results": 1})
+            self.assertEqual(second.all_jobs()[0]["job_id"], job["job_id"])
             self.assertEqual(second.next_job("mac_test")["job_id"], job["job_id"])
             self.assertEqual(second.result("job_persisted")["idempotency_key"], "idem_persisted")
             duplicate, is_duplicate = second.save_result(result)

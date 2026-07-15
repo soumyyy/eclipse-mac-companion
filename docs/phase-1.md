@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1M
+## Current increment: Phase 1N
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M adds durable SQLite storage to the VPS bridge.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N adds operator commands for creating and inspecting bridge work.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -46,6 +46,8 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Bridge bearer token stored in Keychain, with migration from the previous `UserDefaults` key
 - Main overlay focused on bridge status and polling; demo/debug controls moved out of the primary surface
 - Durable bridge-side SQLite storage for queued jobs and results via `ECLIPSE_BRIDGE_DB`
+- Authenticated bridge inspection endpoints for queued jobs and stats
+- `bridge/bridge_cli.py` operator CLI for health, stats, jobs, results, `create-context`, and `create-set-text`
 
 ## Privacy defaults
 
@@ -56,7 +58,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1M check
+## Manual Phase 1N check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
@@ -66,10 +68,11 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 6. Stop the mock bridge and confirm the overlay moves to the unavailable/retry status instead of spinning continuously.
 7. Optional auth check: restart the bridge with `ECLIPSE_BRIDGE_TOKEN='dev-token' python3 bridge/mock_bridge.py --port 8765`, enter `dev-token` in the overlay token field, save, and confirm polling still works.
 8. Remote check: set the overlay URL to `https://bridge.eclipsn.com`, enter the VPS token from `~/eclipse-mac-bridge/.bridge-token`, save, start polling, and create a remote job through the HTTPS bridge.
+9. Operator check: run `python3 bridge/bridge_cli.py stats` with `ECLIPSE_BRIDGE_URL` and `ECLIPSE_BRIDGE_TOKEN` set.
 
 ## Next increment
 
-Add bridge operator UI/commands for creating remote jobs without using raw `curl`, then start wiring the higher-level companion experience on top of the bridge.
+Start wiring the higher-level companion experience on top of the bridge: a small command composer that creates `context.get_active_window` and approved `ui.set_text` jobs without operator-focused tooling.
 
 ## UI development launch arguments
 

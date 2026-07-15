@@ -78,6 +78,18 @@ curl -s -X POST https://bridge.eclipsn.com/jobs \
 unset TOKEN
 ```
 
+Or use the operator CLI:
+
+```bash
+export ECLIPSE_BRIDGE_URL='https://bridge.eclipsn.com'
+export ECLIPSE_BRIDGE_TOKEN="$(ssh e 'cat ~/eclipse-mac-bridge/.bridge-token')"
+
+python3 bridge/bridge_cli.py health
+python3 bridge/bridge_cli.py stats
+python3 bridge/bridge_cli.py create-context
+python3 bridge/bridge_cli.py create-set-text 'Hello from the bridge'
+```
+
 Read remote results:
 
 ```bash
