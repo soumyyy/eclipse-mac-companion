@@ -76,8 +76,12 @@ Hermes should translate tool results into user-facing language:
 
 ## Useful next UX work
 
-1. Add a user-visible `intent`/`reason` field to bridge jobs so approval cards can say why Hermes wants the action.
-2. Add a compact notification when an approval arrives while the overlay is hidden.
-3. Add a “last action” summary in the menu-bar popover.
-4. Add a safer staged flow for clicking: inspect current window first, then approve a specific role/label target.
-5. Add Launch at Login after the approval experience feels reliable.
+The detailed build plan now lives in [`companion-ux-plan.md`](companion-ux-plan.md).
+
+Highest-leverage next items:
+
+1. Compact cursor buddy/orb.
+2. Push-to-talk transcript.
+3. Screen-aware ask response beside the cursor.
+4. User-visible `intent`/`reason` field on approval jobs.
+5. Visual guide/highlight layer before autonomous actions.

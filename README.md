@@ -9,6 +9,8 @@ The Mac owns local computer access: Accessibility, screen capture, microphone, o
 
 **Core rule:** Hermes proposes. The Mac validates, asks for approval when needed, and executes through typed capabilities.
 
+**Current status:** the native Mac foundation and bridge basics are ready. The project is now moving from plumbing into a cursor-native companion UX inspired by HeyClicky: ask near the cursor, understand the current screen, guide in-place, and spawn longer Hermes agent work when needed.
+
 ---
 
 ## Architecture
@@ -114,7 +116,7 @@ hermes-macos-worker/
 
 ## MVP Scope
 
-Build only this first:
+The foundation MVP now covers:
 
 1. Menu-bar Mac app
 2. Permission dashboard
@@ -128,6 +130,16 @@ Build only this first:
 10. One approved text action into a known text field
 11. SQLite idempotency/outbox
 12. Basic logs and diagnostics
+
+The next MVP is the user-facing companion loop:
+
+1. Cursor-side buddy / overlay
+2. Push-to-talk capture
+3. Screen-aware ask flow
+4. Response displayed beside the cursor
+5. Approval prompt for actions
+6. Guide mode that points/describes without acting
+7. Agent mode for longer Hermes work
 
 ---
 
@@ -147,9 +159,9 @@ Do **not** build these yet:
 - public distribution
 - Sparkle updater
 - complex memory sync
-- full HeyClicky clone
+- unconstrained full-computer autonomy
 
-These are distractions until the core Mac ↔ Hermes loop works.
+These remain distractions until the cursor-native ask/guide/approve loop feels reliable.
 
 ---
 
@@ -471,9 +483,7 @@ And Hermes returns the real active app/window from the Mac worker.
 
 ## Phase 4: Voice
 
-Do not build voice first. Voice creates latency and debugging noise before the control path is proven.
-
-After context and jobs work, add push-to-talk.
+The control path is now proven enough to add push-to-talk. Start with a constrained voice loop rather than a wake word.
 
 ### Fast Local Voice Path
 
@@ -721,6 +731,8 @@ The MVP is successful when Hermes can safely do this:
 ```
 
 Until this works, do not add fancy voice, wake words, shell tools, or browser automation.
+
+This foundation loop now works locally. Next, build the cursor-native companion loop in [`docs/companion-ux-plan.md`](docs/companion-ux-plan.md).
 
 ---
 

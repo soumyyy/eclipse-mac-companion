@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1V
+## Current increment: Phase 1 complete; Phase 2 starting
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O added an in-app bridge command composer. Phase 1P added in-app bridge activity/history. Phase 1Q expanded the typed bridge primitives and added the first local command surface. Phase 1R enabled approved `ui.press_key` execution. Phase 1S enabled strict approved `ui.click_element` execution. Phase 1T added Hermes/tool-facing timeout and cancellation behavior. Phase 1U wired queued-job cancellation and fetched-job expiry into the Mac app. Phase 1V adds a concrete JSON Hermes tool host, device heartbeats/presence, copyable activity details, and safer approval countdown UX.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable bridge-side SQLite storage. Phase 1N added operator commands. Phase 1O added an in-app bridge command composer. Phase 1P added bridge activity/history. Phase 1Q expanded typed bridge primitives. Phase 1R enabled approved `ui.press_key`. Phase 1S enabled strict approved `ui.click_element`. Phase 1T added Hermes/tool-facing timeout and cancellation behavior. Phase 1U wired queued-job cancellation and fetched-job expiry. Phase 1V added a JSON Hermes tool host, device heartbeats/presence, copyable activity details, and safer approval countdown UX. Phase 1W made polling start on launch, changed Hermes tools to wait for user-facing completion by default, surfaced approval overlays automatically, and positioned the overlay beside the cursor.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -102,7 +102,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 
 ## Next increment
 
-Wire `bridge/hermes_tool_host.py` into the actual Hermes process/plugin interface when that runtime is available, then add a WebSocket event stream for lower-latency presence, progress, and cancellation.
+Move into the cursor-native companion UX plan. See [`docs/companion-ux-plan.md`](companion-ux-plan.md). The immediate next build target is a compact cursor buddy plus push-to-talk transcript flow.
 
 ## UI development launch arguments
 
