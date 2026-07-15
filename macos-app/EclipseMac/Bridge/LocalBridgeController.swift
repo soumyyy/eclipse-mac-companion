@@ -12,6 +12,7 @@ final class LocalBridgeController: ObservableObject {
     @Published private(set) var bridgeStatus = "Polling stopped"
     @Published private(set) var isPolling = false
     @Published var bridgeBaseURLString: String
+    @Published var bridgeBearerToken: String
 
     private let processor: LocalBridgeProcessor
     private let configurationStore: LocalBridgeConfigurationStore
@@ -35,13 +36,15 @@ final class LocalBridgeController: ObservableObject {
         self.configurationStore = configurationStore
         let configuration = configurationStore.load()
         bridgeBaseURLString = configuration.baseURLString
+        bridgeBearerToken = configuration.bearerToken
         if let transport {
             self.transport = transport
         } else if let url = configuration.baseURL {
-            self.transport = LocalBridgeHTTPClient(baseURL: url)
+            self.transport = LocalBridgeHTTPClient(baseURL: url, bearerToken: configuration.normalizedBearerToken)
         } else {
             self.transport = LocalBridgeHTTPClient()
             bridgeBaseURLString = LocalBridgeConfiguration.defaultBaseURLString
+            bridgeBearerToken = ""
         }
         let bridgeStore = store ?? Self.makeDefaultStore()
         processor = LocalBridgeProcessor(
@@ -113,8 +116,13 @@ final class LocalBridgeController: ObservableObject {
         }
 
         bridgeBaseURLString = trimmed
-        configurationStore.save(LocalBridgeConfiguration(baseURLString: trimmed))
-        transport = LocalBridgeHTTPClient(baseURL: url)
+        bridgeBearerToken = bridgeBearerToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        let configuration = LocalBridgeConfiguration(
+            baseURLString: trimmed,
+            bearerToken: bridgeBearerToken
+        )
+        configurationStore.save(configuration)
+        transport = LocalBridgeHTTPClient(baseURL: url, bearerToken: configuration.normalizedBearerToken)
         consecutiveFailures = 0
         bridgeStatus = isPolling ? "Polling \(trimmed)" : "Bridge URL saved"
         bridgeMessage = "Bridge URL saved"

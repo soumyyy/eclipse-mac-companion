@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import threading
 import uuid
 from dataclasses import dataclass, field
@@ -144,7 +145,14 @@ class BridgeHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/health":
-            self.respond({"ok": True, "protocol_version": PROTOCOL_VERSION})
+            self.respond({
+                "ok": True,
+                "protocol_version": PROTOCOL_VERSION,
+                "auth_required": self.server.token is not None,
+            })
+            return
+        if not self.authorized():
+            self.auth_error()
             return
         if parsed.path == "/jobs/next":
             query = parse_qs(parsed.query)
@@ -171,6 +179,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if not self.authorized():
+            self.auth_error()
+            return
         try:
             body = self.read_json()
             if parsed.path == "/jobs":
@@ -221,28 +232,59 @@ class BridgeHandler(BaseHTTPRequestHandler):
     def error(self, status: int, message: str) -> None:
         self.respond({"error": {"code": "mock_bridge_error", "message": message}}, status=status)
 
+    def authorized(self) -> bool:
+        if self.server.token is None:
+            return True
+        return self.headers.get("authorization") == f"Bearer {self.server.token}"
+
+    def auth_error(self) -> None:
+        self.send_response(401)
+        self.send_header("www-authenticate", "Bearer")
+        body = {"error": {"code": "unauthorized", "message": "missing or invalid bearer token"}}
+        encoded = json.dumps(body, sort_keys=True).encode("utf-8")
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
     def log_message(self, format: str, *args: Any) -> None:
         return
 
 
 class BridgeHTTPServer(ThreadingHTTPServer):
-    def __init__(self, address: tuple[str, int], state: BridgeState | None = None):
+    def __init__(
+        self,
+        address: tuple[str, int],
+        state: BridgeState | None = None,
+        token: str | None = None,
+    ):
         super().__init__(address, BridgeHandler)
         self.state = state or BridgeState()
+        self.token = token
 
 
-def make_server(host: str = "127.0.0.1", port: int = 8765) -> BridgeHTTPServer:
-    return BridgeHTTPServer((host, port))
+def make_server(
+    host: str = "127.0.0.1",
+    port: int = 8765,
+    token: str | None = None,
+) -> BridgeHTTPServer:
+    return BridgeHTTPServer((host, port), token=token)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the local Eclipse Mac mock bridge.")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--host", default=os.environ.get("ECLIPSE_BRIDGE_HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("ECLIPSE_BRIDGE_PORT", "8765")))
+    parser.add_argument(
+        "--token",
+        default=os.environ.get("ECLIPSE_BRIDGE_TOKEN"),
+        help="Optional bearer token. Also read from ECLIPSE_BRIDGE_TOKEN.",
+    )
     args = parser.parse_args()
 
-    server = make_server(args.host, args.port)
-    print(f"mock bridge listening on http://{args.host}:{args.port}", flush=True)
+    server = make_server(args.host, args.port, token=args.token)
+    auth = " with bearer auth" if args.token else ""
+    print(f"mock bridge listening on http://{args.host}:{args.port}{auth}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

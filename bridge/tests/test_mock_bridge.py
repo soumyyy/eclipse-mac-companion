@@ -102,6 +102,53 @@ class MockBridgeTests(unittest.TestCase):
         self.assertEqual(second["accepted"], 0)
         self.assertEqual(second["duplicates"], 1)
 
+    def test_health_reports_auth_mode(self):
+        health = self.get("/health")
+
+        self.assertTrue(health["ok"])
+        self.assertFalse(health["auth_required"])
+
+    def test_token_protected_bridge_rejects_and_accepts_authorized_requests(self):
+        server = make_server(port=0, token="secret_test_token")
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        host, port = server.server_address
+        base_url = f"http://{host}:{port}"
+
+        try:
+            with urlopen(base_url + "/health", timeout=5) as response:
+                health = json.loads(response.read().decode("utf-8"))
+                self.assertTrue(health["auth_required"])
+
+            with self.assertRaises(HTTPError) as caught:
+                urlopen(base_url + "/jobs/next?device_id=mac_test", timeout=5)
+            self.assertEqual(caught.exception.code, 401)
+            caught.exception.read()
+            caught.exception.close()
+
+            request = Request(
+                base_url + "/jobs",
+                data=json.dumps({
+                    "device_id": "mac_test",
+                    "kind": "context.get_active_window",
+                    "risk": "read",
+                    "input": {},
+                }).encode("utf-8"),
+                headers={
+                    "authorization": "Bearer secret_test_token",
+                    "content-type": "application/json",
+                },
+                method="POST",
+            )
+            with urlopen(request, timeout=5) as response:
+                self.assertEqual(response.status, 201)
+                body = json.loads(response.read().decode("utf-8"))
+                self.assertEqual(body["device_id"], "mac_test")
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
     def get(self, path, query=None):
         url = self.base_url + path
         if query:

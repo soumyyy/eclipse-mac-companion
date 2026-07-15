@@ -52,10 +52,13 @@ final class LocalBridgeControllerTests: XCTestCase {
             transport: FakeLocalBridgeTransport(nextJob: nil)
         )
         controller.bridgeBaseURLString = " https://bridge.example.test "
+        controller.bridgeBearerToken = " dev-token "
 
         XCTAssertTrue(controller.saveBridgeBaseURL())
         XCTAssertEqual(controller.bridgeBaseURLString, "https://bridge.example.test")
+        XCTAssertEqual(controller.bridgeBearerToken, "dev-token")
         XCTAssertEqual(defaults.string(forKey: "localBridge.baseURL"), "https://bridge.example.test")
+        XCTAssertEqual(defaults.string(forKey: "localBridge.bearerToken"), "dev-token")
         XCTAssertEqual(controller.bridgeStatus, "Bridge URL saved")
     }
 

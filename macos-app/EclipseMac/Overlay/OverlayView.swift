@@ -115,6 +115,13 @@ struct OverlayView: View {
                 .controlSize(.small)
             }
 
+            SecureField("Bearer token optional for localhost", text: $localBridge.bridgeBearerToken)
+                .textFieldStyle(.roundedBorder)
+                .font(.caption)
+                .onSubmit {
+                    runtime.saveLocalBridgeBaseURL()
+                }
+
             HStack(spacing: 8) {
                 Label(localBridge.bridgeStatus, systemImage: localBridge.isPolling ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
                     .font(.caption)

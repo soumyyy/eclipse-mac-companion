@@ -19,15 +19,18 @@ struct BridgeOutboxReplayResponse: Codable, Equatable, Sendable {
 
 final class LocalBridgeHTTPClient: LocalBridgeTransporting {
     private let baseURL: URL
+    private let bearerToken: String?
     private let session: URLSession
     private let encoder = BridgeJSONCoding.makeEncoder()
     private let decoder = BridgeJSONCoding.makeDecoder()
 
     init(
         baseURL: URL = URL(string: "http://127.0.0.1:8765")!,
+        bearerToken: String? = nil,
         session: URLSession = .shared
     ) {
         self.baseURL = baseURL
+        self.bearerToken = bearerToken
         self.session = session
     }
 
@@ -39,7 +42,7 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
         components?.queryItems = [URLQueryItem(name: "device_id", value: deviceID)]
         guard let url = components?.url else { throw LocalBridgeHTTPError.invalidURL }
 
-        let (data, response) = try await session.data(from: url)
+        let (data, response) = try await session.data(for: request(url: url))
         let statusCode = try statusCode(from: response)
         if statusCode == 204 { return nil }
         try validate(statusCode: statusCode, data: data)
@@ -57,7 +60,7 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
     }
 
     private func post<T: Encodable>(path: String, body: T) async throws -> Data {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        var request = request(url: baseURL.appendingPathComponent(path))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try encoder.encode(body)
@@ -65,6 +68,14 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
         let (data, response) = try await session.data(for: request)
         try validate(statusCode: try statusCode(from: response), data: data)
         return data
+    }
+
+    private func request(url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        if let bearerToken {
+            request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
+        }
+        return request
     }
 
     private func statusCode(from response: URLResponse) throws -> Int {
