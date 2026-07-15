@@ -28,20 +28,33 @@ struct LocalBridgeConfigurationStore {
     private static let baseURLKey = "localBridge.baseURL"
     private static let bearerTokenKey = "localBridge.bearerToken"
     private let defaults: UserDefaults
+    private let tokenStore: any BridgeTokenStoring
 
-    init(defaults: UserDefaults = .standard) {
+    init(
+        defaults: UserDefaults = .standard,
+        tokenStore: any BridgeTokenStoring = KeychainBridgeTokenStore()
+    ) {
         self.defaults = defaults
+        self.tokenStore = tokenStore
     }
 
     func load() -> LocalBridgeConfiguration {
-        LocalBridgeConfiguration(
+        let token = tokenStore.loadToken()
+        let migratedToken = token.isEmpty ? defaults.string(forKey: Self.bearerTokenKey) ?? "" : token
+        if token.isEmpty, !migratedToken.isEmpty {
+            try? tokenStore.saveToken(migratedToken)
+            defaults.removeObject(forKey: Self.bearerTokenKey)
+        }
+
+        return LocalBridgeConfiguration(
             baseURLString: defaults.string(forKey: Self.baseURLKey) ?? LocalBridgeConfiguration.defaultBaseURLString,
-            bearerToken: defaults.string(forKey: Self.bearerTokenKey) ?? ""
+            bearerToken: migratedToken
         )
     }
 
-    func save(_ configuration: LocalBridgeConfiguration) {
+    func save(_ configuration: LocalBridgeConfiguration) throws {
         defaults.set(configuration.baseURLString, forKey: Self.baseURLKey)
-        defaults.set(configuration.bearerToken, forKey: Self.bearerTokenKey)
+        try tokenStore.saveToken(configuration.bearerToken)
+        defaults.removeObject(forKey: Self.bearerTokenKey)
     }
 }

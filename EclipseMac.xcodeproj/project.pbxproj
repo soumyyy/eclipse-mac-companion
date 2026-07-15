@@ -53,6 +53,7 @@
 		EA835672FD96A95082088364 /* PermissionDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4983A74E6734856020E39A /* PermissionDashboardView.swift */; };
 		EB72C106220450ACF5E1664A /* SetTextActionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33481BCD8C233F41CF9283FA /* SetTextActionModels.swift */; };
 		ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */; };
+		F9FB4C9DEFE5E299AB6FE6DB /* BridgeTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B943918733288DD6C37F8D05 /* BridgeTokenStore.swift */; };
 		FD8587B5AD8DE21B97B3BE10 /* LocalBridgeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99455F06418B360B866DFE0 /* LocalBridgeController.swift */; };
 /* End PBXBuildFile section */
 
@@ -102,6 +103,7 @@
 		A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyService.swift; sourceTree = "<group>"; };
 		A51AD2474340A8C65E271916 /* AssistantStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantStateTests.swift; sourceTree = "<group>"; };
 		B11B45AEA2D6F432B728C87F /* LocalBridgeControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBridgeControllerTests.swift; sourceTree = "<group>"; };
+		B943918733288DD6C37F8D05 /* BridgeTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeTokenStore.swift; sourceTree = "<group>"; };
 		C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextPrivacyPolicyTests.swift; sourceTree = "<group>"; };
 		C7A1B929030D03395B07BB0C /* SetTextActionPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionPolicy.swift; sourceTree = "<group>"; };
 		C839F440293B458A4B7E4333 /* OverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayView.swift; sourceTree = "<group>"; };
@@ -166,6 +168,7 @@
 				18CFAEDCC31BF31B9CAAF324 /* BridgeJSONCoding.swift */,
 				D1863B5EA0F4F3B8F18D349A /* BridgeModels.swift */,
 				CBA4F816059D329479548A47 /* BridgeSettingsView.swift */,
+				B943918733288DD6C37F8D05 /* BridgeTokenStore.swift */,
 				814A331916F49DDE2107CECE /* LocalBridgeConfiguration.swift */,
 				C99455F06418B360B866DFE0 /* LocalBridgeController.swift */,
 				ECE672A6B80CF41B4103B4FE /* LocalBridgeHTTPClient.swift */,
@@ -414,6 +417,7 @@
 				9ACB463A8F0E71FC07CD443D /* BridgeModels.swift in Sources */,
 				6F3D6BD90BFDE9308857A49F /* BridgeResultStore.swift in Sources */,
 				0722E03C5DEEF0F77EEA90C7 /* BridgeSettingsView.swift in Sources */,
+				F9FB4C9DEFE5E299AB6FE6DB /* BridgeTokenStore.swift in Sources */,
 				8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */,
 				944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */,
 				4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */,

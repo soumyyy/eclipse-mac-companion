@@ -23,7 +23,7 @@ struct SettingsView: View {
                 .listStyle(.sidebar)
 
                 Spacer()
-                Text("Phase 1B")
+                Text("Development build")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 8)

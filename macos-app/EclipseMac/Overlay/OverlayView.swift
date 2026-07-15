@@ -58,9 +58,9 @@ struct OverlayView: View {
 
     private var preparationCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Approved text action", systemImage: "character.cursor.ibeam")
+            Label("Bridge worker", systemImage: "network")
                 .font(.headline)
-            Text("Keep a normal text field focused, then prepare a one-time action. Nothing is written until you approve the exact target and text.")
+            Text("Eclipse is connected to the configured bridge and will only run local actions after the existing policy and approval checks pass.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -75,26 +75,17 @@ struct OverlayView: View {
             bridgeControls
 
             Spacer(minLength: 0)
-            Text("Demo: \"\(SetTextActionController.demoText)\"")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .lineLimit(1)
             HStack(spacing: 8) {
-                Button("Fetch Job") {
-                    runtime.fetchLocalBridgeJob()
-                }
-                Button("Post Outbox") {
-                    runtime.postLocalBridgeOutbox()
-                }
                 Button(localBridge.isPolling ? "Stop Polling" : "Start Polling") {
                     runtime.toggleLocalBridgePolling()
                 }
-                Spacer()
-                Button("Prepare") {
-                    runtime.prepareDemoTextAction()
-                }
                 .buttonStyle(.borderedProminent)
-                .tint(EclipseTheme.violet)
+                .tint(localBridge.isPolling ? .gray : EclipseTheme.violet)
+
+                Button("Bridge Settings") {
+                    runtime.openSettings()
+                }
+                Spacer()
             }
         }
         .approvalSurface()
@@ -102,26 +93,6 @@ struct OverlayView: View {
 
     private var bridgeControls: some View {
         VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 8) {
-                TextField("Bridge URL", text: $localBridge.bridgeBaseURLString)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.caption)
-                    .onSubmit {
-                        runtime.saveLocalBridgeBaseURL()
-                    }
-                Button("Save") {
-                    runtime.saveLocalBridgeBaseURL()
-                }
-                .controlSize(.small)
-            }
-
-            SecureField("Bearer token optional for localhost", text: $localBridge.bridgeBearerToken)
-                .textFieldStyle(.roundedBorder)
-                .font(.caption)
-                .onSubmit {
-                    runtime.saveLocalBridgeBaseURL()
-                }
-
             HStack(spacing: 8) {
                 Label(localBridge.bridgeStatus, systemImage: localBridge.isPolling ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
                     .font(.caption)
@@ -132,6 +103,10 @@ struct OverlayView: View {
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.tertiary)
             }
+            Text(localBridge.bridgeBaseURLString)
+                .font(.caption.monospaced())
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
         }
     }
 

@@ -39,14 +39,11 @@ struct MenuContentView: View {
                 MenuActionButton(title: "Show Eclipse", symbol: "sparkles", shortcut: "⌥ Space") {
                     NotificationCenter.default.post(name: .toggleEclipseOverlay, object: nil)
                 }
-                MenuActionButton(title: "Preview UI states", symbol: "circle.grid.2x2") {
-                    runtime.cycleDebugState()
-                }
                 SettingsLink {
                     HStack(spacing: 10) {
                         Image(systemName: "slider.horizontal.3")
                             .frame(width: 18)
-                        Text("Settings & Permissions")
+                        Text("Settings")
                         Spacer()
                     }
                     .contentShape(Rectangle())

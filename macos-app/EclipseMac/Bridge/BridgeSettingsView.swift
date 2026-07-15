@@ -11,7 +11,7 @@ struct BridgeSettingsView: View {
 
     var body: some View {
         Form {
-            Section("Remote bridge") {
+            Section("Bridge") {
                 TextField("Bridge URL", text: $localBridge.bridgeBaseURLString)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit {
@@ -46,18 +46,15 @@ struct BridgeSettingsView: View {
                 LabeledContent("Bridge", value: localBridge.bridgeStatus)
                 LabeledContent("Outbox", value: "\(localBridge.outboxCount)")
                 LabeledContent("Device ID", value: LocalBridgeController.defaultDeviceID)
-                Text(runtime.debugMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
 
-            Section("Current VPS") {
-                Text("Use this for the deployed development bridge:")
+            Section("VPS bridge") {
+                Text("Current remote endpoint:")
                     .foregroundStyle(.secondary)
                 Text("https://bridge.eclipsn.com")
                     .font(.system(.body, design: .monospaced))
                     .textSelection(.enabled)
-                Text("Token lives on the VPS at ~/eclipse-mac-bridge/.bridge-token.")
+                Text("Token is stored locally in Keychain after saving. Source token lives on the VPS at ~/eclipse-mac-bridge/.bridge-token.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -89,5 +89,5 @@ unset TOKEN
 ## Current limitations
 
 - The bridge store is in memory only.
-- Token is stored in app `UserDefaults`; move it to Keychain before treating this as sensitive production infrastructure.
+- Token is stored locally in Keychain after saving it in the app.
 - The VPS disk is already above 90% usage, so avoid installing additional services until it is cleaned up or resized.

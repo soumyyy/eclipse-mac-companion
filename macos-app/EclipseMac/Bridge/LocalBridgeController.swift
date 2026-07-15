@@ -121,7 +121,13 @@ final class LocalBridgeController: ObservableObject {
             baseURLString: trimmed,
             bearerToken: bridgeBearerToken
         )
-        configurationStore.save(configuration)
+        do {
+            try configurationStore.save(configuration)
+        } catch {
+            bridgeStatus = "Could not save bridge token"
+            bridgeMessage = error.localizedDescription
+            return false
+        }
         transport = LocalBridgeHTTPClient(baseURL: url, bearerToken: configuration.normalizedBearerToken)
         consecutiveFailures = 0
         bridgeStatus = isPolling ? "Polling \(trimmed)" : "Bridge URL saved"

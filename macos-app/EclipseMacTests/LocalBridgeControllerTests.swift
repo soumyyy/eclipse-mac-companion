@@ -43,12 +43,13 @@ final class LocalBridgeControllerTests: XCTestCase {
 
     func testSaveBridgeBaseURLPersistsValidHTTPURL() {
         let defaults = makeDefaults()
+        let tokenStore = InMemoryBridgeTokenStore()
         let controller = LocalBridgeController(
             deviceID: "mac_test",
             setTextActions: SetTextActionController(),
             collector: FakeControllerContextCollector(snapshot: snapshot()),
             store: InMemoryBridgeResultStore(),
-            configurationStore: LocalBridgeConfigurationStore(defaults: defaults),
+            configurationStore: LocalBridgeConfigurationStore(defaults: defaults, tokenStore: tokenStore),
             transport: FakeLocalBridgeTransport(nextJob: nil)
         )
         controller.bridgeBaseURLString = " https://bridge.example.test "
@@ -58,8 +59,22 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertEqual(controller.bridgeBaseURLString, "https://bridge.example.test")
         XCTAssertEqual(controller.bridgeBearerToken, "dev-token")
         XCTAssertEqual(defaults.string(forKey: "localBridge.baseURL"), "https://bridge.example.test")
-        XCTAssertEqual(defaults.string(forKey: "localBridge.bearerToken"), "dev-token")
+        XCTAssertNil(defaults.string(forKey: "localBridge.bearerToken"))
+        XCTAssertEqual(tokenStore.loadToken(), "dev-token")
         XCTAssertEqual(controller.bridgeStatus, "Bridge URL saved")
+    }
+
+    func testConfigurationStoreMigratesLegacyUserDefaultsTokenToTokenStore() {
+        let defaults = makeDefaults()
+        defaults.set("legacy-token", forKey: "localBridge.bearerToken")
+        let tokenStore = InMemoryBridgeTokenStore()
+        let store = LocalBridgeConfigurationStore(defaults: defaults, tokenStore: tokenStore)
+
+        let configuration = store.load()
+
+        XCTAssertEqual(configuration.bearerToken, "legacy-token")
+        XCTAssertEqual(tokenStore.loadToken(), "legacy-token")
+        XCTAssertNil(defaults.string(forKey: "localBridge.bearerToken"))
     }
 
     func testSaveBridgeBaseURLRejectsInvalidURL() {
