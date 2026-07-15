@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1J
+## Current increment: Phase 1K
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J makes the bridge path auth-ready for local or VPS testing.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deploys the development bridge on the VPS behind Cloudflare Tunnel.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -41,6 +41,8 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Optional bearer-token bridge auth in the Mac client and development mock bridge
 - `ECLIPSE_BRIDGE_TOKEN`/`--token` support for running the bridge in protected mode
 - Minimal VPS deployment profile: HTTPS, token auth, and environment-specific bridge URL
+- VPS dev bridge service at `https://bridge.eclipsn.com`, backed by `127.0.0.1:8765` through Cloudflare Tunnel
+- Systemd deployment template and operator notes in `deploy/` and `docs/vps-bridge.md`
 
 ## Privacy defaults
 
@@ -51,7 +53,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1J check
+## Manual Phase 1K check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
@@ -60,10 +62,11 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 5. Confirm the outbox is replayed automatically and the mock bridge received the receipt with `GET /results`.
 6. Stop the mock bridge and confirm the overlay moves to the unavailable/retry status instead of spinning continuously.
 7. Optional auth check: restart the bridge with `ECLIPSE_BRIDGE_TOKEN='dev-token' python3 bridge/mock_bridge.py --port 8765`, enter `dev-token` in the overlay token field, save, and confirm polling still works.
+8. Remote check: set the overlay URL to `https://bridge.eclipsn.com`, enter the VPS token from `~/eclipse-mac-bridge/.bridge-token`, save, start polling, and create a remote job through the HTTPS bridge.
 
 ## Next increment
 
-Deploy the bridge to a real VPS or VPN-only host, terminate HTTPS, configure the app with the remote URL/token, and replace the in-memory job/result store with durable storage before relying on it for long-running sessions.
+Replace the VPS bridge's in-memory job/result store with durable storage, then move the Mac app bearer token from `UserDefaults` into Keychain.
 
 ## UI development launch arguments
 

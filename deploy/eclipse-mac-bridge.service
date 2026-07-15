@@ -1,0 +1,21 @@
+[Unit]
+Description=Eclipse Mac Bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=openclaw
+WorkingDirectory=/home/openclaw/eclipse-mac-bridge
+EnvironmentFile=/home/openclaw/eclipse-mac-bridge/.env
+ExecStart=/usr/bin/python3 /home/openclaw/eclipse-mac-bridge/mock_bridge.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/openclaw/eclipse-mac-bridge
+
+[Install]
+WantedBy=multi-user.target
