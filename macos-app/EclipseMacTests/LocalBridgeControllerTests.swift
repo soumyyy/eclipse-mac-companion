@@ -210,6 +210,7 @@ final class LocalBridgeControllerTests: XCTestCase {
             setTextActions: SetTextActionController(),
             collector: FakeControllerContextCollector(snapshot: snapshot()),
             keyPressExecutor: FakeControllerKeyPressExecutor(),
+            clickElementExecutor: FakeControllerClickElementExecutor(),
             store: InMemoryBridgeResultStore(),
             transport: transport
         )
@@ -231,6 +232,7 @@ final class LocalBridgeControllerTests: XCTestCase {
             setTextActions: SetTextActionController(),
             collector: FakeControllerContextCollector(snapshot: snapshot()),
             keyPressExecutor: executor,
+            clickElementExecutor: FakeControllerClickElementExecutor(),
             store: InMemoryBridgeResultStore(),
             transport: transport
         )
@@ -254,6 +256,7 @@ final class LocalBridgeControllerTests: XCTestCase {
             setTextActions: SetTextActionController(),
             collector: FakeControllerContextCollector(snapshot: snapshot()),
             keyPressExecutor: FakeControllerKeyPressExecutor(),
+            clickElementExecutor: FakeControllerClickElementExecutor(),
             store: InMemoryBridgeResultStore(),
             transport: transport
         )
@@ -264,6 +267,35 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertNil(controller.pendingJob)
         XCTAssertEqual(controller.latestResult?.status, .rejected)
         XCTAssertEqual(controller.latestResult?.error?.code, "user_cancelled")
+        XCTAssertEqual(controller.outboxCount, 1)
+    }
+
+    func testCompletePendingClickJobQueuesSucceededReceipt() async {
+        let executor = FakeControllerClickElementExecutor()
+        let transport = FakeLocalBridgeTransport(
+            nextJob: job(
+                kind: .uiClickElement,
+                risk: .consequential,
+                input: .clickElement(role: "AXButton", label: "Continue")
+            )
+        )
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            keyPressExecutor: FakeControllerKeyPressExecutor(),
+            clickElementExecutor: executor,
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+        _ = await controller.fetchNextRemoteJob()
+
+        controller.completePendingAutomationJob()
+
+        XCTAssertNil(controller.pendingJob)
+        XCTAssertEqual(controller.latestResult?.status, .succeeded)
+        XCTAssertEqual(controller.latestResult?.output?.click?.elementLabel, "Continue")
+        XCTAssertEqual(executor.executedLabels, ["Continue"])
         XCTAssertEqual(controller.outboxCount, 1)
     }
 
@@ -409,6 +441,26 @@ private final class FakeControllerKeyPressExecutor: KeyPressExecuting {
             actionID: approval.actionID,
             key: key,
             modifiers: input.modifiers ?? [],
+            completedAt: now
+        )
+    }
+}
+
+@MainActor
+private final class FakeControllerClickElementExecutor: ClickElementExecuting {
+    private(set) var executedLabels: [String] = []
+
+    func execute(
+        approval: BridgeAutomationApprovalRequest,
+        input: BridgeJobInput,
+        now: Date
+    ) throws -> BridgeClickResult {
+        let label = input.elementLabel ?? "missing"
+        executedLabels.append(label)
+        return BridgeClickResult(
+            actionID: approval.actionID,
+            elementRole: input.elementRole ?? "missing",
+            elementLabel: label,
             completedAt: now
         )
     }

@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1R
+## Current increment: Phase 1S
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O added an in-app bridge command composer. Phase 1P added in-app bridge activity/history. Phase 1Q expanded the typed bridge primitives and added the first local command surface. Phase 1R enables approved `ui.press_key` execution.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O added an in-app bridge command composer. Phase 1P added in-app bridge activity/history. Phase 1Q expanded the typed bridge primitives and added the first local command surface. Phase 1R enabled approved `ui.press_key` execution. Phase 1S enables strict approved `ui.click_element` execution.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -25,6 +25,9 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Text mutation is blocked for secure fields, unsupported focused elements, blocked applications, blocked windows, stale approval, and changed focus
 - One approved `ui.press_key` action for a small allowed key set: Escape, Return, Tab, Space, Enter, and arrow keys
 - Key presses are blocked when the active application/window no longer matches the approval target
+- One approved `ui.click_element` action through Accessibility `AXPress`
+- Click execution requires the active app/window to match the approval target, an exact element role, an exact element label, and a single matching Accessibility element
+- Click execution has no coordinate fallback and blocks risky labels such as Send, Delete, Purchase, Pay, Submit, Checkout, Transfer, and Authorize
 - Cancelled approvals produce bridge-visible `rejected` receipts with `user_cancelled`
 - Versioned local bridge job and result envelopes for `context.get_active_window`, `context.capture_window`, `notification.show`, `ui.set_text`, `ui.press_key`, and `ui.click_element`
 - Local risk/input/expiry validation before capability execution
@@ -66,13 +69,13 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1R check
+## Manual Phase 1S check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
 3. Open **Settings → Bridge** and click **Refresh Activity**.
 4. Queue **Active Window**, **Capture Window**, **Press Escape**, or enter `type Hello` in the command box.
-5. Wait for the polling loop to fetch it. If the job is `ui.set_text`, review the pending action and approve it. If the job is `ui.press_key`, approve it to post the allowed key event. Click jobs still stop at typed approval/rejection receipts rather than executing arbitrary UI clicks.
+5. Wait for the polling loop to fetch it. If the job is `ui.set_text`, review the pending action and approve it. If the job is `ui.press_key`, approve it to post the allowed key event. If the job is `ui.click_element`, approve only when the role/label target is correct.
 6. Confirm the outbox is replayed automatically and the mock bridge received the receipt with `GET /results`.
 7. Stop the mock bridge and confirm the overlay moves to the unavailable/retry status instead of spinning continuously.
 8. Optional auth check: restart the bridge with `ECLIPSE_BRIDGE_TOKEN='dev-token' python3 bridge/mock_bridge.py --port 8765`, enter `dev-token` in Settings → Bridge, save, and confirm polling still works.
@@ -82,7 +85,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 
 ## Next increment
 
-Implement real `ui.click_element` only after adding strict Accessibility target matching and risky-label blocking.
+Add a first Hermes/tool-facing workflow that uses the real read/capture/type/key/click primitives end to end, with clear timeout and cancellation behavior.
 
 ## UI development launch arguments
 

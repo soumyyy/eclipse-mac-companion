@@ -244,6 +244,7 @@ struct BridgeSettingsView: View {
         if let capture = output.capture { return "capture \(capture.pixelWidth)x\(capture.pixelHeight)" }
         if output.notification != nil { return "notification delivered" }
         if let keyPress = output.keyPress { return "pressed \(((keyPress.modifiers) + [keyPress.key]).joined(separator: "+"))" }
+        if let click = output.click { return "clicked \(click.elementRole) · \(click.elementLabel)" }
         return "none"
     }
 }

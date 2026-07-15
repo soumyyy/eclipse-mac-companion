@@ -40,6 +40,7 @@ final class LocalBridgeController: ObservableObject {
         setTextActions: SetTextActionController,
         collector: any ContextCollecting = AccessibilityContextCollector(),
         keyPressExecutor: (any KeyPressExecuting)? = nil,
+        clickElementExecutor: (any ClickElementExecuting)? = nil,
         store: (any BridgeResultStoring)? = nil,
         configurationStore: LocalBridgeConfigurationStore = LocalBridgeConfigurationStore(),
         transport: (any LocalBridgeTransporting)? = nil
@@ -64,6 +65,7 @@ final class LocalBridgeController: ObservableObject {
             deviceID: deviceID,
             collector: collector,
             keyPressExecutor: keyPressExecutor ?? KeyPressActionExecutor(collector: collector),
+            clickElementExecutor: clickElementExecutor ?? ClickElementActionExecutor(collector: collector),
             textActions: setTextActions,
             store: bridgeStore
         )

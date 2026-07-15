@@ -50,10 +50,12 @@
 		CCEFE95104A009E73A6A9D36 /* SetTextActionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22442F5AC0AA1049517254C8 /* SetTextActionController.swift */; };
 		D11A179A68D889B66D1D1CEF /* OverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6FFF593D1D464DB816D46B /* OverlayController.swift */; };
 		D34FE09C001F482BD94E8542 /* InMemoryBridgeResultStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53CDEF1B21D4A0FC8B69B9D1 /* InMemoryBridgeResultStore.swift */; };
+		D62472DD2731ECDC5AB82D89 /* ClickElementActionExecutorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43F6EC0C8AC63E3E66AC528E /* ClickElementActionExecutorTests.swift */; };
 		D889D8BB4C4F7FC403CE5019 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761269DF84E6D2214A388CD4 /* AppDelegate.swift */; };
 		EA835672FD96A95082088364 /* PermissionDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4983A74E6734856020E39A /* PermissionDashboardView.swift */; };
 		EB72C106220450ACF5E1664A /* SetTextActionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33481BCD8C233F41CF9283FA /* SetTextActionModels.swift */; };
 		ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */; };
+		F477CCCBFF11E60969C6520B /* ClickElementActionExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AA050506CB913A5FCA3D12 /* ClickElementActionExecutor.swift */; };
 		F9FB4C9DEFE5E299AB6FE6DB /* BridgeTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B943918733288DD6C37F8D05 /* BridgeTokenStore.swift */; };
 		FD8587B5AD8DE21B97B3BE10 /* LocalBridgeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99455F06418B360B866DFE0 /* LocalBridgeController.swift */; };
 /* End PBXBuildFile section */
@@ -69,6 +71,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		04AA050506CB913A5FCA3D12 /* ClickElementActionExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickElementActionExecutor.swift; sourceTree = "<group>"; };
 		18CFAEDCC31BF31B9CAAF324 /* BridgeJSONCoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeJSONCoding.swift; sourceTree = "<group>"; };
 		21F8AB925ED95F0619058326 /* ContextDiagnosticsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextDiagnosticsModel.swift; sourceTree = "<group>"; };
 		22442F5AC0AA1049517254C8 /* SetTextActionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionController.swift; sourceTree = "<group>"; };
@@ -80,6 +83,7 @@
 		37B5C9C35BDBC1A2622524D5 /* SetTextActionPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionPolicyTests.swift; sourceTree = "<group>"; };
 		3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionModels.swift; sourceTree = "<group>"; };
 		3DDC0A120E5C63FBD07826A7 /* SQLiteBridgeResultStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteBridgeResultStore.swift; sourceTree = "<group>"; };
+		43F6EC0C8AC63E3E66AC528E /* ClickElementActionExecutorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickElementActionExecutorTests.swift; sourceTree = "<group>"; };
 		46C8CECF42DAFE4630027895 /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
 		4A4983A74E6734856020E39A /* PermissionDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDashboardView.swift; sourceTree = "<group>"; };
 		502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshotCodingTests.swift; sourceTree = "<group>"; };
@@ -257,6 +261,7 @@
 		BCD491B89CA7D1BEB448971C /* Actions */ = {
 			isa = PBXGroup;
 			children = (
+				04AA050506CB913A5FCA3D12 /* ClickElementActionExecutor.swift */,
 				D7D16F119501734DD26FAD2A /* KeyPressActionExecutor.swift */,
 				22442F5AC0AA1049517254C8 /* SetTextActionController.swift */,
 				5E19A391BDF52E0D05A55238 /* SetTextActionExecutor.swift */,
@@ -290,6 +295,7 @@
 				A51AD2474340A8C65E271916 /* AssistantStateTests.swift */,
 				D1944F78613D1C0FDFF00788 /* BridgeJobPolicyTests.swift */,
 				72D1EDE0DF69F461606C7AAD /* BridgeModelsCodingTests.swift */,
+				43F6EC0C8AC63E3E66AC528E /* ClickElementActionExecutorTests.swift */,
 				C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */,
 				502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */,
 				B11B45AEA2D6F432B728C87F /* LocalBridgeControllerTests.swift */,
@@ -397,6 +403,7 @@
 				3C3800B211D8E76D348F1398 /* AssistantStateTests.swift in Sources */,
 				669EE3608B5AB3C0F2EDDC0B /* BridgeJobPolicyTests.swift in Sources */,
 				032DF1BD98C2B374B5A993AA /* BridgeModelsCodingTests.swift in Sources */,
+				D62472DD2731ECDC5AB82D89 /* ClickElementActionExecutorTests.swift in Sources */,
 				9AB239821488E361C0242242 /* ContextPrivacyPolicyTests.swift in Sources */,
 				356BF9304CCC8773CF064727 /* ContextSnapshotCodingTests.swift in Sources */,
 				4C19A8EDE47E3FAFD6078F2C /* LocalBridgeControllerTests.swift in Sources */,
@@ -421,6 +428,7 @@
 				6F3D6BD90BFDE9308857A49F /* BridgeResultStore.swift in Sources */,
 				0722E03C5DEEF0F77EEA90C7 /* BridgeSettingsView.swift in Sources */,
 				F9FB4C9DEFE5E299AB6FE6DB /* BridgeTokenStore.swift in Sources */,
+				F477CCCBFF11E60969C6520B /* ClickElementActionExecutor.swift in Sources */,
 				8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */,
 				944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */,
 				4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */,

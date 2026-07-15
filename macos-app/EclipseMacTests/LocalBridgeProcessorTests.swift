@@ -13,6 +13,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -34,6 +35,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -57,6 +59,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -77,6 +80,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -98,6 +102,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -120,6 +125,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
@@ -142,6 +148,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -168,6 +175,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
@@ -190,6 +198,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
@@ -218,6 +227,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: executor,
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -246,6 +256,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
             keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -256,6 +267,38 @@ final class LocalBridgeProcessorTests: XCTestCase {
 
         XCTAssertEqual(result.status, .rejected)
         XCTAssertEqual(result.error?.code, "user_cancelled")
+    }
+
+    func testAutomationCompletionExecutesApprovedClickAndReplacesPendingReceipt() async {
+        let executor = FakeClickElementExecutor()
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: executor,
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+        let job = job(
+            kind: .uiClickElement,
+            risk: .consequential,
+            input: .clickElement(role: "AXButton", label: "Continue")
+        )
+        let pending = await processor.process(job, now: now)
+        let approval = try! XCTUnwrap(pending.output?.automationApproval)
+
+        let result = processor.automationCompletionResult(
+            for: job,
+            approval: approval,
+            completedAt: now.addingTimeInterval(1)
+        )
+
+        XCTAssertEqual(result.status, .succeeded)
+        XCTAssertEqual(result.output?.click?.elementRole, "AXButton")
+        XCTAssertEqual(result.output?.click?.elementLabel, "Continue")
+        XCTAssertEqual(executor.executedLabels, ["Continue"])
     }
 
     private func job(
@@ -359,6 +402,26 @@ private final class FakeKeyPressExecutor: KeyPressExecuting {
             actionID: approval.actionID,
             key: key,
             modifiers: input.modifiers ?? [],
+            completedAt: now
+        )
+    }
+}
+
+@MainActor
+private final class FakeClickElementExecutor: ClickElementExecuting {
+    private(set) var executedLabels: [String] = []
+
+    func execute(
+        approval: BridgeAutomationApprovalRequest,
+        input: BridgeJobInput,
+        now: Date
+    ) throws -> BridgeClickResult {
+        let label = input.elementLabel ?? "missing"
+        executedLabels.append(label)
+        return BridgeClickResult(
+            actionID: approval.actionID,
+            elementRole: input.elementRole ?? "missing",
+            elementLabel: label,
             completedAt: now
         )
     }

@@ -190,7 +190,7 @@ struct OverlayView: View {
                     .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 8))
 
                 if pending.kind == .uiClickElement {
-                    Label("Click execution is not enabled yet. Cancelling will report a rejected result to the bridge.", systemImage: "exclamationmark.triangle")
+                    Label("Click execution requires an exact role and label match. Risky labels such as Send, Delete, Pay, and Submit are blocked locally.", systemImage: "exclamationmark.triangle")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -202,8 +202,8 @@ struct OverlayView: View {
                 }
                 .keyboardShortcut(.cancelAction)
                 Spacer()
-                if pending.kind == .uiPressKey {
-                    Button("Approve & Press Key") {
+                if pending.kind == .uiPressKey || pending.kind == .uiClickElement {
+                    Button(pending.kind == .uiPressKey ? "Approve & Press Key" : "Approve & Click") {
                         runtime.approveAutomationAction()
                     }
                     .buttonStyle(.borderedProminent)

@@ -194,7 +194,30 @@
           }
         },
         "click": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action_id",
+            "element_role",
+            "element_label",
+            "completed_at"
+          ],
+          "properties": {
+            "action_id": {
+              "type": "string",
+              "pattern": "^act_[a-z0-9_-]+$"
+            },
+            "element_role": {
+              "type": "string"
+            },
+            "element_label": {
+              "type": "string"
+            },
+            "completed_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         }
       }
     },

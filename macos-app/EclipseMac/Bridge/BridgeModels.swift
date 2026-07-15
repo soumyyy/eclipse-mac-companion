@@ -209,6 +209,20 @@ struct BridgeKeyPressResult: Codable, Equatable, Sendable {
     }
 }
 
+struct BridgeClickResult: Codable, Equatable, Sendable {
+    let actionID: String
+    let elementRole: String
+    let elementLabel: String
+    let completedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case actionID = "action_id"
+        case elementRole = "element_role"
+        case elementLabel = "element_label"
+        case completedAt = "completed_at"
+    }
+}
+
 struct BridgeJobOutput: Codable, Equatable, Sendable {
     let context: ContextSnapshot?
     let approval: BridgeApprovalRequest?
@@ -217,6 +231,7 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
     let capture: BridgeWindowCaptureMetadata?
     let notification: BridgeNotificationReceipt?
     let keyPress: BridgeKeyPressResult?
+    let click: BridgeClickResult?
 
     enum CodingKeys: String, CodingKey {
         case context
@@ -226,6 +241,7 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
         case capture
         case notification
         case keyPress = "key_press"
+        case click
     }
 
     static func context(_ snapshot: ContextSnapshot) -> BridgeJobOutput {
@@ -236,7 +252,8 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
             actionResult: nil,
             capture: nil,
             notification: nil,
-            keyPress: nil
+            keyPress: nil,
+            click: nil
         )
     }
 
@@ -248,7 +265,8 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
             actionResult: nil,
             capture: nil,
             notification: nil,
-            keyPress: nil
+            keyPress: nil,
+            click: nil
         )
     }
 
@@ -260,7 +278,8 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
             actionResult: nil,
             capture: nil,
             notification: nil,
-            keyPress: nil
+            keyPress: nil,
+            click: nil
         )
     }
 
@@ -272,7 +291,8 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
             actionResult: result,
             capture: nil,
             notification: nil,
-            keyPress: nil
+            keyPress: nil,
+            click: nil
         )
     }
 
@@ -291,7 +311,8 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
                 pixelHeight: metadata.pixelHeight
             ),
             notification: nil,
-            keyPress: nil
+            keyPress: nil,
+            click: nil
         )
     }
 
@@ -303,7 +324,8 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
             actionResult: nil,
             capture: nil,
             notification: receipt,
-            keyPress: nil
+            keyPress: nil,
+            click: nil
         )
     }
 
@@ -315,7 +337,21 @@ struct BridgeJobOutput: Codable, Equatable, Sendable {
             actionResult: nil,
             capture: nil,
             notification: nil,
-            keyPress: result
+            keyPress: result,
+            click: nil
+        )
+    }
+
+    static func click(_ result: BridgeClickResult) -> BridgeJobOutput {
+        BridgeJobOutput(
+            context: nil,
+            approval: nil,
+            automationApproval: nil,
+            actionResult: nil,
+            capture: nil,
+            notification: nil,
+            keyPress: nil,
+            click: result
         )
     }
 }

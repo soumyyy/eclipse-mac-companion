@@ -62,6 +62,7 @@ final class LocalBridgeProcessor {
     private let capturer: any WindowCapturing
     private let notifier: any LocalNotificationDelivering
     private let keyPressExecutor: any KeyPressExecuting
+    private let clickElementExecutor: any ClickElementExecuting
     private let textActions: any SetTextActionControlling
     private let policy: BridgeJobPolicy
     private let store: any BridgeResultStoring
@@ -72,6 +73,7 @@ final class LocalBridgeProcessor {
         capturer: any WindowCapturing = ActiveWindowCapturer(),
         notifier: any LocalNotificationDelivering = UserNotificationDeliverer(),
         keyPressExecutor: any KeyPressExecuting = KeyPressActionExecutor(),
+        clickElementExecutor: any ClickElementExecuting = ClickElementActionExecutor(),
         textActions: any SetTextActionControlling,
         policy: BridgeJobPolicy = .default,
         store: any BridgeResultStoring
@@ -81,6 +83,7 @@ final class LocalBridgeProcessor {
         self.capturer = capturer
         self.notifier = notifier
         self.keyPressExecutor = keyPressExecutor
+        self.clickElementExecutor = clickElementExecutor
         self.textActions = textActions
         self.policy = policy
         self.store = store
@@ -238,13 +241,15 @@ final class LocalBridgeProcessor {
                     completedAt: completedAt
                 )
             case .uiClickElement:
+                let result = try clickElementExecutor.execute(
+                    approval: approval,
+                    input: job.input,
+                    now: completedAt
+                )
                 return try persistedResult(
                     for: job,
-                    status: .rejected,
-                    error: BridgeErrorPayload(
-                        code: "executor_not_enabled",
-                        message: "ui.click_element approval is modeled, but real click execution is not enabled yet."
-                    ),
+                    status: .succeeded,
+                    output: .click(result),
                     completedAt: completedAt
                 )
             case .contextGetActiveWindow, .contextCaptureWindow, .notificationShow, .uiSetText:
