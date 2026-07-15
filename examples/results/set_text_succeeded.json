@@ -1,0 +1,16 @@
+{
+  "job_id": "job_example_set_text",
+  "protocol_version": "0.1",
+  "device_id": "mac_soumya_local",
+  "status": "succeeded",
+  "output": {
+    "action_result": {
+      "action_id": "act_example_set_text",
+      "snapshot_id": "ctx_example",
+      "completed_at": "2026-07-15T12:00:05Z",
+      "characters_written": 22
+    }
+  },
+  "completed_at": "2026-07-15T12:00:05Z",
+  "idempotency_key": "idem_example_set_text"
+}

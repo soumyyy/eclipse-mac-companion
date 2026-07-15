@@ -1,0 +1,10 @@
+{
+  "job_id": "job_example_active_window",
+  "protocol_version": "0.1",
+  "device_id": "mac_soumya_local",
+  "kind": "context.get_active_window",
+  "risk": "read",
+  "input": {},
+  "expires_at": "2026-07-15T12:00:30Z",
+  "idempotency_key": "idem_example_active_window"
+}

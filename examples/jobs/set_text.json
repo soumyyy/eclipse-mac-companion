@@ -1,0 +1,12 @@
+{
+  "job_id": "job_example_set_text",
+  "protocol_version": "0.1",
+  "device_id": "mac_soumya_local",
+  "kind": "ui.set_text",
+  "risk": "reversible",
+  "input": {
+    "text": "Hello from Eclipse Mac"
+  },
+  "expires_at": "2026-07-15T12:00:30Z",
+  "idempotency_key": "idem_example_set_text"
+}

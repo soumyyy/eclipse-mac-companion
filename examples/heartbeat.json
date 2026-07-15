@@ -1,0 +1,10 @@
+{
+  "protocol_version": "0.1",
+  "device_id": "mac_soumya_local",
+  "sent_at": "2026-07-15T12:00:00Z",
+  "capabilities": [
+    "context.get_active_window",
+    "ui.set_text"
+  ],
+  "app_version": "debug"
+}

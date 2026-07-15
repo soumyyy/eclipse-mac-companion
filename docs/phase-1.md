@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1F
+## Current increment: Phase 1G
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F adds SQLite-backed idempotency and a result outbox.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G adds shared schemas and a local mock bridge API.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -29,6 +29,9 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - SQLite bridge result store at `Application Support/Eclipse Mac/bridge.sqlite3`
 - Idempotency-key replay before capability execution, so duplicate jobs return the stored pending or final receipt
 - Local result outbox with posted/unposted tracking; replacing a pending receipt with a final receipt requeues it
+- Shared JSON Schema files for jobs, results, approvals, events, heartbeat, and errors
+- Example MVP job/result/heartbeat payloads
+- Development-only Python mock bridge with create-job, fetch-next-job, receive-result, and replay-outbox endpoints
 
 ## Privacy defaults
 
@@ -39,18 +42,17 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1F check
+## Manual Phase 1G check
 
-1. Open a harmless editable field, such as a blank TextEdit document.
-2. Focus the field and press `Option-Space`.
-3. Click `Prepare Action`.
-4. Confirm the displayed bridge job ID, application, window, field, and exact text.
-5. Click `Approve & Type` within ten seconds.
-6. Confirm `Hello from Eclipse Mac` appears in the focused field and the overlay shows an outbox count.
+1. Run `python3 bridge/mock_bridge.py --port 8765`.
+2. Create a job with `POST /jobs` using one of the examples in `examples/jobs/`.
+3. Fetch it with `GET /jobs/next?device_id=mac_soumya_local`.
+4. Post a receipt with `POST /results` or replay a batch with `POST /outbox/replay`.
+5. Confirm duplicate result posts return the original stored receipt instead of creating a second result.
 
 ## Next increment
 
-Add shared JSON Schema files plus a local mock bridge API that can create jobs and receive/replay outbox results over a local development transport.
+Connect the Mac app to the local mock bridge over HTTP: poll or fetch a queued job, execute it through the existing local policy/approval path, and post the SQLite outbox result back to the bridge.
 
 ## UI development launch arguments
 

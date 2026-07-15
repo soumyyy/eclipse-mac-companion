@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eclipse-mac.local/schemas/approval.schema.json",
+  "title": "Eclipse Mac Approval Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "approval_id",
+    "action_id",
+    "risk",
+    "target",
+    "proposed_text",
+    "expires_at"
+  ],
+  "properties": {
+    "approval_id": {
+      "type": "string",
+      "pattern": "^appr_[a-z0-9_-]+$"
+    },
+    "action_id": {
+      "type": "string",
+      "pattern": "^act_[a-z0-9_-]+$"
+    },
+    "risk": {
+      "enum": [
+        "read",
+        "reversible",
+        "consequential"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_id",
+        "bundle_id",
+        "application_name",
+        "window_id",
+        "element_role"
+      ],
+      "properties": {
+        "snapshot_id": {
+          "type": "string"
+        },
+        "bundle_id": {
+          "type": "string"
+        },
+        "application_name": {
+          "type": "string"
+        },
+        "window_id": {
+          "type": "integer"
+        },
+        "window_title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "element_role": {
+          "type": "string"
+        },
+        "element_label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "proposed_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

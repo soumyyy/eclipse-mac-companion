@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eclipse-mac.local/schemas/event.schema.json",
+  "title": "Eclipse Mac Bridge Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "protocol_version",
+    "device_id",
+    "type",
+    "created_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt_[a-z0-9_-]+$"
+    },
+    "protocol_version": {
+      "const": "0.1"
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "enum": [
+        "job.created",
+        "job.delivered",
+        "result.received",
+        "heartbeat.received"
+      ]
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object"
+    }
+  }
+}

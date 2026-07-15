@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eclipse-mac.local/schemas/heartbeat.schema.json",
+  "title": "Eclipse Mac Heartbeat",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol_version",
+    "device_id",
+    "sent_at",
+    "capabilities"
+  ],
+  "properties": {
+    "protocol_version": {
+      "const": "0.1"
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "context.get_active_window",
+          "ui.set_text"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "app_version": {
+      "type": "string"
+    }
+  }
+}

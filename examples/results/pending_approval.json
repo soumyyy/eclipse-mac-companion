@@ -1,0 +1,26 @@
+{
+  "job_id": "job_example_set_text",
+  "protocol_version": "0.1",
+  "device_id": "mac_soumya_local",
+  "status": "pending_approval",
+  "output": {
+    "approval": {
+      "approval_id": "appr_example_set_text",
+      "action_id": "act_example_set_text",
+      "risk": "reversible",
+      "target": {
+        "snapshot_id": "ctx_example",
+        "bundle_id": "com.apple.TextEdit",
+        "application_name": "TextEdit",
+        "window_id": 42,
+        "window_title": "Untitled",
+        "element_role": "AXTextArea",
+        "element_label": "Body"
+      },
+      "proposed_text": "Hello from Eclipse Mac",
+      "expires_at": "2026-07-15T12:00:10Z"
+    }
+  },
+  "completed_at": "2026-07-15T12:00:01Z",
+  "idempotency_key": "idem_example_set_text"
+}

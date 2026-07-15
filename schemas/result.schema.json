@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eclipse-mac.local/schemas/result.schema.json",
+  "title": "Eclipse Mac Job Result Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "job_id",
+    "protocol_version",
+    "device_id",
+    "status",
+    "completed_at",
+    "idempotency_key"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "pattern": "^job_[a-z0-9_-]+$"
+    },
+    "protocol_version": {
+      "const": "0.1"
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "failed",
+        "rejected",
+        "expired",
+        "pending_approval"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "type": "object"
+        },
+        "approval": {
+          "$ref": "approval.schema.json"
+        },
+        "action_result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action_id",
+            "snapshot_id",
+            "completed_at",
+            "characters_written"
+          ],
+          "properties": {
+            "action_id": {
+              "type": "string",
+              "pattern": "^act_[a-z0-9_-]+$"
+            },
+            "snapshot_id": {
+              "type": "string",
+              "pattern": "^ctx_[a-z0-9_-]+$"
+            },
+            "completed_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "characters_written": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "$ref": "error.schema.json"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "pattern": "^idem_[a-z0-9_-]+$"
+    }
+  }
+}

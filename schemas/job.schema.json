@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eclipse-mac.local/schemas/job.schema.json",
+  "title": "Eclipse Mac Job Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "job_id",
+    "protocol_version",
+    "device_id",
+    "kind",
+    "risk",
+    "input",
+    "expires_at",
+    "idempotency_key"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "pattern": "^job_[a-z0-9_-]+$"
+    },
+    "protocol_version": {
+      "const": "0.1"
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "context.get_active_window",
+        "ui.set_text"
+      ]
+    },
+    "risk": {
+      "enum": [
+        "read",
+        "reversible",
+        "consequential"
+      ]
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        }
+      }
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "pattern": "^idem_[a-z0-9_-]+$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "context.get_active_window"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "risk": {
+            "const": "read"
+          },
+          "input": {
+            "maxProperties": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "ui.set_text"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "risk": {
+            "const": "reversible"
+          },
+          "input": {
+            "required": [
+              "text"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
