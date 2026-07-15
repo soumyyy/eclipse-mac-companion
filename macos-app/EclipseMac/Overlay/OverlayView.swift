@@ -17,6 +17,8 @@ struct OverlayView: View {
 
             if let pending = textActions.pendingAction?.presentation {
                 approvalCard(pending)
+            } else if let automationApproval = localBridge.pendingAutomationApproval {
+                automationApprovalCard(automationApproval)
             } else if let result = textActions.result {
                 resultCard(result)
             } else {
@@ -157,6 +159,61 @@ struct OverlayView: View {
         .approvalSurface()
     }
 
+    private func automationApprovalCard(_ pending: BridgeAutomationApprovalRequest) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                Label("Approval required", systemImage: "hand.raised.fill")
+                    .font(.headline)
+                Spacer()
+                Text(pending.risk.rawValue)
+                    .font(.caption)
+                    .foregroundStyle(pending.risk == .consequential ? .orange : .secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(pending.targetApp?.name ?? "Current app")
+                    .font(.subheadline.weight(.semibold))
+                Text(automationTargetDescription(pending))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                if let jobID = localBridge.pendingJob?.jobID {
+                    Text(jobID)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
+                Text(pending.summary)
+                    .font(.system(.callout, design: .rounded).weight(.medium))
+                    .padding(9)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 8))
+
+                if pending.kind == .uiClickElement {
+                    Label("Click execution is not enabled yet. Cancelling will report a rejected result to the bridge.", systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+
+            HStack {
+                Button("Cancel") {
+                    runtime.cancelAutomationAction()
+                }
+                .keyboardShortcut(.cancelAction)
+                Spacer()
+                if pending.kind == .uiPressKey {
+                    Button("Approve & Press Key") {
+                        runtime.approveAutomationAction()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(EclipseTheme.violet)
+                }
+            }
+        }
+        .approvalSurface()
+    }
+
     private func resultCard(_ result: SetTextActionResult) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Text action completed", systemImage: "checkmark.circle.fill")
@@ -191,6 +248,14 @@ struct OverlayView: View {
             return "\(title) - \(field)"
         }
         return field
+    }
+
+    private func automationTargetDescription(_ pending: BridgeAutomationApprovalRequest) -> String {
+        let windowTitle = pending.targetWindow?.title ?? "active window"
+        if let windowID = pending.targetWindow?.id {
+            return "\(windowTitle) · window \(windowID)"
+        }
+        return windowTitle
     }
 }
 

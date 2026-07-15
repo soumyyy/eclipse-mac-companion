@@ -201,6 +201,72 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertEqual(controller.bridgeMessage, "Bridge activity refreshed")
     }
 
+    func testFetchPressKeyJobExposesAutomationApproval() async {
+        let transport = FakeLocalBridgeTransport(
+            nextJob: job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape"))
+        )
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            keyPressExecutor: FakeControllerKeyPressExecutor(),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+
+        let result = await controller.fetchNextRemoteJob()
+
+        XCTAssertEqual(result?.status, .pendingApproval)
+        XCTAssertEqual(controller.pendingAutomationApproval?.kind, .uiPressKey)
+        XCTAssertEqual(controller.bridgeMessage, "Fetched job; waiting for approval")
+    }
+
+    func testCompletePendingPressKeyJobQueuesSucceededReceipt() async {
+        let executor = FakeControllerKeyPressExecutor()
+        let transport = FakeLocalBridgeTransport(
+            nextJob: job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape"))
+        )
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            keyPressExecutor: executor,
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+        _ = await controller.fetchNextRemoteJob()
+
+        controller.completePendingAutomationJob()
+
+        XCTAssertNil(controller.pendingJob)
+        XCTAssertEqual(controller.latestResult?.status, .succeeded)
+        XCTAssertEqual(controller.latestResult?.output?.keyPress?.key, "escape")
+        XCTAssertEqual(executor.executedKeys, ["escape"])
+        XCTAssertEqual(controller.outboxCount, 1)
+    }
+
+    func testCancelPendingJobQueuesRejectedReceipt() async {
+        let transport = FakeLocalBridgeTransport(
+            nextJob: job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape"))
+        )
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            keyPressExecutor: FakeControllerKeyPressExecutor(),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+        _ = await controller.fetchNextRemoteJob()
+
+        controller.cancelPendingJob()
+
+        XCTAssertNil(controller.pendingJob)
+        XCTAssertEqual(controller.latestResult?.status, .rejected)
+        XCTAssertEqual(controller.latestResult?.error?.code, "user_cancelled")
+        XCTAssertEqual(controller.outboxCount, 1)
+    }
+
     private func job(
         kind: BridgeJobKind,
         risk: BridgeRisk,
@@ -325,5 +391,25 @@ private final class FakeControllerContextCollector: ContextCollecting {
 
     func capture() throws -> ContextSnapshot {
         snapshot
+    }
+}
+
+@MainActor
+private final class FakeControllerKeyPressExecutor: KeyPressExecuting {
+    private(set) var executedKeys: [String] = []
+
+    func execute(
+        approval: BridgeAutomationApprovalRequest,
+        input: BridgeJobInput,
+        now: Date
+    ) throws -> BridgeKeyPressResult {
+        let key = input.key ?? "missing"
+        executedKeys.append(key)
+        return BridgeKeyPressResult(
+            actionID: approval.actionID,
+            key: key,
+            modifiers: input.modifiers ?? [],
+            completedAt: now
+        )
     }
 }

@@ -165,7 +165,33 @@
           "type": "object"
         },
         "key_press": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action_id",
+            "key",
+            "modifiers",
+            "completed_at"
+          ],
+          "properties": {
+            "action_id": {
+              "type": "string",
+              "pattern": "^act_[a-z0-9_-]+$"
+            },
+            "key": {
+              "type": "string"
+            },
+            "modifiers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "completed_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         },
         "click": {
           "type": "object"

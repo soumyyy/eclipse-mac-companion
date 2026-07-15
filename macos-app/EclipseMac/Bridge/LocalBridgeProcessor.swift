@@ -61,6 +61,7 @@ final class LocalBridgeProcessor {
     private let collector: any ContextCollecting
     private let capturer: any WindowCapturing
     private let notifier: any LocalNotificationDelivering
+    private let keyPressExecutor: any KeyPressExecuting
     private let textActions: any SetTextActionControlling
     private let policy: BridgeJobPolicy
     private let store: any BridgeResultStoring
@@ -70,6 +71,7 @@ final class LocalBridgeProcessor {
         collector: any ContextCollecting = AccessibilityContextCollector(),
         capturer: any WindowCapturing = ActiveWindowCapturer(),
         notifier: any LocalNotificationDelivering = UserNotificationDeliverer(),
+        keyPressExecutor: any KeyPressExecuting = KeyPressActionExecutor(),
         textActions: any SetTextActionControlling,
         policy: BridgeJobPolicy = .default,
         store: any BridgeResultStoring
@@ -78,6 +80,7 @@ final class LocalBridgeProcessor {
         self.collector = collector
         self.capturer = capturer
         self.notifier = notifier
+        self.keyPressExecutor = keyPressExecutor
         self.textActions = textActions
         self.policy = policy
         self.store = store
@@ -213,6 +216,70 @@ final class LocalBridgeProcessor {
                 completedAt: completedAt
             )
         }
+    }
+
+    func automationCompletionResult(
+        for job: BridgeJobEnvelope,
+        approval: BridgeAutomationApprovalRequest,
+        completedAt: Date = Date()
+    ) -> BridgeJobResultEnvelope {
+        do {
+            switch job.kind {
+            case .uiPressKey:
+                let result = try keyPressExecutor.execute(
+                    approval: approval,
+                    input: job.input,
+                    now: completedAt
+                )
+                return try persistedResult(
+                    for: job,
+                    status: .succeeded,
+                    output: .keyPress(result),
+                    completedAt: completedAt
+                )
+            case .uiClickElement:
+                return try persistedResult(
+                    for: job,
+                    status: .rejected,
+                    error: BridgeErrorPayload(
+                        code: "executor_not_enabled",
+                        message: "ui.click_element approval is modeled, but real click execution is not enabled yet."
+                    ),
+                    completedAt: completedAt
+                )
+            case .contextGetActiveWindow, .contextCaptureWindow, .notificationShow, .uiSetText:
+                return try persistedResult(
+                    for: job,
+                    status: .rejected,
+                    error: BridgeErrorPayload(
+                        code: "not_automation_action",
+                        message: "\(job.kind.rawValue) is not an automation approval action."
+                    ),
+                    completedAt: completedAt
+                )
+            }
+        } catch {
+            return storedErrorResult(
+                for: job,
+                status: .failed,
+                error: BridgeErrorPayload(code: "automation_execution_failed", message: error.localizedDescription),
+                completedAt: completedAt
+            )
+        }
+    }
+
+    func rejectionResult(
+        for job: BridgeJobEnvelope,
+        code: String = "user_cancelled",
+        message: String = "User cancelled the approval",
+        completedAt: Date = Date()
+    ) -> BridgeJobResultEnvelope {
+        storedErrorResult(
+            for: job,
+            status: .rejected,
+            error: BridgeErrorPayload(code: code, message: message),
+            completedAt: completedAt
+        )
     }
 
     func unpostedResults(limit: Int = 50) -> [BridgeJobResultEnvelope] {

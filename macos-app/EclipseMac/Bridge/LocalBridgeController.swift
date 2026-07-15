@@ -30,10 +30,16 @@ final class LocalBridgeController: ObservableObject {
     private let normalPollingInterval: TimeInterval = 3
     private let failurePollingInterval: TimeInterval = 8
 
+    var pendingAutomationApproval: BridgeAutomationApprovalRequest? {
+        guard pendingJob != nil else { return nil }
+        return latestResult?.output?.automationApproval
+    }
+
     init(
         deviceID: String = LocalBridgeController.defaultDeviceID,
         setTextActions: SetTextActionController,
         collector: any ContextCollecting = AccessibilityContextCollector(),
+        keyPressExecutor: (any KeyPressExecuting)? = nil,
         store: (any BridgeResultStoring)? = nil,
         configurationStore: LocalBridgeConfigurationStore = LocalBridgeConfigurationStore(),
         transport: (any LocalBridgeTransporting)? = nil
@@ -57,6 +63,7 @@ final class LocalBridgeController: ObservableObject {
         processor = LocalBridgeProcessor(
             deviceID: deviceID,
             collector: collector,
+            keyPressExecutor: keyPressExecutor ?? KeyPressActionExecutor(collector: collector),
             textActions: setTextActions,
             store: bridgeStore
         )
@@ -100,8 +107,30 @@ final class LocalBridgeController: ObservableObject {
         refreshOutboxCount()
     }
 
+    func completePendingAutomationJob() {
+        guard let pendingJob,
+              let approval = latestResult?.output?.automationApproval else { return }
+        latestResult = processor.automationCompletionResult(for: pendingJob, approval: approval)
+        self.pendingJob = nil
+        switch latestResult?.status {
+        case .succeeded:
+            bridgeMessage = "Automation action completed"
+        case .rejected:
+            bridgeMessage = latestResult?.error?.message ?? "Automation action rejected"
+        case .failed:
+            bridgeMessage = latestResult?.error?.message ?? "Automation action failed"
+        case .expired, .pendingApproval, .none:
+            bridgeMessage = "Automation action finished"
+        }
+        refreshOutboxCount()
+    }
+
     func cancelPendingJob() {
-        pendingJob = nil
+        guard let pendingJob else { return }
+        latestResult = processor.rejectionResult(for: pendingJob)
+        self.pendingJob = nil
+        bridgeMessage = "Queued cancellation receipt for local bridge"
+        refreshOutboxCount()
     }
 
     func markLatestResultPosted() {

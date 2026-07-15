@@ -12,6 +12,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -32,6 +33,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -54,6 +56,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -73,6 +76,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -93,6 +97,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -114,6 +119,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
@@ -135,6 +141,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -160,6 +167,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
@@ -181,6 +189,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
             collector: FakeContextCollector(snapshot: snapshot()),
             capturer: FakeWindowCapturer(),
             notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
@@ -199,6 +208,54 @@ final class LocalBridgeProcessorTests: XCTestCase {
         XCTAssertEqual(replay.status, .succeeded)
         XCTAssertEqual(replay.output?.actionResult?.charactersWritten, 5)
         XCTAssertEqual(textActions.prepareCount, 1)
+    }
+
+    func testAutomationCompletionExecutesApprovedKeyPressAndReplacesPendingReceipt() async {
+        let executor = FakeKeyPressExecutor()
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            keyPressExecutor: executor,
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+        let job = job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape"))
+        let pending = await processor.process(job, now: now)
+        let approval = try! XCTUnwrap(pending.output?.automationApproval)
+
+        let result = processor.automationCompletionResult(
+            for: job,
+            approval: approval,
+            completedAt: now.addingTimeInterval(1)
+        )
+        let replay = await processor.process(job, now: now.addingTimeInterval(2))
+
+        XCTAssertEqual(result.status, .succeeded)
+        XCTAssertEqual(result.output?.keyPress?.key, "escape")
+        XCTAssertEqual(executor.executedKeys, ["escape"])
+        XCTAssertEqual(replay.status, .succeeded)
+        XCTAssertEqual(replay.output?.keyPress?.actionID, approval.actionID)
+    }
+
+    func testRejectionResultReplacesPendingApprovalReceipt() async {
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+        let job = job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape"))
+        _ = await processor.process(job, now: now)
+
+        let result = processor.rejectionResult(for: job, completedAt: now.addingTimeInterval(1))
+
+        XCTAssertEqual(result.status, .rejected)
+        XCTAssertEqual(result.error?.code, "user_cancelled")
     }
 
     private func job(
@@ -283,6 +340,26 @@ private final class FakeNotifier: LocalNotificationDelivering {
         BridgeNotificationReceipt(
             notificationID: "notif_test",
             deliveredAt: Date(timeIntervalSince1970: 1_000)
+        )
+    }
+}
+
+@MainActor
+private final class FakeKeyPressExecutor: KeyPressExecuting {
+    private(set) var executedKeys: [String] = []
+
+    func execute(
+        approval: BridgeAutomationApprovalRequest,
+        input: BridgeJobInput,
+        now: Date
+    ) throws -> BridgeKeyPressResult {
+        let key = input.key ?? "missing"
+        executedKeys.append(key)
+        return BridgeKeyPressResult(
+            actionID: approval.actionID,
+            key: key,
+            modifiers: input.modifiers ?? [],
+            completedAt: now
         )
     }
 }

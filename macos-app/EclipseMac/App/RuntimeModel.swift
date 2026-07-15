@@ -64,11 +64,31 @@ final class RuntimeModel: ObservableObject {
         }
     }
 
+    func approveAutomationAction() {
+        state = .acting
+        localBridge.completePendingAutomationJob()
+        switch localBridge.latestResult?.status {
+        case .succeeded:
+            state = .idle
+        case .failed, .rejected, .expired:
+            state = .error
+        case .pendingApproval, .none:
+            state = .idle
+        }
+        debugMessage = localBridge.bridgeMessage
+    }
+
     func cancelTextAction() {
         setTextActions.cancel()
         localBridge.cancelPendingJob()
         state = .idle
         debugMessage = "Text action cancelled"
+    }
+
+    func cancelAutomationAction() {
+        localBridge.cancelPendingJob()
+        state = .idle
+        debugMessage = "Automation action cancelled"
     }
 
     func resetTextAction() {

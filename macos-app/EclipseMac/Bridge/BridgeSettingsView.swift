@@ -243,6 +243,7 @@ struct BridgeSettingsView: View {
         if let action = output.actionResult { return "typed \(action.charactersWritten) chars" }
         if let capture = output.capture { return "capture \(capture.pixelWidth)x\(capture.pixelHeight)" }
         if output.notification != nil { return "notification delivered" }
+        if let keyPress = output.keyPress { return "pressed \(((keyPress.modifiers) + [keyPress.key]).joined(separator: "+"))" }
         return "none"
     }
 }
