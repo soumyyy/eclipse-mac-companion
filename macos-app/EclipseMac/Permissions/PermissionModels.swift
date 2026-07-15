@@ -30,7 +30,7 @@ enum SystemPermission: String, CaseIterable, Identifiable, Sendable {
         case .screenRecording:
             "Captures one active window only when explicitly requested. Continuous display recording is not used."
         case .microphone:
-            "Reserved for a later push-to-talk phase. Eclipse never listens in the background."
+            "Used only when you press the companion microphone button. Eclipse never listens in the background."
         }
     }
 }

@@ -4,6 +4,7 @@ struct OverlayView: View {
     @ObservedObject var runtime: RuntimeModel
     @ObservedObject private var textActions: SetTextActionController
     @ObservedObject private var localBridge: LocalBridgeController
+    @ObservedObject private var speech: SpeechTranscriptionController
     @State private var now = Date()
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -12,6 +13,7 @@ struct OverlayView: View {
         self.runtime = runtime
         textActions = runtime.setTextActions
         localBridge = runtime.localBridge
+        speech = runtime.speech
     }
 
     var body: some View {
@@ -141,17 +143,35 @@ struct OverlayView: View {
                 .onSubmit {
                     runtime.prepareCompanionAskForHermes()
                 }
+                .onChange(of: speech.transcript) { _, transcript in
+                    guard speech.isListening else { return }
+                    runtime.companionPrompt = transcript
+                }
 
             Text(runtime.companionContextSummary)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
+            if let speechError = speech.errorMessage {
+                Label(speechError, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .lineLimit(1)
+            }
 
             HStack(spacing: 8) {
+                Button {
+                    runtime.toggleCompanionVoiceInput()
+                } label: {
+                    Label(speech.isListening ? "Stop" : "Voice", systemImage: speech.isListening ? "stop.fill" : "mic.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(speech.isListening ? EclipseTheme.coral : EclipseTheme.blue)
+
                 Button("Ask Hermes") {
                     runtime.prepareCompanionAskForHermes()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
                 .tint(EclipseTheme.violet)
                 .disabled(runtime.companionPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 

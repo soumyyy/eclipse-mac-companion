@@ -87,7 +87,7 @@ Eclipse: Started. I’ll keep working in the background and notify you when ther
 - Keep the existing menu-bar app and use `Option-Space` for the cursor buddy.
 - Show compact states: idle, listening, thinking, guiding, needs approval, agent running, error.
 - Keep full settings/debug surfaces out of the primary experience.
-- Added first implementation: `Option-Space` opens a tiny cursor-side buddy. The buddy has an expand control for the larger companion card with an “Ask Hermes” composer and bridge health summary. The Mac packages local screen context for Hermes instead of answering locally.
+- Added first implementation: `Option-Space` opens a tiny cursor-side buddy that follows the cursor and freezes when the pointer approaches it. The buddy has an expand control for the larger left-side companion card with an “Ask Hermes” composer, push-to-talk transcript capture, and bridge health summary. The Mac packages local screen context for Hermes instead of answering locally.
 
 Exit check: pressing the hotkey shows a small Eclipse companion near the cursor without opening Settings.
 
@@ -146,8 +146,8 @@ Exit check: after reboot/login, Eclipse starts, connects, and shows whether the 
 ## Next nine steps
 
 1. Build compact cursor buddy/orb UI. ✅ First compact companion card is in place.
-2. Add a transcript field and ask composer to the buddy. ✅ Text ask composer is in place; voice transcript comes next.
-3. Implement push-to-talk recording behind the existing microphone permission.
+2. Add a transcript field and ask composer to the buddy. ✅ Text ask composer is in place.
+3. Implement push-to-talk recording behind the existing microphone permission. ✅ First native Speech transcript path is in place.
 4. Send transcript + active context to a local/Hermes ask endpoint.
 5. Display assistant responses beside the cursor.
 6. Add `intent`/`reason` to bridge jobs and approval cards.

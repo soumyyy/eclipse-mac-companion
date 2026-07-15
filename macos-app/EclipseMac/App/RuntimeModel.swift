@@ -15,6 +15,7 @@ final class RuntimeModel: ObservableObject {
     let contextDiagnostics = ContextDiagnosticsModel()
     let setTextActions: SetTextActionController
     let localBridge: LocalBridgeController
+    let speech = SpeechTranscriptionController()
 
     var needsApprovalOverlay: Bool {
         setTextActions.pendingAction != nil ||
@@ -48,6 +49,22 @@ final class RuntimeModel: ObservableObject {
 
     func collapseCompanion() {
         companionExpanded = false
+    }
+
+    func toggleCompanionVoiceInput() {
+        if speech.isListening {
+            speech.stopListening()
+            let transcript = speech.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !transcript.isEmpty {
+                companionPrompt = transcript
+            }
+            state = .idle
+            debugMessage = transcript.isEmpty ? "Voice stopped" : "Voice transcript ready for Hermes"
+        } else {
+            state = .listening
+            debugMessage = "Listening for a Hermes prompt"
+            speech.startListening()
+        }
     }
 
     func prepareCompanionAskForHermes() {

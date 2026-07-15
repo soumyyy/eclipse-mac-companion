@@ -25,6 +25,7 @@
 		4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770AD420C5F18D3A824363B5 /* ContextModels.swift */; };
 		51BBD4073ABEAB1C54D3BACC /* RuntimeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B9E174095478517034A0F2 /* RuntimeModel.swift */; };
 		538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */; };
+		538B720BAFED15B655C8CBE5 /* SpeechTranscriptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6A6238E3251B9B19EF13A0 /* SpeechTranscriptionController.swift */; };
 		5DB85E598687FC4B65AA037D /* LocalBridgeConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814A331916F49DDE2107CECE /* LocalBridgeConfiguration.swift */; };
 		5DEE191F292E93ACA214AC68 /* WindowCapturePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8604FBF4D8D434C95F5755B /* WindowCapturePolicyTests.swift */; };
 		609C82AB1D355DD9963F8AB9 /* SetTextActionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A1B929030D03395B07BB0C /* SetTextActionPolicy.swift */; };
@@ -77,6 +78,7 @@
 		22442F5AC0AA1049517254C8 /* SetTextActionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionController.swift; sourceTree = "<group>"; };
 		24F948C4DAEDE2D78CFF283C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantState.swift; sourceTree = "<group>"; };
+		2B6A6238E3251B9B19EF13A0 /* SpeechTranscriptionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscriptionController.swift; sourceTree = "<group>"; };
 		2D8D45C5E832E23364E83607 /* EclipseMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EclipseMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		33481BCD8C233F41CF9283FA /* SetTextActionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionModels.swift; sourceTree = "<group>"; };
 		3777045C3652EFC1133DDF85 /* PermissionCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCenter.swift; sourceTree = "<group>"; };
@@ -193,6 +195,14 @@
 			path = Storage;
 			sourceTree = "<group>";
 		};
+		8CF22B07A81A8441C92E6FA9 /* Voice */ = {
+			isa = PBXGroup;
+			children = (
+				2B6A6238E3251B9B19EF13A0 /* SpeechTranscriptionController.swift */,
+			);
+			path = Voice;
+			sourceTree = "<group>";
+		};
 		8E9912F85461D2C8802FB441 /* EclipseMac */ = {
 			isa = PBXGroup;
 			children = (
@@ -206,6 +216,7 @@
 				B0F6355023FA2A11024BE166 /* Permissions */,
 				7983DA3DA6153D5ADD5BC005 /* Storage */,
 				AEF144FE2B88D77148F80930 /* UI */,
+				8CF22B07A81A8441C92E6FA9 /* Voice */,
 			);
 			path = EclipseMac;
 			sourceTree = "<group>";
@@ -455,6 +466,7 @@
 				EB72C106220450ACF5E1664A /* SetTextActionModels.swift in Sources */,
 				609C82AB1D355DD9963F8AB9 /* SetTextActionPolicy.swift in Sources */,
 				7BEF045D9277487F832171EF /* SettingsView.swift in Sources */,
+				538B720BAFED15B655C8CBE5 /* SpeechTranscriptionController.swift in Sources */,
 				011CEC396C999234334F06A1 /* WindowCaptureModels.swift in Sources */,
 				20D826971760774818E476CE /* WindowCapturePolicy.swift in Sources */,
 			);
@@ -498,6 +510,7 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start push-to-talk.";
 				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Eclipse Mac captures only the active window when you explicitly request it.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Eclipse Mac uses speech recognition only after you press the microphone button.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -519,6 +532,7 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start push-to-talk.";
 				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Eclipse Mac captures only the active window when you explicitly request it.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Eclipse Mac uses speech recognition only after you press the microphone button.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
