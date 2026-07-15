@@ -14,6 +14,12 @@ Run it with bearer-token auth:
 ECLIPSE_BRIDGE_TOKEN='replace-with-a-long-random-token' python3 bridge/mock_bridge.py --host 0.0.0.0 --port 8765
 ```
 
+Run it with durable SQLite storage:
+
+```bash
+ECLIPSE_BRIDGE_DB='./bridge.sqlite3' python3 bridge/mock_bridge.py --port 8765
+```
+
 When a token is configured, all job/result endpoints require:
 
 ```text
@@ -40,4 +46,5 @@ Minimal VPS profile:
 - Set `ECLIPSE_BRIDGE_TOKEN` to a long random value.
 - Terminate TLS at the reverse proxy and use an `https://` bridge URL in the Mac app.
 - Enter the same bearer token in the overlay token field.
-- Keep this mock bridge for development only; it stores jobs/results in memory and loses state on restart.
+- Set `ECLIPSE_BRIDGE_DB` so jobs/results survive service restarts.
+- Keep this bridge for development only; the SQLite-backed mode is durable enough for MVP testing but not a full production queue.

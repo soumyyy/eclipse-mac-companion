@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1L
+## Current increment: Phase 1M
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moves bridge tokens to Keychain and removes demo clutter from the visible UI.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M adds durable SQLite storage to the VPS bridge.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -45,6 +45,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Systemd deployment template and operator notes in `deploy/` and `docs/vps-bridge.md`
 - Bridge bearer token stored in Keychain, with migration from the previous `UserDefaults` key
 - Main overlay focused on bridge status and polling; demo/debug controls moved out of the primary surface
+- Durable bridge-side SQLite storage for queued jobs and results via `ECLIPSE_BRIDGE_DB`
 
 ## Privacy defaults
 
@@ -55,7 +56,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1L check
+## Manual Phase 1M check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
@@ -68,7 +69,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 
 ## Next increment
 
-Replace the VPS bridge's in-memory job/result store with durable storage so jobs/results survive service restarts.
+Add bridge operator UI/commands for creating remote jobs without using raw `curl`, then start wiring the higher-level companion experience on top of the bridge.
 
 ## UI development launch arguments
 

@@ -9,7 +9,7 @@ Current dev deployment:
 - Public exposure: existing Cloudflare Tunnel
 - Auth: bearer token from `~/eclipse-mac-bridge/.bridge-token` on the VPS
 
-The bridge is intentionally dependency-light and uses Python stdlib only. It is still a development bridge: jobs/results are in memory and reset when the service restarts.
+The bridge is intentionally dependency-light and uses Python stdlib only. The VPS deployment stores jobs/results in SQLite at `~/eclipse-mac-bridge/bridge.sqlite3`.
 
 ## Runtime files on the VPS
 
@@ -18,6 +18,7 @@ The bridge is intentionally dependency-light and uses Python stdlib only. It is 
   mock_bridge.py
   .env
   .bridge-token
+  bridge.sqlite3
 ```
 
 Systemd unit:
@@ -91,3 +92,4 @@ unset TOKEN
 - The bridge store is in memory only.
 - Token is stored locally in Keychain after saving it in the app.
 - The VPS disk is already above 90% usage, so avoid installing additional services until it is cleaned up or resized.
+- SQLite is acceptable for current single-worker MVP testing; use a real queue/database before supporting multiple writers/workers.

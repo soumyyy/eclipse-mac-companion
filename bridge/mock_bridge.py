@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sqlite3
 import threading
 import uuid
 from dataclasses import dataclass, field
@@ -89,6 +90,171 @@ class BridgeState:
     def all_results(self) -> list[dict[str, Any]]:
         with self.lock:
             return list(self.results_by_job_id.values())
+
+
+class SQLiteBridgeState:
+    def __init__(self, path: str):
+        self.path = path
+        self.lock = threading.Lock()
+        self._initialize()
+
+    def create_job(self, request: dict[str, Any]) -> dict[str, Any]:
+        if "job_id" in request:
+            job = dict(request)
+        else:
+            ttl_seconds = int(request.get("ttl_seconds", 30))
+            job = {
+                "job_id": prefixed_id("job"),
+                "protocol_version": PROTOCOL_VERSION,
+                "device_id": request.get("device_id", "mac_soumya_local"),
+                "kind": request["kind"],
+                "risk": request["risk"],
+                "input": request.get("input", {}),
+                "expires_at": isoformat(utc_now() + timedelta(seconds=ttl_seconds)),
+                "idempotency_key": request.get("idempotency_key", prefixed_id("idem")),
+            }
+
+        validate_job(job)
+        with self.lock, self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO jobs (
+                    job_id, device_id, idempotency_key, job_json, created_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    job["job_id"],
+                    job["device_id"],
+                    job["idempotency_key"],
+                    encode_json(job),
+                    isoformat(utc_now()),
+                ),
+            )
+        return job
+
+    def next_job(self, device_id: str | None) -> dict[str, Any] | None:
+        with self.lock, self._connect() as connection:
+            if device_id is None:
+                row = connection.execute(
+                    """
+                    SELECT id, job_json
+                    FROM jobs
+                    ORDER BY id
+                    LIMIT 1
+                    """
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    """
+                    SELECT id, job_json
+                    FROM jobs
+                    WHERE device_id = ?
+                    ORDER BY id
+                    LIMIT 1
+                    """,
+                    (device_id,),
+                ).fetchone()
+
+            if row is None:
+                return None
+            connection.execute("DELETE FROM jobs WHERE id = ?", (row["id"],))
+            return json.loads(row["job_json"])
+
+    def save_result(self, result: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+        validate_result(result)
+        with self.lock, self._connect() as connection:
+            existing = connection.execute(
+                """
+                SELECT result_json
+                FROM results
+                WHERE idempotency_key = ?
+                LIMIT 1
+                """,
+                (result["idempotency_key"],),
+            ).fetchone()
+            if existing is not None:
+                return json.loads(existing["result_json"]), True
+
+            connection.execute(
+                """
+                INSERT INTO results (
+                    job_id, idempotency_key, result_json, created_at
+                ) VALUES (?, ?, ?, ?)
+                """,
+                (
+                    result["job_id"],
+                    result["idempotency_key"],
+                    encode_json(result),
+                    isoformat(utc_now()),
+                ),
+            )
+            return result, False
+
+    def result(self, job_id: str) -> dict[str, Any] | None:
+        with self.lock, self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT result_json
+                FROM results
+                WHERE job_id = ?
+                LIMIT 1
+                """,
+                (job_id,),
+            ).fetchone()
+            return None if row is None else json.loads(row["result_json"])
+
+    def all_results(self) -> list[dict[str, Any]]:
+        with self.lock, self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT result_json
+                FROM results
+                ORDER BY id
+                """
+            ).fetchall()
+            return [json.loads(row["result_json"]) for row in rows]
+
+    def _initialize(self) -> None:
+        parent = os.path.dirname(self.path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with self._connect() as connection:
+            connection.executescript(
+                """
+                PRAGMA journal_mode = WAL;
+                CREATE TABLE IF NOT EXISTS jobs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    job_id TEXT NOT NULL,
+                    device_id TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL,
+                    job_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS jobs_device_id_idx
+                ON jobs(device_id, id);
+
+                CREATE TABLE IF NOT EXISTS results (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    job_id TEXT NOT NULL UNIQUE,
+                    idempotency_key TEXT NOT NULL UNIQUE,
+                    result_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS results_job_id_idx
+                ON results(job_id);
+                CREATE INDEX IF NOT EXISTS results_idempotency_key_idx
+                ON results(idempotency_key);
+                """
+            )
+
+    def _connect(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self.path, timeout=10)
+        connection.row_factory = sqlite3.Row
+        return connection
+
+
+def encode_json(value: dict[str, Any]) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
 def validate_job(job: dict[str, Any]) -> None:
@@ -255,7 +421,7 @@ class BridgeHTTPServer(ThreadingHTTPServer):
     def __init__(
         self,
         address: tuple[str, int],
-        state: BridgeState | None = None,
+        state: BridgeState | SQLiteBridgeState | None = None,
         token: str | None = None,
     ):
         super().__init__(address, BridgeHandler)
@@ -267,8 +433,9 @@ def make_server(
     host: str = "127.0.0.1",
     port: int = 8765,
     token: str | None = None,
+    state: BridgeState | SQLiteBridgeState | None = None,
 ) -> BridgeHTTPServer:
-    return BridgeHTTPServer((host, port), token=token)
+    return BridgeHTTPServer((host, port), state=state, token=token)
 
 
 def main() -> None:
@@ -280,11 +447,18 @@ def main() -> None:
         default=os.environ.get("ECLIPSE_BRIDGE_TOKEN"),
         help="Optional bearer token. Also read from ECLIPSE_BRIDGE_TOKEN.",
     )
+    parser.add_argument(
+        "--db",
+        default=os.environ.get("ECLIPSE_BRIDGE_DB"),
+        help="Optional SQLite database path. Also read from ECLIPSE_BRIDGE_DB.",
+    )
     args = parser.parse_args()
 
-    server = make_server(args.host, args.port, token=args.token)
+    state = SQLiteBridgeState(args.db) if args.db else None
+    server = make_server(args.host, args.port, token=args.token, state=state)
     auth = " with bearer auth" if args.token else ""
-    print(f"mock bridge listening on http://{args.host}:{args.port}{auth}", flush=True)
+    storage = f" using sqlite {args.db}" if args.db else " using memory"
+    print(f"mock bridge listening on http://{args.host}:{args.port}{auth}{storage}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

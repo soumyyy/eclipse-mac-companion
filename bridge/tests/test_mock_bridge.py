@@ -1,4 +1,5 @@
 import json
+import tempfile
 import threading
 import unittest
 from pathlib import Path
@@ -9,7 +10,7 @@ from urllib.request import Request, urlopen
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from mock_bridge import make_server  # noqa: E402
+from mock_bridge import SQLiteBridgeState, make_server  # noqa: E402
 
 
 class MockBridgeTests(unittest.TestCase):
@@ -107,6 +108,34 @@ class MockBridgeTests(unittest.TestCase):
 
         self.assertTrue(health["ok"])
         self.assertFalse(health["auth_required"])
+
+    def test_sqlite_state_persists_queued_jobs_and_results(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = str(Path(directory) / "bridge.sqlite3")
+            first = SQLiteBridgeState(path)
+            job = first.create_job({
+                "device_id": "mac_test",
+                "kind": "context.get_active_window",
+                "risk": "read",
+                "input": {},
+            })
+            result = {
+                "job_id": "job_persisted",
+                "protocol_version": "0.1",
+                "device_id": "mac_test",
+                "status": "succeeded",
+                "completed_at": "2026-07-15T12:00:05Z",
+                "idempotency_key": "idem_persisted",
+            }
+            first.save_result(result)
+
+            second = SQLiteBridgeState(path)
+
+            self.assertEqual(second.next_job("mac_test")["job_id"], job["job_id"])
+            self.assertEqual(second.result("job_persisted")["idempotency_key"], "idem_persisted")
+            duplicate, is_duplicate = second.save_result(result)
+            self.assertTrue(is_duplicate)
+            self.assertEqual(duplicate["job_id"], "job_persisted")
 
     def test_token_protected_bridge_rejects_and_accepts_authorized_requests(self):
         server = make_server(port=0, token="secret_test_token")
