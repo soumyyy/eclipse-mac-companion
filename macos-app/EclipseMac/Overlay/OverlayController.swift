@@ -7,7 +7,7 @@ final class OverlayController {
 
     init(runtime: RuntimeModel) {
         panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 156),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 310),
             styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
