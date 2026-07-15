@@ -287,6 +287,20 @@ final class LocalBridgeProcessor {
         )
     }
 
+    func expirationResult(
+        for job: BridgeJobEnvelope,
+        code: String = "approval_expired",
+        message: String = "The approval expired before it was completed.",
+        completedAt: Date = Date()
+    ) -> BridgeJobResultEnvelope {
+        storedErrorResult(
+            for: job,
+            status: .expired,
+            error: BridgeErrorPayload(code: code, message: message),
+            completedAt: completedAt
+        )
+    }
+
     func unpostedResults(limit: Int = 50) -> [BridgeJobResultEnvelope] {
         (try? store.unpostedResults(limit: limit)) ?? []
     }

@@ -54,6 +54,8 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Durable bridge-side SQLite storage for queued jobs and results via `ECLIPSE_BRIDGE_DB`
 - Authenticated bridge inspection endpoints for queued jobs and stats
 - Authenticated queued-job cancellation endpoint that removes undelivered jobs and stores rejected cancellation receipts
+- Mac Settings activity UI can cancel still-queued bridge jobs through the configured bridge
+- Fetched jobs waiting on Mac-side approval now expire locally and post an `expired` receipt through the outbox
 - `bridge/bridge_cli.py` operator CLI for health, stats, jobs, results, context, capture, notification, text, key, and click job creation
 - Operator CLI support for `wait-result` and queued-job `cancel`
 - In-app command composer for queueing typed jobs to the configured bridge
@@ -71,7 +73,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1T check
+## Manual Phase 1U check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
@@ -85,6 +87,8 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 10. Operator check: run `python3 bridge/bridge_cli.py stats`, `create-capture-window`, `create-notification`, `create-press-key escape`, and `create-click-element AXButton --element-label Continue` with `ECLIPSE_BRIDGE_URL` and `ECLIPSE_BRIDGE_TOKEN` set.
 11. Confirm **Refresh Activity** reflects queued jobs and stored results in the Activity section.
 12. Timeout/cancel check: queue a job, run `python3 bridge/bridge_cli.py cancel <job_id>`, and confirm `GET /results/<job_id>` returns a `rejected` cancellation receipt.
+13. In-app cancel check: queue a job, refresh **Settings → Bridge → Activity**, expand the queued job, click **Cancel Queued Job**, and confirm the remote result is `rejected` with `cancelled_before_delivery`.
+14. Expiry check: fetch a text/key/click job that needs approval, wait past the approval window, then poll once. Confirm the app clears the pending approval, queues an `expired` outbox receipt, and posts it on the next outbox replay.
 
 ## Next increment
 

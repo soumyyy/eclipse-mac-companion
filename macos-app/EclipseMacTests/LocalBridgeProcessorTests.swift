@@ -269,6 +269,26 @@ final class LocalBridgeProcessorTests: XCTestCase {
         XCTAssertEqual(result.error?.code, "user_cancelled")
     }
 
+    func testExpirationResultReplacesPendingApprovalReceipt() async {
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            keyPressExecutor: FakeKeyPressExecutor(),
+            clickElementExecutor: FakeClickElementExecutor(),
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+        let job = job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape"))
+        _ = await processor.process(job, now: now)
+
+        let result = processor.expirationResult(for: job, completedAt: now.addingTimeInterval(11))
+
+        XCTAssertEqual(result.status, .expired)
+        XCTAssertEqual(result.error?.code, "approval_expired")
+    }
+
     func testAutomationCompletionExecutesApprovedClickAndReplacesPendingReceipt() async {
         let executor = FakeClickElementExecutor()
         let processor = LocalBridgeProcessor(

@@ -270,6 +270,53 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertEqual(controller.outboxCount, 1)
     }
 
+    func testExpirePendingJobQueuesExpiredReceipt() async {
+        let transport = FakeLocalBridgeTransport(
+            nextJob: job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape"))
+        )
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            keyPressExecutor: FakeControllerKeyPressExecutor(),
+            clickElementExecutor: FakeControllerClickElementExecutor(),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+        _ = await controller.fetchNextRemoteJob()
+
+        let expired = controller.expirePendingJobIfNeeded(now: Date().addingTimeInterval(31))
+
+        XCTAssertTrue(expired)
+        XCTAssertNil(controller.pendingJob)
+        XCTAssertEqual(controller.latestResult?.status, .expired)
+        XCTAssertEqual(controller.latestResult?.error?.code, "approval_expired")
+        XCTAssertEqual(controller.bridgeMessage, "Queued expired receipt for local bridge")
+        XCTAssertEqual(controller.outboxCount, 1)
+    }
+
+    func testCancelRemoteQueuedJobCallsBridgeAndRefreshesActivity() async {
+        let transport = FakeLocalBridgeTransport(nextJob: nil)
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+        let queuedJob = await controller.queuePressKeyJob(key: "escape")
+        let remoteJob = try! XCTUnwrap(queuedJob)
+
+        let cancelled = await controller.cancelRemoteQueuedJob(remoteJob)
+
+        XCTAssertTrue(cancelled)
+        XCTAssertEqual(transport.cancelledJobIDs, [remoteJob.jobID])
+        XCTAssertEqual(controller.latestResult?.status, .rejected)
+        XCTAssertEqual(controller.latestResult?.error?.code, "cancelled_before_delivery")
+        XCTAssertEqual(controller.remoteQueuedJobs, [])
+        XCTAssertEqual(controller.remoteResults.map(\.jobID), [remoteJob.jobID])
+    }
+
     func testCompletePendingClickJobQueuesSucceededReceipt() async {
         let executor = FakeControllerClickElementExecutor()
         let transport = FakeLocalBridgeTransport(
@@ -345,6 +392,8 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
     private(set) var replayedResults: [BridgeJobResultEnvelope] = []
     private(set) var createdRequests: [BridgeCreateJobRequest] = []
     private(set) var createdJobs: [BridgeJobEnvelope] = []
+    private(set) var cancelledJobIDs: [String] = []
+    private var cancelledResults: [BridgeJobResultEnvelope] = []
 
     init(nextJob: BridgeJobEnvelope?, fetchError: Error? = nil) {
         self.nextJob = nextJob
@@ -366,6 +415,18 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
     func replayOutbox(_ results: [BridgeJobResultEnvelope]) async throws -> BridgeOutboxReplayResponse {
         replayedResults = results
         return BridgeOutboxReplayResponse(accepted: results.count, duplicates: 0, results: results)
+    }
+
+    func cancelJob(jobID: String, message: String) async throws -> BridgeCancelJobResponse {
+        cancelledJobIDs.append(jobID)
+        createdJobs.removeAll { $0.jobID == jobID }
+        let cancelled = result(
+            jobID: jobID,
+            status: .rejected,
+            error: BridgeErrorPayload(code: "cancelled_before_delivery", message: message)
+        )
+        cancelledResults.append(cancelled)
+        return BridgeCancelJobResponse(cancelled: true, result: cancelled)
     }
 
     func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope {
@@ -393,20 +454,27 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
     }
 
     func fetchResults() async throws -> [BridgeJobResultEnvelope] {
-        [
+        if !cancelledResults.isEmpty {
+            return cancelledResults
+        }
+        return [
             result(jobID: "job_result_1", status: .succeeded),
             result(jobID: "job_result_2", status: .failed)
         ]
     }
 
-    private func result(jobID: String, status: BridgeJobStatus) -> BridgeJobResultEnvelope {
+    private func result(
+        jobID: String,
+        status: BridgeJobStatus,
+        error: BridgeErrorPayload? = nil
+    ) -> BridgeJobResultEnvelope {
         BridgeJobResultEnvelope(
             jobID: jobID,
             protocolVersion: BridgeProtocol.currentVersion,
             deviceID: "mac_test",
             status: status,
             output: nil,
-            error: status == .failed ? BridgeErrorPayload(code: "test", message: "Test failure") : nil,
+            error: error ?? (status == .failed ? BridgeErrorPayload(code: "test", message: "Test failure") : nil),
             completedAt: Date(),
             idempotencyKey: "idem_\(jobID)"
         )

@@ -131,6 +131,11 @@ struct BridgeSettingsView: View {
                     ForEach(Array(localBridge.remoteQueuedJobs.prefix(5)), id: \.jobID) { job in
                         DisclosureGroup {
                             jobDetail(job)
+                            Button("Cancel Queued Job") {
+                                cancelQueuedJob(job)
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(localBridge.pendingJob?.jobID == job.jobID)
                         } label: {
                             activityLabel(title: job.kind.rawValue, subtitle: lifecycleStatus(for: job))
                         }
@@ -173,6 +178,12 @@ struct BridgeSettingsView: View {
             if await localBridge.queueCommandPhrase(commandInput) != nil {
                 commandInput = ""
             }
+        }
+    }
+
+    private func cancelQueuedJob(_ job: BridgeJobEnvelope) {
+        Task {
+            _ = await localBridge.cancelRemoteQueuedJob(job)
         }
     }
 

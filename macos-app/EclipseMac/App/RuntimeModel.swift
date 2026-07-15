@@ -51,6 +51,13 @@ final class RuntimeModel: ObservableObject {
     }
 
     func approveTextAction() {
+        if localBridge.expirePendingJobIfNeeded() {
+            setTextActions.cancel()
+            state = .error
+            debugMessage = localBridge.bridgeMessage
+            return
+        }
+
         state = .acting
         do {
             let actionResult = try setTextActions.approve()
@@ -65,6 +72,12 @@ final class RuntimeModel: ObservableObject {
     }
 
     func approveAutomationAction() {
+        if localBridge.expirePendingJobIfNeeded() {
+            state = .error
+            debugMessage = localBridge.bridgeMessage
+            return
+        }
+
         state = .acting
         localBridge.completePendingAutomationJob()
         switch localBridge.latestResult?.status {
@@ -150,6 +163,8 @@ final class RuntimeModel: ObservableObject {
             _ = await localBridge.pollOnce()
             if localBridge.pendingJob != nil {
                 state = .waitingForApproval
+            } else if localBridge.latestResult?.status == .expired {
+                state = .error
             } else {
                 state = localBridge.bridgeStatus.hasPrefix("Bridge unavailable") ? .error : .idle
             }

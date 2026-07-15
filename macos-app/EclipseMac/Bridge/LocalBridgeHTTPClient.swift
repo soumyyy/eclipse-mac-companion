@@ -4,6 +4,7 @@ protocol LocalBridgeTransporting: Sendable {
     func fetchNextJob(deviceID: String) async throws -> BridgeJobEnvelope?
     func postResult(_ result: BridgeJobResultEnvelope) async throws -> BridgePostResultResponse
     func replayOutbox(_ results: [BridgeJobResultEnvelope]) async throws -> BridgeOutboxReplayResponse
+    func cancelJob(jobID: String, message: String) async throws -> BridgeCancelJobResponse
     func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope
     func fetchStats() async throws -> BridgeStats
     func fetchQueuedJobs() async throws -> [BridgeJobEnvelope]
@@ -19,6 +20,15 @@ struct BridgeOutboxReplayResponse: Codable, Equatable, Sendable {
     let accepted: Int
     let duplicates: Int
     let results: [BridgeJobResultEnvelope]
+}
+
+struct BridgeCancelJobResponse: Codable, Equatable, Sendable {
+    let cancelled: Bool
+    let result: BridgeJobResultEnvelope
+}
+
+struct BridgeCancelJobRequest: Codable, Equatable, Sendable {
+    let message: String
 }
 
 struct BridgeCreateJobRequest: Codable, Equatable, Sendable {
@@ -97,6 +107,14 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
     func replayOutbox(_ results: [BridgeJobResultEnvelope]) async throws -> BridgeOutboxReplayResponse {
         let data = try await post(path: "outbox/replay", body: BridgeOutboxReplayRequest(results: results))
         return try decoder.decode(BridgeOutboxReplayResponse.self, from: data)
+    }
+
+    func cancelJob(jobID: String, message: String = "Job cancelled from Eclipse Mac") async throws -> BridgeCancelJobResponse {
+        let data = try await post(
+            path: "jobs/\(jobID)/cancel",
+            body: BridgeCancelJobRequest(message: message)
+        )
+        return try decoder.decode(BridgeCancelJobResponse.self, from: data)
     }
 
     func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope {

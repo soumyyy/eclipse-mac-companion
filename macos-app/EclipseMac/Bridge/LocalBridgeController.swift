@@ -102,6 +102,7 @@ final class LocalBridgeController: ObservableObject {
     }
 
     func completePendingSetTextJob(with actionResult: SetTextActionResult?) {
+        guard !expirePendingJobIfNeeded() else { return }
         guard let pendingJob, let actionResult else { return }
         latestResult = processor.completionResult(for: pendingJob, actionResult: actionResult)
         self.pendingJob = nil
@@ -110,6 +111,7 @@ final class LocalBridgeController: ObservableObject {
     }
 
     func completePendingAutomationJob() {
+        guard !expirePendingJobIfNeeded() else { return }
         guard let pendingJob,
               let approval = latestResult?.output?.automationApproval else { return }
         latestResult = processor.automationCompletionResult(for: pendingJob, approval: approval)
@@ -125,6 +127,25 @@ final class LocalBridgeController: ObservableObject {
             bridgeMessage = "Automation action finished"
         }
         refreshOutboxCount()
+    }
+
+    @discardableResult
+    func expirePendingJobIfNeeded(now: Date = Date()) -> Bool {
+        guard let pendingJob,
+              let deadline = pendingApprovalDeadline(for: pendingJob, result: latestResult),
+              deadline < now else {
+            return false
+        }
+
+        latestResult = processor.expirationResult(
+            for: pendingJob,
+            message: "Approval expired before the Mac completed the job.",
+            completedAt: now
+        )
+        self.pendingJob = nil
+        bridgeMessage = "Queued expired receipt for local bridge"
+        refreshOutboxCount()
+        return true
     }
 
     func cancelPendingJob() {
@@ -377,6 +398,33 @@ final class LocalBridgeController: ObservableObject {
         }
     }
 
+    func cancelRemoteQueuedJob(
+        _ job: BridgeJobEnvelope,
+        message: String = "Cancelled from Eclipse Mac"
+    ) async -> Bool {
+        if !usesInjectedTransport {
+            guard saveBridgeBaseURL() else { return false }
+        }
+
+        do {
+            let response = try await transport.cancelJob(jobID: job.jobID, message: message)
+            if response.cancelled {
+                bridgeMessage = "Cancelled queued job: \(job.jobID)"
+            } else {
+                bridgeMessage = "Job already finished: \(job.jobID)"
+            }
+            latestResult = response.result
+            _ = await refreshRemoteActivity(updateMessage: false)
+            bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Connected"
+            return response.cancelled
+        } catch {
+            lastTransportRequestFailed = true
+            bridgeMessage = error.localizedDescription
+            bridgeStatus = "Bridge unavailable"
+            return false
+        }
+    }
+
     func startPolling() {
         guard pollingTask == nil else { return }
         guard saveBridgeBaseURL() else { return }
@@ -407,6 +455,8 @@ final class LocalBridgeController: ObservableObject {
     @discardableResult
     func pollOnce() async -> TimeInterval {
         lastTransportRequestFailed = false
+
+        _ = expirePendingJobIfNeeded()
 
         if pendingJob == nil {
             _ = await fetchNextRemoteJob()
@@ -495,6 +545,17 @@ final class LocalBridgeController: ObservableObject {
 
     private func refreshOutboxCount() {
         outboxCount = processor.unpostedResults(limit: 1_000).count
+    }
+
+    private func pendingApprovalDeadline(
+        for job: BridgeJobEnvelope,
+        result: BridgeJobResultEnvelope?
+    ) -> Date? {
+        let approvalDeadline = result?.output?.approval?.expiresAt
+        let automationDeadline = result?.output?.automationApproval?.expiresAt
+        return [job.expiresAt, approvalDeadline, automationDeadline]
+            .compactMap { $0 }
+            .min()
     }
 
     private static func makeDefaultStore() -> any BridgeResultStoring {
