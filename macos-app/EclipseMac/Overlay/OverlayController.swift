@@ -6,9 +6,9 @@ final class OverlayController {
     private let panel: NSPanel
 
     init(runtime: RuntimeModel) {
-        panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 310),
-            styleMask: [.nonactivatingPanel, .fullSizeContentView],
+        panel = InputCapablePanel(
+            contentRect: NSRect(x: 0, y: 0, width: 540, height: 380),
+            styleMask: [.titled, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -37,10 +37,16 @@ final class OverlayController {
             y: visibleFrame.maxY - panel.frame.height - 72
         )
         panel.setFrameOrigin(origin)
-        panel.orderFrontRegardless()
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
     }
 
     func hide() {
         panel.orderOut(nil)
     }
+}
+
+private final class InputCapablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
 }

@@ -17,6 +17,8 @@ struct SettingsView: View {
                         .tag(SettingsDestination.permissions)
                     Label("Diagnostics", systemImage: "waveform.path.ecg")
                         .tag(SettingsDestination.diagnostics)
+                    Label("Bridge", systemImage: "network")
+                        .tag(SettingsDestination.bridge)
                 }
                 .listStyle(.sidebar)
 
@@ -34,6 +36,8 @@ struct SettingsView: View {
                 PermissionDashboardView(permissionCenter: runtime.permissions)
             case .diagnostics:
                 ContextDiagnosticsView(model: runtime.contextDiagnostics)
+            case .bridge:
+                BridgeSettingsView(runtime: runtime)
             }
         }
     }
@@ -42,4 +46,5 @@ struct SettingsView: View {
 private enum SettingsDestination: Hashable {
     case permissions
     case diagnostics
+    case bridge
 }
