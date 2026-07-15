@@ -60,12 +60,14 @@ Get the app token from the VPS:
 ssh e 'cat ~/eclipse-mac-bridge/.bridge-token'
 ```
 
-Use that token in the Mac overlay:
+Use that token in the Mac app:
 
+- Open **Settings → Bridge**
 - Bridge URL: `https://bridge.eclipsn.com`
 - Bearer token: value from `.bridge-token`
 - Save
 - Start Polling
+- Use the command composer to queue context or approved text jobs
 
 Create a remote test job:
 
@@ -101,7 +103,7 @@ unset TOKEN
 
 ## Current limitations
 
-- The bridge store is in memory only.
+- The bridge stores jobs/results in SQLite at `~/eclipse-mac-bridge/bridge.sqlite3`.
 - Token is stored locally in Keychain after saving it in the app.
 - The VPS disk is already above 90% usage, so avoid installing additional services until it is cleaned up or resized.
 - SQLite is acceptable for current single-worker MVP testing; use a real queue/database before supporting multiple writers/workers.

@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1N
+## Current increment: Phase 1O
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N adds operator commands for creating and inspecting bridge work.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O adds an in-app bridge command composer.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -20,7 +20,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Ten-second context expiry and capture cancellation when ownership changes
 - Memory-only screenshot preview with a 3,840-pixel maximum dimension
 - No cursor, window shadow, file export, display capture, or continuous stream
-- One approved `ui.set_text` demo action into the currently focused editable text field
+- One approved `ui.set_text` action into the currently focused editable text field
 - Approval is bound to the original bundle ID, window ID, focused AX element, proposed text, and a ten-second freshness window
 - Text mutation is blocked for secure fields, unsupported focused elements, blocked applications, blocked windows, stale approval, and changed focus
 - Versioned local bridge job and result envelopes for `context.get_active_window` and `ui.set_text`
@@ -33,7 +33,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Example MVP job/result/heartbeat payloads
 - Development-only Python mock bridge with create-job, fetch-next-job, receive-result, and replay-outbox endpoints
 - Mac app local HTTP client for fetching the next queued bridge job and replaying SQLite outbox receipts
-- Overlay controls for manually fetching a local bridge job and posting the result outbox
+- Settings controls for bridge configuration, polling, stats, and command composition
 - Shared ISO-8601 bridge JSON coding between the mock bridge wire protocol and local persistence
 - Persisted bridge base URL, defaulting to `http://127.0.0.1:8765`
 - Overlay bridge status showing connected, waiting-for-approval, stopped, invalid URL, and unavailable states
@@ -48,6 +48,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Durable bridge-side SQLite storage for queued jobs and results via `ECLIPSE_BRIDGE_DB`
 - Authenticated bridge inspection endpoints for queued jobs and stats
 - `bridge/bridge_cli.py` operator CLI for health, stats, jobs, results, `create-context`, and `create-set-text`
+- In-app command composer for queueing `context.get_active_window` and approval-gated `ui.set_text` jobs to the configured bridge
 
 ## Privacy defaults
 
@@ -58,21 +59,23 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1N check
+## Manual Phase 1O check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
-3. Create a job with `POST /jobs` using one of the examples in `examples/jobs/`.
-4. Wait for the polling loop to fetch it. If the job is `ui.set_text`, review the pending action and approve it.
-5. Confirm the outbox is replayed automatically and the mock bridge received the receipt with `GET /results`.
-6. Stop the mock bridge and confirm the overlay moves to the unavailable/retry status instead of spinning continuously.
-7. Optional auth check: restart the bridge with `ECLIPSE_BRIDGE_TOKEN='dev-token' python3 bridge/mock_bridge.py --port 8765`, enter `dev-token` in the overlay token field, save, and confirm polling still works.
-8. Remote check: set the overlay URL to `https://bridge.eclipsn.com`, enter the VPS token from `~/eclipse-mac-bridge/.bridge-token`, save, start polling, and create a remote job through the HTTPS bridge.
-9. Operator check: run `python3 bridge/bridge_cli.py stats` with `ECLIPSE_BRIDGE_URL` and `ECLIPSE_BRIDGE_TOKEN` set.
+3. Open **Settings → Bridge** and click **Refresh Stats**.
+4. Queue **Active Window Context**, or enter text and queue a text job.
+5. Wait for the polling loop to fetch it. If the job is `ui.set_text`, review the pending action and approve it.
+6. Confirm the outbox is replayed automatically and the mock bridge received the receipt with `GET /results`.
+7. Stop the mock bridge and confirm the overlay moves to the unavailable/retry status instead of spinning continuously.
+8. Optional auth check: restart the bridge with `ECLIPSE_BRIDGE_TOKEN='dev-token' python3 bridge/mock_bridge.py --port 8765`, enter `dev-token` in Settings → Bridge, save, and confirm polling still works.
+9. Remote check: set the bridge URL to `https://bridge.eclipsn.com`, enter the VPS token from `~/eclipse-mac-bridge/.bridge-token`, save, start polling, and queue a remote job from Settings.
+10. Operator check: run `python3 bridge/bridge_cli.py stats` with `ECLIPSE_BRIDGE_URL` and `ECLIPSE_BRIDGE_TOKEN` set.
+11. Confirm **Refresh Stats** reflects queued jobs and stored results.
 
 ## Next increment
 
-Start wiring the higher-level companion experience on top of the bridge: a small command composer that creates `context.get_active_window` and approved `ui.set_text` jobs without operator-focused tooling.
+Improve the higher-level companion experience: add a concise command history/results panel and make the composer status clearer after queued jobs complete.
 
 ## UI development launch arguments
 

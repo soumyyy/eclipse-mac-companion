@@ -11,12 +11,15 @@ final class LocalBridgeController: ObservableObject {
     @Published private(set) var bridgeMessage = "Local bridge ready"
     @Published private(set) var bridgeStatus = "Polling stopped"
     @Published private(set) var isPolling = false
+    @Published private(set) var bridgeStats: BridgeStats?
+    @Published private(set) var lastQueuedJob: BridgeJobEnvelope?
     @Published var bridgeBaseURLString: String
     @Published var bridgeBearerToken: String
 
     private let processor: LocalBridgeProcessor
     private let configurationStore: LocalBridgeConfigurationStore
     private var transport: any LocalBridgeTransporting
+    private let usesInjectedTransport: Bool
     private let deviceID: String
     private var pollingTask: Task<Void, Never>?
     private var consecutiveFailures = 0
@@ -37,6 +40,7 @@ final class LocalBridgeController: ObservableObject {
         let configuration = configurationStore.load()
         bridgeBaseURLString = configuration.baseURLString
         bridgeBearerToken = configuration.bearerToken
+        usesInjectedTransport = transport != nil
         if let transport {
             self.transport = transport
         } else if let url = configuration.baseURL {
@@ -103,6 +107,57 @@ final class LocalBridgeController: ObservableObject {
         refreshOutboxCount()
     }
 
+    func queueContextJob(ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
+        await queueJob(
+            BridgeCreateJobRequest(
+                deviceID: deviceID,
+                kind: .contextGetActiveWindow,
+                risk: .read,
+                input: .empty,
+                ttlSeconds: ttlSeconds,
+                idempotencyKey: nil
+            ),
+            successMessage: "Queued context job"
+        )
+    }
+
+    func queueSetTextJob(text: String, ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            bridgeMessage = "Enter text before queueing a text job"
+            return nil
+        }
+
+        return await queueJob(
+            BridgeCreateJobRequest(
+                deviceID: deviceID,
+                kind: .uiSetText,
+                risk: .reversible,
+                input: .setText(trimmed),
+                ttlSeconds: ttlSeconds,
+                idempotencyKey: nil
+            ),
+            successMessage: "Queued text job"
+        )
+    }
+
+    func refreshRemoteStats() async -> BridgeStats? {
+        if !usesInjectedTransport {
+            guard saveBridgeBaseURL() else { return nil }
+        }
+        do {
+            let stats = try await transport.fetchStats()
+            bridgeStats = stats
+            bridgeMessage = "Bridge stats refreshed"
+            return stats
+        } catch {
+            lastTransportRequestFailed = true
+            bridgeMessage = error.localizedDescription
+            bridgeStatus = "Bridge unavailable"
+            return nil
+        }
+    }
+
     @discardableResult
     func saveBridgeBaseURL() -> Bool {
         let trimmed = bridgeBaseURLString.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -128,11 +183,35 @@ final class LocalBridgeController: ObservableObject {
             bridgeMessage = error.localizedDescription
             return false
         }
-        transport = LocalBridgeHTTPClient(baseURL: url, bearerToken: configuration.normalizedBearerToken)
+        if !usesInjectedTransport {
+            transport = LocalBridgeHTTPClient(baseURL: url, bearerToken: configuration.normalizedBearerToken)
+        }
         consecutiveFailures = 0
         bridgeStatus = isPolling ? "Polling \(trimmed)" : "Bridge URL saved"
         bridgeMessage = "Bridge URL saved"
         return true
+    }
+
+    private func queueJob(
+        _ request: BridgeCreateJobRequest,
+        successMessage: String
+    ) async -> BridgeJobEnvelope? {
+        if !usesInjectedTransport {
+            guard saveBridgeBaseURL() else { return nil }
+        }
+        do {
+            let job = try await transport.createJob(request)
+            lastQueuedJob = job
+            bridgeMessage = "\(successMessage): \(job.jobID)"
+            bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Job queued"
+            bridgeStats = try? await transport.fetchStats()
+            return job
+        } catch {
+            lastTransportRequestFailed = true
+            bridgeMessage = error.localizedDescription
+            bridgeStatus = "Bridge unavailable"
+            return nil
+        }
     }
 
     func startPolling() {

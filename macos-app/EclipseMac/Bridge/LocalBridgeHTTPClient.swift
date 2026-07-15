@@ -4,6 +4,8 @@ protocol LocalBridgeTransporting: Sendable {
     func fetchNextJob(deviceID: String) async throws -> BridgeJobEnvelope?
     func postResult(_ result: BridgeJobResultEnvelope) async throws -> BridgePostResultResponse
     func replayOutbox(_ results: [BridgeJobResultEnvelope]) async throws -> BridgeOutboxReplayResponse
+    func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope
+    func fetchStats() async throws -> BridgeStats
 }
 
 struct BridgePostResultResponse: Codable, Equatable, Sendable {
@@ -15,6 +17,34 @@ struct BridgeOutboxReplayResponse: Codable, Equatable, Sendable {
     let accepted: Int
     let duplicates: Int
     let results: [BridgeJobResultEnvelope]
+}
+
+struct BridgeCreateJobRequest: Codable, Equatable, Sendable {
+    let deviceID: String
+    let kind: BridgeJobKind
+    let risk: BridgeRisk
+    let input: BridgeJobInput
+    let ttlSeconds: Int
+    let idempotencyKey: String?
+
+    enum CodingKeys: String, CodingKey {
+        case deviceID = "device_id"
+        case kind
+        case risk
+        case input
+        case ttlSeconds = "ttl_seconds"
+        case idempotencyKey = "idempotency_key"
+    }
+}
+
+struct BridgeStats: Codable, Equatable, Sendable {
+    let queuedJobs: Int
+    let results: Int
+
+    enum CodingKeys: String, CodingKey {
+        case queuedJobs = "queued_jobs"
+        case results
+    }
 }
 
 final class LocalBridgeHTTPClient: LocalBridgeTransporting {
@@ -57,6 +87,22 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
     func replayOutbox(_ results: [BridgeJobResultEnvelope]) async throws -> BridgeOutboxReplayResponse {
         let data = try await post(path: "outbox/replay", body: BridgeOutboxReplayRequest(results: results))
         return try decoder.decode(BridgeOutboxReplayResponse.self, from: data)
+    }
+
+    func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope {
+        let data = try await post(path: "jobs", body: request)
+        return try decoder.decode(BridgeJobEnvelope.self, from: data)
+    }
+
+    func fetchStats() async throws -> BridgeStats {
+        let data = try await get(path: "stats")
+        return try decoder.decode(BridgeStats.self, from: data)
+    }
+
+    private func get(path: String) async throws -> Data {
+        let (data, response) = try await session.data(for: request(url: baseURL.appendingPathComponent(path)))
+        try validate(statusCode: try statusCode(from: response), data: data)
+        return data
     }
 
     private func post<T: Encodable>(path: String, body: T) async throws -> Data {

@@ -3,6 +3,7 @@ import SwiftUI
 struct BridgeSettingsView: View {
     @ObservedObject var runtime: RuntimeModel
     @ObservedObject private var localBridge: LocalBridgeController
+    @State private var textJobInput = ""
 
     init(runtime: RuntimeModel) {
         self.runtime = runtime
@@ -45,7 +46,49 @@ struct BridgeSettingsView: View {
             Section("Status") {
                 LabeledContent("Bridge", value: localBridge.bridgeStatus)
                 LabeledContent("Outbox", value: "\(localBridge.outboxCount)")
+                if let stats = localBridge.bridgeStats {
+                    LabeledContent("Queued jobs", value: "\(stats.queuedJobs)")
+                    LabeledContent("Remote results", value: "\(stats.results)")
+                }
                 LabeledContent("Device ID", value: LocalBridgeController.defaultDeviceID)
+                Button("Refresh Stats") {
+                    Task {
+                        _ = await localBridge.refreshRemoteStats()
+                    }
+                }
+            }
+
+            Section("Command composer") {
+                Text("Queue work for this Mac through the configured bridge. Text jobs still require Mac-side approval before anything is typed.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Queue Active Window Context") {
+                    Task {
+                        _ = await localBridge.queueContextJob()
+                    }
+                }
+
+                TextField("Text to type after approval", text: $textJobInput)
+                    .textFieldStyle(.roundedBorder)
+
+                HStack {
+                    Button("Queue Text Job") {
+                        Task {
+                            if await localBridge.queueSetTextJob(text: textJobInput) != nil {
+                                textJobInput = ""
+                            }
+                        }
+                    }
+                    .disabled(textJobInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    Spacer()
+                }
+
+                if let job = localBridge.lastQueuedJob {
+                    LabeledContent("Last queued", value: job.jobID)
+                    LabeledContent("Kind", value: job.kind.rawValue)
+                }
             }
 
             Section("VPS bridge") {

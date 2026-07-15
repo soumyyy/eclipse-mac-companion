@@ -126,6 +126,61 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertEqual(controller.bridgeStatus, "Bridge unavailable; retrying in 8s")
     }
 
+    func testQueueContextJobCreatesRemoteReadJobAndRefreshesStats() async {
+        let transport = FakeLocalBridgeTransport(nextJob: nil)
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+
+        let job = await controller.queueContextJob()
+
+        XCTAssertEqual(job?.kind, .contextGetActiveWindow)
+        XCTAssertEqual(job?.risk, .read)
+        XCTAssertEqual(transport.createdRequests.first?.deviceID, "mac_test")
+        XCTAssertEqual(transport.createdRequests.first?.kind, .contextGetActiveWindow)
+        XCTAssertEqual(controller.lastQueuedJob?.jobID, job?.jobID)
+        XCTAssertEqual(controller.bridgeStats, BridgeStats(queuedJobs: 1, results: 2))
+    }
+
+    func testQueueSetTextJobCreatesRemoteReversibleJob() async {
+        let transport = FakeLocalBridgeTransport(nextJob: nil)
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+
+        let job = await controller.queueSetTextJob(text: " Hello from composer ")
+
+        XCTAssertEqual(job?.kind, .uiSetText)
+        XCTAssertEqual(job?.risk, .reversible)
+        XCTAssertEqual(transport.createdRequests.first?.input.text, "Hello from composer")
+        XCTAssertEqual(controller.bridgeStatus, "Job queued")
+    }
+
+    func testQueueSetTextJobRejectsEmptyTextBeforeNetwork() async {
+        let transport = FakeLocalBridgeTransport(nextJob: nil)
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+
+        let job = await controller.queueSetTextJob(text: "   ")
+
+        XCTAssertNil(job)
+        XCTAssertTrue(transport.createdRequests.isEmpty)
+        XCTAssertEqual(controller.bridgeMessage, "Enter text before queueing a text job")
+    }
+
     private func job(
         kind: BridgeJobKind,
         risk: BridgeRisk,
@@ -170,6 +225,7 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
     private let fetchError: Error?
     private(set) var fetchCount = 0
     private(set) var replayedResults: [BridgeJobResultEnvelope] = []
+    private(set) var createdRequests: [BridgeCreateJobRequest] = []
 
     init(nextJob: BridgeJobEnvelope?, fetchError: Error? = nil) {
         self.nextJob = nextJob
@@ -191,6 +247,24 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
     func replayOutbox(_ results: [BridgeJobResultEnvelope]) async throws -> BridgeOutboxReplayResponse {
         replayedResults = results
         return BridgeOutboxReplayResponse(accepted: results.count, duplicates: 0, results: results)
+    }
+
+    func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope {
+        createdRequests.append(request)
+        return BridgeJobEnvelope(
+            jobID: "job_created_\(createdRequests.count)",
+            protocolVersion: BridgeProtocol.currentVersion,
+            deviceID: request.deviceID,
+            kind: request.kind,
+            risk: request.risk,
+            input: request.input,
+            expiresAt: Date().addingTimeInterval(TimeInterval(request.ttlSeconds)),
+            idempotencyKey: request.idempotencyKey ?? "idem_created_\(createdRequests.count)"
+        )
+    }
+
+    func fetchStats() async throws -> BridgeStats {
+        BridgeStats(queuedJobs: createdRequests.count, results: 2)
     }
 }
 

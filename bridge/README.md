@@ -40,7 +40,9 @@ Useful endpoints:
 - `GET /results/{job_id}`
 - `GET /stats`
 
-The server stores jobs and results in memory. It validates the same MVP constraints as the Swift local bridge: protocol `0.1`, supported job kinds, risk matching, and required `input.text` for `ui.set_text`.
+Without `ECLIPSE_BRIDGE_DB`, the server stores jobs and results in memory. With `ECLIPSE_BRIDGE_DB`, queued jobs and results are stored in SQLite. It validates the same MVP constraints as the Swift local bridge: protocol `0.1`, supported job kinds, risk matching, and required `input.text` for `ui.set_text`.
+
+The Mac app can also create bridge jobs from **Settings → Bridge**. The command composer supports `context.get_active_window` and `ui.set_text`; text jobs still require Mac-side approval before typing.
 
 Operator CLI:
 
@@ -61,6 +63,6 @@ Minimal VPS profile:
 - Bind the Python bridge to `127.0.0.1:8765` behind a reverse proxy, or `0.0.0.0:8765` only behind a firewall/VPN.
 - Set `ECLIPSE_BRIDGE_TOKEN` to a long random value.
 - Terminate TLS at the reverse proxy and use an `https://` bridge URL in the Mac app.
-- Enter the same bearer token in the overlay token field.
+- Enter the same bearer token in **Settings → Bridge**.
 - Set `ECLIPSE_BRIDGE_DB` so jobs/results survive service restarts.
 - Keep this bridge for development only; the SQLite-backed mode is durable enough for MVP testing but not a full production queue.
