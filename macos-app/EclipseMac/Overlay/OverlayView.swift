@@ -18,18 +18,20 @@ struct OverlayView: View {
         VStack(alignment: .leading, spacing: 16) {
             header
 
-            if let pending = textActions.pendingAction?.presentation {
-                approvalCard(pending)
-            } else if let automationApproval = localBridge.pendingAutomationApproval {
-                automationApprovalCard(automationApproval)
-            } else if let result = textActions.result {
-                resultCard(result)
+            if isExpanded {
+                if let pending = textActions.pendingAction?.presentation {
+                    approvalCard(pending)
+                } else if let automationApproval = localBridge.pendingAutomationApproval {
+                    automationApprovalCard(automationApproval)
+                } else if let result = textActions.result {
+                    resultCard(result)
+                }
             } else {
-                preparationCard
+                companionCard
             }
         }
-        .padding(22)
-        .frame(width: 540, height: 380, alignment: .topLeading)
+        .padding(isExpanded ? 22 : 16)
+        .frame(width: overlaySize.width, height: overlaySize.height, alignment: .topLeading)
         .background(.ultraThinMaterial)
         .background(EclipseTheme.canvas.opacity(0.32))
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
@@ -43,12 +45,22 @@ struct OverlayView: View {
         .padding(8)
     }
 
+    private var isExpanded: Bool {
+        textActions.pendingAction != nil ||
+            textActions.result != nil ||
+            localBridge.pendingAutomationApproval != nil
+    }
+
+    private var overlaySize: CGSize {
+        isExpanded ? CGSize(width: 540, height: 380) : CGSize(width: 430, height: 246)
+    }
+
     private var header: some View {
         HStack(spacing: 14) {
-            EclipseOrb(state: runtime.state, size: 46)
+            EclipseOrb(state: runtime.state, size: isExpanded ? 46 : 38)
             VStack(alignment: .leading, spacing: 3) {
                 Text(runtime.state.title)
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.system(size: isExpanded ? 17 : 15, weight: .semibold, design: .rounded))
                 Text(runtime.debugMessage)
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
@@ -62,6 +74,54 @@ struct OverlayView: View {
                 .padding(.vertical, 6)
                 .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
         }
+    }
+
+    private var companionCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Label(localBridge.isPolling ? "Hermes bridge active" : "Hermes bridge paused", systemImage: localBridge.isPolling ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(localBridge.bridgeStatus.hasPrefix("Bridge unavailable") || localBridge.bridgeStatus.hasPrefix("Invalid") ? .orange : .secondary)
+                    .lineLimit(1)
+                Spacer()
+                Text("eyes + hands")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.tertiary)
+            }
+
+            TextField("Ask Hermes about this screen…", text: $runtime.companionPrompt)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit {
+                    runtime.prepareCompanionAskForHermes()
+                }
+
+            Text(runtime.companionContextSummary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+
+            HStack(spacing: 8) {
+                Button("Ask Hermes") {
+                    runtime.prepareCompanionAskForHermes()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(EclipseTheme.violet)
+                .disabled(runtime.companionPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                Button(localBridge.isPolling ? "Pause Bridge" : "Start Bridge") {
+                    runtime.toggleLocalBridgePolling()
+                }
+                .buttonStyle(.bordered)
+
+                Spacer()
+
+                Button("Settings") {
+                    runtime.openSettings()
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .approvalSurface()
     }
 
     private var preparationCard: some View {

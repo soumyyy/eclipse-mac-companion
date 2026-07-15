@@ -3,11 +3,13 @@ import SwiftUI
 
 @MainActor
 final class OverlayController {
+    private let runtime: RuntimeModel
     private let panel: NSPanel
 
     init(runtime: RuntimeModel) {
+        self.runtime = runtime
         panel = InputCapablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 540, height: 380),
+            contentRect: NSRect(origin: .zero, size: Self.compactSize),
             styleMask: [.titled, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -30,6 +32,7 @@ final class OverlayController {
     }
 
     func show() {
+        resizeForCurrentState()
         let mouseLocation = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouseLocation) }) ?? NSScreen.main ?? NSScreen.screens.first else { return }
         let visibleFrame = screen.visibleFrame
@@ -61,6 +64,19 @@ final class OverlayController {
     private static func clamp(_ value: CGFloat, lower: CGFloat, upper: CGFloat) -> CGFloat {
         min(max(value, lower), upper)
     }
+
+    private func resizeForCurrentState() {
+        let size = runtime.prefersExpandedOverlay ? Self.expandedSize : Self.compactSize
+        guard panel.frame.size != size else { return }
+        panel.setFrame(
+            NSRect(origin: panel.frame.origin, size: size),
+            display: true,
+            animate: panel.isVisible
+        )
+    }
+
+    private static let compactSize = NSSize(width: 430, height: 246)
+    private static let expandedSize = NSSize(width: 540, height: 380)
 }
 
 private final class InputCapablePanel: NSPanel {

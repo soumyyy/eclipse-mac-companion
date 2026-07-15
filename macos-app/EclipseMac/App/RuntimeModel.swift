@@ -7,10 +7,19 @@ final class RuntimeModel: ObservableObject {
 
     @Published var state: AssistantState = .idle
     @Published var debugMessage = "Ready on this Mac"
+    @Published var companionPrompt = ""
+    @Published var companionLastPrompt = ""
+    @Published var companionContextSummary = "Ask Hermes about the screen you are on."
     let permissions = PermissionCenter()
     let contextDiagnostics = ContextDiagnosticsModel()
     let setTextActions: SetTextActionController
     let localBridge: LocalBridgeController
+
+    var prefersExpandedOverlay: Bool {
+        setTextActions.pendingAction != nil ||
+            setTextActions.result != nil ||
+            localBridge.pendingAutomationApproval != nil
+    }
 
     private init() {
         let setTextActions = SetTextActionController()
@@ -25,6 +34,30 @@ final class RuntimeModel: ObservableObject {
 
     func openSettings() {
         NotificationCenter.default.post(name: .openEclipseSettings, object: nil)
+    }
+
+    func prepareCompanionAskForHermes() {
+        let prompt = companionPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty else { return }
+
+        state = .thinking
+        debugMessage = "Packing screen context for Hermes"
+        companionLastPrompt = prompt
+        companionPrompt = ""
+
+        do {
+            let snapshot = try AccessibilityContextCollector().capture()
+            let appName = snapshot.activeApp?.name ?? "Unknown app"
+            let windowTitle = snapshot.window?.title?.isEmpty == false ? snapshot.window?.title : "active window"
+            let focused = snapshot.focusedElement?.label ?? snapshot.focusedElement?.role ?? "no focused element"
+            companionContextSummary = "Ready for Hermes · \(appName) · \(windowTitle ?? "active window") · \(focused)"
+            state = .idle
+            debugMessage = "Hermes ask endpoint is next; context package is ready"
+        } catch {
+            state = .error
+            debugMessage = error.localizedDescription
+            companionContextSummary = "Could not collect context for Hermes: \(error.localizedDescription)"
+        }
     }
 
     func prepareDemoTextAction() {
