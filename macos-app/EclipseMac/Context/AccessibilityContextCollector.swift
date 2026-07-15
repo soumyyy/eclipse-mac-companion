@@ -40,22 +40,26 @@ final class AccessibilityContextCollector: ContextCollecting {
 
     private let policy: ContextPrivacyPolicy
     private let workspace: NSWorkspace
+    private let ownProcessIdentifier: pid_t
 
     init(
         policy: ContextPrivacyPolicy = .default,
-        workspace: NSWorkspace = .shared
+        workspace: NSWorkspace = .shared,
+        ownProcessIdentifier: pid_t = ProcessInfo.processInfo.processIdentifier
     ) {
         self.policy = policy
         self.workspace = workspace
+        self.ownProcessIdentifier = ownProcessIdentifier
     }
 
     func capture() throws -> ContextSnapshot {
         guard AXIsProcessTrusted() else {
             throw ContextCollectorError.accessibilityPermissionRequired
         }
-        guard let runningApplication = workspace.frontmostApplication else {
+        guard let target = contextTarget() else {
             throw ContextCollectorError.noActiveApplication
         }
+        let runningApplication = target.application
 
         let bundleID = runningApplication.bundleIdentifier ?? "unknown"
         let application = ActiveApplication(
@@ -78,11 +82,18 @@ final class AccessibilityContextCollector: ContextCollecting {
             from: applicationElement,
             attribute: Attribute.focusedWindow
         ) else {
+            if let targetWindow = target.window {
+                return fallbackSnapshot(
+                    application: application,
+                    targetWindow: targetWindow
+                )
+            }
             throw ContextCollectorError.accessibilityReadFailed
         }
 
         var redactions: [Redaction] = []
         let rawWindowTitle = stringValue(from: windowElement, attribute: Attribute.title)
+            ?? target.window?.title
         let windowTitle = policy.sanitize(rawWindowTitle)
         if windowTitle.wasTruncated {
             redactions.append(.truncatedText)
@@ -91,7 +102,7 @@ final class AccessibilityContextCollector: ContextCollecting {
         let windowID = activeWindowID(
             for: windowElement,
             processIdentifier: runningApplication.processIdentifier
-        )
+        ) ?? target.window?.id
         if policy.blocks(windowTitle: rawWindowTitle) {
             redactions.append(.blockedWindow)
             return snapshot(
@@ -115,6 +126,101 @@ final class AccessibilityContextCollector: ContextCollecting {
             window: ActiveWindow(id: windowID, title: windowTitle.value),
             focusedElement: focusedContext.element,
             selectedText: focusedContext.selectedText,
+            redactions: redactions
+        )
+    }
+
+    private struct WindowStackTarget {
+        let application: NSRunningApplication
+        let window: ActiveWindow?
+    }
+
+    private func contextTarget() -> WindowStackTarget? {
+        guard let frontmostApplication = workspace.frontmostApplication else {
+            return nil
+        }
+        let frontmostTarget = WindowStackTarget(application: frontmostApplication, window: nil)
+        guard shouldIgnoreForUnderlyingContext(frontmostApplication) else {
+            return frontmostTarget
+        }
+        return topVisibleNonEclipseWindowTarget() ?? frontmostTarget
+    }
+
+    private func shouldIgnoreForUnderlyingContext(_ application: NSRunningApplication) -> Bool {
+        if application.processIdentifier == ownProcessIdentifier {
+            return true
+        }
+        let bundleID = application.bundleIdentifier ?? ""
+        if bundleID == Bundle.main.bundleIdentifier {
+            return true
+        }
+        return bundleID.hasPrefix("com.soumya.eclipse-mac")
+    }
+
+    private func topVisibleNonEclipseWindowTarget() -> WindowStackTarget? {
+        guard let windows = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements],
+            kCGNullWindowID
+        ) as? [[String: Any]] else {
+            return nil
+        }
+
+        for window in windows {
+            guard let ownerPID = window[kCGWindowOwnerPID as String] as? pid_t,
+                  ownerPID != ownProcessIdentifier,
+                  let layer = window[kCGWindowLayer as String] as? Int,
+                  layer == 0,
+                  let runningApplication = NSRunningApplication(processIdentifier: ownerPID),
+                  !shouldIgnoreForUnderlyingContext(runningApplication),
+                  isVisibleContextWindow(window) else {
+                continue
+            }
+
+            let windowID = (window[kCGWindowNumber as String] as? NSNumber)?.uint32Value
+            let windowTitle = window[kCGWindowName as String] as? String
+            return WindowStackTarget(
+                application: runningApplication,
+                window: ActiveWindow(id: windowID, title: windowTitle)
+            )
+        }
+        return nil
+    }
+
+    private func isVisibleContextWindow(_ window: [String: Any]) -> Bool {
+        if let alpha = window[kCGWindowAlpha as String] as? CGFloat, alpha <= 0 {
+            return false
+        }
+        guard let rawBounds = window[kCGWindowBounds as String] as? [String: Any],
+              let bounds = CGRect(dictionaryRepresentation: rawBounds as CFDictionary) else {
+            return false
+        }
+        return bounds.width >= 80 && bounds.height >= 40
+    }
+
+    private func fallbackSnapshot(
+        application: ActiveApplication,
+        targetWindow: ActiveWindow
+    ) -> ContextSnapshot {
+        var redactions: [Redaction] = []
+        let windowTitle = policy.sanitize(targetWindow.title)
+        if windowTitle.wasTruncated {
+            redactions.append(.truncatedText)
+        }
+        if policy.blocks(windowTitle: targetWindow.title) {
+            redactions.append(.blockedWindow)
+            return snapshot(
+                application: application,
+                window: ActiveWindow(id: targetWindow.id, title: nil),
+                focusedElement: nil,
+                selectedText: nil,
+                redactions: redactions
+            )
+        }
+        return snapshot(
+            application: application,
+            window: ActiveWindow(id: targetWindow.id, title: windowTitle.value),
+            focusedElement: nil,
+            selectedText: nil,
             redactions: redactions
         )
     }
