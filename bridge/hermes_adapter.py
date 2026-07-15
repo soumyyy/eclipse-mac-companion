@@ -39,7 +39,7 @@ class EclipseMacHermesAdapter:
                     "body": {"type": "string"},
                 },
             },
-            "wait_default": False,
+            "wait_default": True,
         },
         "mac.type_text": {
             "description": "Request Mac-side approval to type text into the current focused field.",
@@ -49,7 +49,7 @@ class EclipseMacHermesAdapter:
                 "required": ["text"],
                 "properties": {"text": {"type": "string", "minLength": 1}},
             },
-            "wait_default": False,
+            "wait_default": True,
         },
         "mac.press_key": {
             "description": "Request Mac-side approval to press a small allowed key.",
@@ -62,7 +62,7 @@ class EclipseMacHermesAdapter:
                     "modifiers": {"type": "array", "items": {"type": "string"}},
                 },
             },
-            "wait_default": False,
+            "wait_default": True,
         },
         "mac.click_element": {
             "description": "Request Mac-side approval to AXPress an exact role/label matched element.",
@@ -75,7 +75,7 @@ class EclipseMacHermesAdapter:
                     "element_label": {"type": "string"},
                 },
             },
-            "wait_default": False,
+            "wait_default": True,
         },
     }
 

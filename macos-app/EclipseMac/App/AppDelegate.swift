@@ -1,9 +1,11 @@
 import AppKit
+import Combine
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var overlayController: OverlayController?
     private var hotKeyService: GlobalHotKeyService?
+    private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let overlayController = OverlayController(runtime: RuntimeModel.shared)
@@ -21,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
         RuntimeModel.shared.permissions.refresh()
+        installApprovalPresentationHandler(overlayController: overlayController)
 
         if !ProcessInfo.processInfo.arguments.contains("--capture-window-once") {
             RuntimeModel.shared.startLocalBridgePollingOnLaunch()
@@ -51,6 +54,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func toggleOverlay() {
         overlayController?.toggle()
+    }
+
+    private func installApprovalPresentationHandler(overlayController: OverlayController) {
+        let runtime = RuntimeModel.shared
+        runtime.localBridge.$pendingJob
+            .sink { [weak overlayController] pendingJob in
+                if pendingJob != nil {
+                    runtime.state = .waitingForApproval
+                    runtime.debugMessage = runtime.localBridge.bridgeMessage
+                    overlayController?.show()
+                } else if runtime.state == .waitingForApproval {
+                    runtime.state = .idle
+                    runtime.debugMessage = runtime.localBridge.bridgeMessage
+                }
+            }
+            .store(in: &cancellables)
     }
 
     private func runOneShotWindowCapture() {

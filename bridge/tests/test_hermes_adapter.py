@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import threading
 import unittest
 from pathlib import Path
@@ -54,6 +55,25 @@ class HermesAdapterTests(unittest.TestCase):
         self.assertIn("mac.press_key", tool_names)
         self.assertEqual(response["job"]["kind"], "notification.show")
         self.assertEqual(response["job"]["input"]["title"], "Tool hello")
+
+    def test_all_hermes_tools_wait_by_default_for_user_facing_calls(self):
+        adapter = EclipseMacHermesAdapter(
+            bridge_url=self.base_url,
+            token="adapter_test_token",
+            device_id="mac_adapter_wait_defaults",
+        )
+
+        tools = {tool["name"]: tool for tool in adapter.list_tools()}
+
+        for name in [
+            "mac.get_active_window",
+            "mac.capture_window",
+            "mac.show_notification",
+            "mac.type_text",
+            "mac.press_key",
+            "mac.click_element",
+        ]:
+            self.assertTrue(tools[name]["wait_default"], name)
 
     def test_adapter_posts_heartbeat_and_lists_devices(self):
         adapter = EclipseMacHermesAdapter(
@@ -125,6 +145,38 @@ class HermesAdapterTests(unittest.TestCase):
         body = json.loads(completed.stdout)
         self.assertTrue(body["timed_out"])
         self.assertTrue(body["cancellation"]["cancelled"])
+
+    def test_hermes_plugin_passes_timeout_as_call_local_argument(self):
+        plugin_path = Path(__file__).resolve().parents[2] / "hermes-plugin" / "eclipse-mac" / "__init__.py"
+        spec = importlib.util.spec_from_file_location("eclipse_mac_plugin_test", plugin_path)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        captured = {}
+
+        def fake_run_host(command, global_options=None):
+            captured["command"] = command
+            captured["global_options"] = global_options
+            return "{}"
+
+        module.run_host = fake_run_host
+
+        module.invoke_tool("mac.press_key", {"key": "escape", "wait": True, "timeout_seconds": 10})
+
+        self.assertEqual(
+            captured["command"],
+            [
+                "call",
+                "mac.press_key",
+                "--arguments",
+                '{"key":"escape"}',
+                "--wait",
+                "--timeout-seconds",
+                "10",
+            ],
+        )
+        self.assertIsNone(captured["global_options"])
 
     def test_adapter_cancels_queued_job_on_timeout(self):
         adapter = EclipseMacHermesAdapter(

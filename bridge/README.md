@@ -76,10 +76,11 @@ from hermes_adapter import EclipseMacHermesAdapter
 
 adapter = EclipseMacHermesAdapter()
 adapter.get_active_window(wait=True, timeout_seconds=10)
-adapter.type_text_with_approval("Hello", wait=False)
+adapter.invoke_tool("mac.type_text", {"text": "Hello"}, timeout_seconds=30)
 
-# If wait=True times out, queued jobs are cancelled by default when the Mac has
-# not fetched them yet. The return shape includes timed_out and cancellation.
+# Hermes-facing tool calls wait by default. If a wait times out, queued jobs are
+# cancelled by default when the Mac has not fetched them yet. The return shape
+# includes timed_out and cancellation.
 adapter.press_key_with_approval("escape", wait=True, timeout_seconds=10)
 ```
 
@@ -92,7 +93,7 @@ export ECLIPSE_BRIDGE_TOKEN='replace-with-the-vps-token'
 python3 bridge/hermes_tool_host.py list-tools --pretty
 python3 bridge/hermes_tool_host.py heartbeat
 python3 bridge/hermes_tool_host.py devices --pretty
-python3 bridge/hermes_tool_host.py call mac.get_active_window --wait --timeout-seconds 10 --pretty
+python3 bridge/hermes_tool_host.py call mac.get_active_window --timeout-seconds 10 --pretty
 python3 bridge/hermes_tool_host.py call mac.press_key --arguments '{"key":"escape"}' --no-wait
 ```
 
