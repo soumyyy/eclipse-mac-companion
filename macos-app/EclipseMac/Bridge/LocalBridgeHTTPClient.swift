@@ -11,6 +11,7 @@ protocol LocalBridgeTransporting: Sendable {
     func fetchResults() async throws -> [BridgeJobResultEnvelope]
     func postHeartbeat(_ heartbeat: BridgeHeartbeatRequest) async throws -> BridgeHeartbeatResponse
     func fetchDevices() async throws -> [BridgeDevicePresence]
+    func askCompanion(_ request: BridgeCompanionAskRequest) async throws -> BridgeCompanionAskResponse
 }
 
 struct BridgePostResultResponse: Codable, Equatable, Sendable {
@@ -113,6 +114,38 @@ struct BridgeStats: Codable, Equatable, Sendable {
     }
 }
 
+struct BridgeCompanionAskRequest: Codable, Equatable, Sendable {
+    let protocolVersion: String
+    let deviceID: String
+    let prompt: String
+    let context: ContextSnapshot
+    let sentAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case protocolVersion = "protocol_version"
+        case deviceID = "device_id"
+        case prompt
+        case context
+        case sentAt = "sent_at"
+    }
+}
+
+struct BridgeCompanionAskResponse: Codable, Equatable, Sendable {
+    let responseID: String
+    let answer: String
+    let mode: String
+    let createdAt: Date
+    let contextSummary: String?
+
+    enum CodingKeys: String, CodingKey {
+        case responseID = "response_id"
+        case answer
+        case mode
+        case createdAt = "created_at"
+        case contextSummary = "context_summary"
+    }
+}
+
 private struct BridgeJobsResponse: Decodable {
     let jobs: [BridgeJobEnvelope]
 }
@@ -203,6 +236,11 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
     func fetchDevices() async throws -> [BridgeDevicePresence] {
         let data = try await get(path: "devices")
         return try decoder.decode(BridgeDevicesResponse.self, from: data).devices
+    }
+
+    func askCompanion(_ request: BridgeCompanionAskRequest) async throws -> BridgeCompanionAskResponse {
+        let data = try await post(path: "ask", body: request)
+        return try decoder.decode(BridgeCompanionAskResponse.self, from: data)
     }
 
     private func get(path: String) async throws -> Data {

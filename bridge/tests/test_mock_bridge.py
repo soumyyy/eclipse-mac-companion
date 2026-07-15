@@ -156,6 +156,29 @@ class MockBridgeTests(unittest.TestCase):
         self.assertEqual(listed[0]["status"], "polling")
         self.assertEqual(listed[0]["outbox_count"], 2)
 
+    def test_accepts_companion_ask_and_returns_contextual_scaffold(self):
+        response = self.post("/ask", {
+            "protocol_version": "0.1",
+            "device_id": "mac_ask_test",
+            "prompt": "What am I looking at?",
+            "sent_at": "2026-07-15T12:00:00Z",
+            "context": {
+                "snapshot_id": "ctx_test",
+                "captured_at": "2026-07-15T12:00:00Z",
+                "active_app": {"bundle_id": "com.apple.Notes", "name": "Notes"},
+                "window": {"id": 123, "title": "Meeting notes"},
+                "focused_element": {"role": "AXTextArea", "label": "Body", "value_preview": "Hello"},
+                "selected_text": None,
+                "visible_elements": [],
+                "screenshot_ref": None,
+                "redactions": [],
+            },
+        })
+
+        self.assertEqual(response["mode"], "scaffold")
+        self.assertIn("What am I looking at?", response["answer"])
+        self.assertEqual(response["context_summary"], "Notes · Meeting notes · Body")
+
     def test_replays_outbox_batch(self):
         body = {
             "results": [

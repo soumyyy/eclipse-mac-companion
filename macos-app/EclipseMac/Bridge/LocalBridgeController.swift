@@ -313,6 +313,32 @@ final class LocalBridgeController: ObservableObject {
         }
     }
 
+    func askCompanion(prompt: String, context: ContextSnapshot) async -> BridgeCompanionAskResponse? {
+        if !usesInjectedTransport {
+            guard saveBridgeBaseURL() else { return nil }
+        }
+
+        let request = BridgeCompanionAskRequest(
+            protocolVersion: BridgeProtocol.currentVersion,
+            deviceID: deviceID,
+            prompt: prompt,
+            context: context,
+            sentAt: Date()
+        )
+
+        do {
+            let response = try await transport.askCompanion(request)
+            bridgeMessage = response.mode == "hermes" ? "Hermes responded" : "Hermes ask scaffold responded"
+            bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Connected"
+            return response
+        } catch {
+            lastTransportRequestFailed = true
+            bridgeMessage = error.localizedDescription
+            bridgeStatus = "Bridge unavailable"
+            return nil
+        }
+    }
+
     func refreshRemoteActivity(updateMessage: Bool = true) async -> Bool {
         if !usesInjectedTransport {
             guard saveBridgeBaseURL() else { return false }

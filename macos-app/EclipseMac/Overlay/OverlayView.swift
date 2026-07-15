@@ -152,6 +152,15 @@ struct OverlayView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
+            if let response = runtime.companionResponseText {
+                Text(response)
+                    .font(.callout)
+                    .foregroundStyle(EclipseTheme.ink)
+                    .lineLimit(3)
+                    .padding(9)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 8))
+            }
             if let speechError = speech.errorMessage {
                 Label(speechError, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption2)

@@ -148,8 +148,8 @@ Exit check: after reboot/login, Eclipse starts, connects, and shows whether the 
 1. Build compact cursor buddy/orb UI. ✅ First compact companion card is in place.
 2. Add a transcript field and ask composer to the buddy. ✅ Text ask composer is in place.
 3. Implement push-to-talk recording behind the existing microphone permission. ✅ First native Speech transcript path is in place.
-4. Send transcript + active context to a local/Hermes ask endpoint.
-5. Display assistant responses beside the cursor.
+4. Send transcript + active context to a local/Hermes ask endpoint. ✅ `POST /ask` bridge handoff is wired.
+5. Display assistant responses beside the cursor. ✅ Left-side companion card renders the bridge/Hermes response.
 6. Add `intent`/`reason` to bridge jobs and approval cards.
 7. Add first visual guide primitive: highlight/point at a matched Accessibility element.
 8. Add explicit “Eclipse agent” background task path.

@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
+from urllib.request import Request, urlopen
 
 PROTOCOL_VERSION = "0.1"
 JOB_KINDS = {
@@ -527,6 +528,80 @@ def validate_heartbeat(heartbeat: dict[str, Any]) -> None:
         raise ValueError(f"unsupported heartbeat capabilities: {', '.join(unsupported)}")
 
 
+def companion_ask_response(request: dict[str, Any]) -> dict[str, Any]:
+    validate_companion_ask(request)
+    backend_url = os.environ.get("ECLIPSE_HERMES_ASK_URL", "").strip()
+    if backend_url:
+        return forward_companion_ask(backend_url, request)
+
+    context = request["context"]
+    active_app = context.get("active_app") or {}
+    window = context.get("window") or {}
+    focused = context.get("focused_element") or {}
+    app_name = active_app.get("name") or "your Mac"
+    window_title = window.get("title") or "the active window"
+    focus_label = focused.get("label") or focused.get("role") or "no focused element"
+    prompt = request["prompt"]
+    context_summary = f"{app_name} · {window_title} · {focus_label}"
+    return {
+        "response_id": prefixed_id("ask"),
+        "answer": (
+            f"Hermes handoff received: “{prompt}”. "
+            f"Context: {context_summary}. "
+            "Set ECLIPSE_HERMES_ASK_URL on the bridge to route this to the real Hermes brain."
+        ),
+        "mode": "scaffold",
+        "created_at": isoformat(utc_now()),
+        "context_summary": context_summary,
+    }
+
+
+def forward_companion_ask(backend_url: str, request_body: dict[str, Any]) -> dict[str, Any]:
+    headers = {
+        "content-type": "application/json",
+        "accept": "application/json",
+        "user-agent": "EclipseMacBridge/0.1",
+    }
+    token = os.environ.get("ECLIPSE_HERMES_ASK_TOKEN", "").strip()
+    if token:
+        headers["authorization"] = f"Bearer {token}"
+    request = Request(
+        backend_url,
+        data=encode_json(request_body).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    with urlopen(request, timeout=30) as response:
+        raw = response.read()
+    value = json.loads(raw.decode("utf-8")) if raw else {}
+    if not isinstance(value, dict):
+        raise ValueError("Hermes ask backend must return a JSON object")
+    if "answer" not in value:
+        raise ValueError("Hermes ask backend response requires answer")
+    return {
+        "response_id": str(value.get("response_id") or prefixed_id("ask")),
+        "answer": str(value["answer"]),
+        "mode": str(value.get("mode") or "hermes"),
+        "created_at": str(value.get("created_at") or isoformat(utc_now())),
+        "context_summary": value.get("context_summary"),
+    }
+
+
+def validate_companion_ask(request: dict[str, Any]) -> None:
+    required = {"protocol_version", "device_id", "prompt", "context", "sent_at"}
+    missing = required - request.keys()
+    if missing:
+        raise ValueError(f"ask missing fields: {', '.join(sorted(missing))}")
+    if request["protocol_version"] != PROTOCOL_VERSION:
+        raise ValueError("unsupported protocol_version")
+    if not isinstance(request["device_id"], str) or not request["device_id"]:
+        raise ValueError("ask device_id must be a non-empty string")
+    if not isinstance(request["prompt"], str) or not request["prompt"].strip():
+        raise ValueError("ask prompt must be a non-empty string")
+    if not isinstance(request["context"], dict):
+        raise ValueError("ask context must be a JSON object")
+
+
 class BridgeHandler(BaseHTTPRequestHandler):
     server: "BridgeHTTPServer"
 
@@ -584,6 +659,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
             if parsed.path == "/jobs":
                 job = self.server.state.create_job(body)
                 self.respond(job, status=201)
+                return
+            if parsed.path == "/ask":
+                self.respond(companion_ask_response(body), status=200)
                 return
             if parsed.path == "/heartbeats":
                 heartbeat = self.server.state.save_heartbeat(body)

@@ -10,6 +10,7 @@ final class RuntimeModel: ObservableObject {
     @Published var companionPrompt = ""
     @Published var companionLastPrompt = ""
     @Published var companionContextSummary = "Ask Hermes about the screen you are on."
+    @Published var companionResponseText: String?
     @Published var companionExpanded = false
     let permissions = PermissionCenter()
     let contextDiagnostics = ContextDiagnosticsModel()
@@ -75,19 +76,32 @@ final class RuntimeModel: ObservableObject {
         debugMessage = "Packing screen context for Hermes"
         companionLastPrompt = prompt
         companionPrompt = ""
+        companionResponseText = nil
 
         do {
             let snapshot = try AccessibilityContextCollector().capture()
             let appName = snapshot.activeApp?.name ?? "Unknown app"
             let windowTitle = snapshot.window?.title?.isEmpty == false ? snapshot.window?.title : "active window"
             let focused = snapshot.focusedElement?.label ?? snapshot.focusedElement?.role ?? "no focused element"
-            companionContextSummary = "Ready for Hermes · \(appName) · \(windowTitle ?? "active window") · \(focused)"
-            state = .idle
-            debugMessage = "Hermes ask endpoint is next; context package is ready"
+            companionContextSummary = "Sending to Hermes · \(appName) · \(windowTitle ?? "active window") · \(focused)"
+
+            Task {
+                if let response = await localBridge.askCompanion(prompt: prompt, context: snapshot) {
+                    companionContextSummary = response.contextSummary ?? companionContextSummary
+                    companionResponseText = response.answer
+                    state = .idle
+                    debugMessage = response.mode == "hermes" ? "Hermes responded" : "Bridge returned Hermes scaffold"
+                } else {
+                    state = .error
+                    debugMessage = localBridge.bridgeMessage
+                    companionResponseText = nil
+                }
+            }
         } catch {
             state = .error
             debugMessage = error.localizedDescription
             companionContextSummary = "Could not collect context for Hermes: \(error.localizedDescription)"
+            companionResponseText = nil
         }
     }
 

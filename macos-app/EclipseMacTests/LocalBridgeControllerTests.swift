@@ -521,6 +521,16 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
         ]
     }
 
+    func askCompanion(_ request: BridgeCompanionAskRequest) async throws -> BridgeCompanionAskResponse {
+        BridgeCompanionAskResponse(
+            responseID: "ask_test",
+            answer: "Hermes received: \(request.prompt)",
+            mode: "test",
+            createdAt: Date(),
+            contextSummary: request.context.activeApp?.name
+        )
+    }
+
     private func result(
         jobID: String,
         status: BridgeJobStatus,

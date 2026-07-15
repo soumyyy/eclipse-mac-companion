@@ -42,10 +42,13 @@ Useful endpoints:
 - `GET /stats`
 - `POST /heartbeats`
 - `GET /devices`
+- `POST /ask`
 
 Without `ECLIPSE_BRIDGE_DB`, the server stores jobs, results, and device heartbeats in memory. With `ECLIPSE_BRIDGE_DB`, queued jobs, results, and latest device heartbeats are stored in SQLite. It validates the same MVP constraints as the Swift local bridge: protocol `0.1`, supported job kinds, risk matching, and required inputs for typed jobs.
 
 The Mac app can also create bridge jobs from **Settings → Bridge**. The command composer supports `context.get_active_window`, `context.capture_window`, `notification.show`, `ui.set_text`, `ui.press_key`, and `ui.click_element`. Text jobs require Mac-side approval before typing. Key jobs require Mac-side approval before posting one of the allowed key events. Click jobs require Mac-side approval, exact Accessibility role/label matching, and pass the local risky-label blocklist before `AXPress`. The same Settings panel can refresh bridge activity to show queued jobs, recent remote results, device presence, copyable raw JSON, cancel still-queued jobs, and post `expired` receipts for fetched jobs whose Mac-side approval window lapses.
+
+The companion ask flow uses `POST /ask` with the user prompt and sanitized active-window context. By default the development bridge returns a scaffold response proving the handoff. Set `ECLIPSE_HERMES_ASK_URL` and optional `ECLIPSE_HERMES_ASK_TOKEN` on the bridge to forward ask requests to the real Hermes brain.
 
 Operator CLI:
 
