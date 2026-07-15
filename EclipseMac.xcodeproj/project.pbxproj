@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		011CEC396C999234334F06A1 /* WindowCaptureModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE8281F90779901B918F8CF5 /* WindowCaptureModels.swift */; };
+		032DF1BD98C2B374B5A993AA /* BridgeModelsCodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72D1EDE0DF69F461606C7AAD /* BridgeModelsCodingTests.swift */; };
 		0560A778BE1F4A0F07452B05 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C8CECF42DAFE4630027895 /* MenuContentView.swift */; };
 		0FD5B233DA562CF23B9466D8 /* PermissionCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3777045C3652EFC1133DDF85 /* PermissionCenter.swift */; };
 		1BD0067AA739616DA28B89DE /* SetTextActionPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37B5C9C35BDBC1A2622524D5 /* SetTextActionPolicyTests.swift */; };
@@ -21,15 +22,20 @@
 		538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */; };
 		5DEE191F292E93ACA214AC68 /* WindowCapturePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8604FBF4D8D434C95F5755B /* WindowCapturePolicyTests.swift */; };
 		609C82AB1D355DD9963F8AB9 /* SetTextActionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A1B929030D03395B07BB0C /* SetTextActionPolicy.swift */; };
+		669EE3608B5AB3C0F2EDDC0B /* BridgeJobPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1944F78613D1C0FDFF00788 /* BridgeJobPolicyTests.swift */; };
+		67CEB24FDDC2669FADAEA515 /* BridgeJobPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93F306EDDB2B65E3DC566F3 /* BridgeJobPolicy.swift */; };
 		7BEF045D9277487F832171EF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24F948C4DAEDE2D78CFF283C /* SettingsView.swift */; };
 		7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */; };
 		8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21F8AB925ED95F0619058326 /* ContextDiagnosticsModel.swift */; };
 		87E3F465D75AA6025A97BC1F /* AccessibilityContextCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64A42AB2744E24305E16E352 /* AccessibilityContextCollector.swift */; };
 		8CC6E07A36576C9EE2BE1D1A /* SetTextActionExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E19A391BDF52E0D05A55238 /* SetTextActionExecutor.swift */; };
+		910D9C7235FDBDBDB79FEFD0 /* LocalBridgeProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6164B203D733957F27C31156 /* LocalBridgeProcessor.swift */; };
 		944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84F11827BB0332409EDBED7 /* ContextDiagnosticsView.swift */; };
 		9AB239821488E361C0242242 /* ContextPrivacyPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */; };
+		9ACB463A8F0E71FC07CD443D /* BridgeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1863B5EA0F4F3B8F18D349A /* BridgeModels.swift */; };
 		B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */; };
 		B1D389E6698E3B996D20F67C /* PermissionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */; };
+		BDC8FE6C21DDC7841DF0F7C5 /* LocalBridgeProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C6CD7F1F34A544AC65CD41 /* LocalBridgeProcessorTests.swift */; };
 		BDF0673AEF9E7688C6820CB9 /* ActiveWindowCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792DCC3ED9F4409AF229B54F /* ActiveWindowCapturer.swift */; };
 		CCEFE95104A009E73A6A9D36 /* SetTextActionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22442F5AC0AA1049517254C8 /* SetTextActionController.swift */; };
 		D11A179A68D889B66D1D1CEF /* OverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6FFF593D1D464DB816D46B /* OverlayController.swift */; };
@@ -37,6 +43,7 @@
 		EA835672FD96A95082088364 /* PermissionDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4983A74E6734856020E39A /* PermissionDashboardView.swift */; };
 		EB72C106220450ACF5E1664A /* SetTextActionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33481BCD8C233F41CF9283FA /* SetTextActionModels.swift */; };
 		ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */; };
+		FD8587B5AD8DE21B97B3BE10 /* LocalBridgeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99455F06418B360B866DFE0 /* LocalBridgeController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -65,23 +72,30 @@
 		57B7B8B226E47E147328F409 /* EclipseMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EclipseMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5964EC146B72E306F8E2CD7B /* ContextPrivacyPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextPrivacyPolicy.swift; sourceTree = "<group>"; };
 		5E19A391BDF52E0D05A55238 /* SetTextActionExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionExecutor.swift; sourceTree = "<group>"; };
+		6164B203D733957F27C31156 /* LocalBridgeProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBridgeProcessor.swift; sourceTree = "<group>"; };
 		64A42AB2744E24305E16E352 /* AccessibilityContextCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityContextCollector.swift; sourceTree = "<group>"; };
+		72D1EDE0DF69F461606C7AAD /* BridgeModelsCodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeModelsCodingTests.swift; sourceTree = "<group>"; };
 		761269DF84E6D2214A388CD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		770AD420C5F18D3A824363B5 /* ContextModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextModels.swift; sourceTree = "<group>"; };
 		792DCC3ED9F4409AF229B54F /* ActiveWindowCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveWindowCapturer.swift; sourceTree = "<group>"; };
 		81E0A5BE16850B68B182DDBD /* WindowCapturePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapturePolicy.swift; sourceTree = "<group>"; };
 		9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseTheme.swift; sourceTree = "<group>"; };
 		95B9E174095478517034A0F2 /* RuntimeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeModel.swift; sourceTree = "<group>"; };
+		A1C6CD7F1F34A544AC65CD41 /* LocalBridgeProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBridgeProcessorTests.swift; sourceTree = "<group>"; };
 		A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyService.swift; sourceTree = "<group>"; };
 		A51AD2474340A8C65E271916 /* AssistantStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantStateTests.swift; sourceTree = "<group>"; };
 		C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextPrivacyPolicyTests.swift; sourceTree = "<group>"; };
 		C7A1B929030D03395B07BB0C /* SetTextActionPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTextActionPolicy.swift; sourceTree = "<group>"; };
 		C839F440293B458A4B7E4333 /* OverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayView.swift; sourceTree = "<group>"; };
 		C84F11827BB0332409EDBED7 /* ContextDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextDiagnosticsView.swift; sourceTree = "<group>"; };
+		C99455F06418B360B866DFE0 /* LocalBridgeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBridgeController.swift; sourceTree = "<group>"; };
+		D1863B5EA0F4F3B8F18D349A /* BridgeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeModels.swift; sourceTree = "<group>"; };
+		D1944F78613D1C0FDFF00788 /* BridgeJobPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeJobPolicyTests.swift; sourceTree = "<group>"; };
 		DC6FFF593D1D464DB816D46B /* OverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayController.swift; sourceTree = "<group>"; };
 		DE8281F90779901B918F8CF5 /* WindowCaptureModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCaptureModels.swift; sourceTree = "<group>"; };
 		E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseMacApp.swift; sourceTree = "<group>"; };
 		E8604FBF4D8D434C95F5755B /* WindowCapturePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapturePolicyTests.swift; sourceTree = "<group>"; };
+		E93F306EDDB2B65E3DC566F3 /* BridgeJobPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeJobPolicy.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -106,11 +120,23 @@
 			path = Context;
 			sourceTree = "<group>";
 		};
+		70699FDB152EA7C79D071877 /* Bridge */ = {
+			isa = PBXGroup;
+			children = (
+				E93F306EDDB2B65E3DC566F3 /* BridgeJobPolicy.swift */,
+				D1863B5EA0F4F3B8F18D349A /* BridgeModels.swift */,
+				C99455F06418B360B866DFE0 /* LocalBridgeController.swift */,
+				6164B203D733957F27C31156 /* LocalBridgeProcessor.swift */,
+			);
+			path = Bridge;
+			sourceTree = "<group>";
+		};
 		8E9912F85461D2C8802FB441 /* EclipseMac */ = {
 			isa = PBXGroup;
 			children = (
 				BCD491B89CA7D1BEB448971C /* Actions */,
 				A38F299F8C1AABBA99D387FB /* App */,
+				70699FDB152EA7C79D071877 /* Bridge */,
 				9152EAA8D49655A80F0F7F1A /* Capture */,
 				1EFC250D8F586E3D4C3570EC /* Context */,
 				A7AE6D85B97EEA85ECB0670B /* Design */,
@@ -201,8 +227,11 @@
 			isa = PBXGroup;
 			children = (
 				A51AD2474340A8C65E271916 /* AssistantStateTests.swift */,
+				D1944F78613D1C0FDFF00788 /* BridgeJobPolicyTests.swift */,
+				72D1EDE0DF69F461606C7AAD /* BridgeModelsCodingTests.swift */,
 				C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */,
 				502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */,
+				A1C6CD7F1F34A544AC65CD41 /* LocalBridgeProcessorTests.swift */,
 				37B5C9C35BDBC1A2622524D5 /* SetTextActionPolicyTests.swift */,
 				E8604FBF4D8D434C95F5755B /* WindowCapturePolicyTests.swift */,
 			);
@@ -302,8 +331,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				3C3800B211D8E76D348F1398 /* AssistantStateTests.swift in Sources */,
+				669EE3608B5AB3C0F2EDDC0B /* BridgeJobPolicyTests.swift in Sources */,
+				032DF1BD98C2B374B5A993AA /* BridgeModelsCodingTests.swift in Sources */,
 				9AB239821488E361C0242242 /* ContextPrivacyPolicyTests.swift in Sources */,
 				356BF9304CCC8773CF064727 /* ContextSnapshotCodingTests.swift in Sources */,
+				BDC8FE6C21DDC7841DF0F7C5 /* LocalBridgeProcessorTests.swift in Sources */,
 				1BD0067AA739616DA28B89DE /* SetTextActionPolicyTests.swift in Sources */,
 				5DEE191F292E93ACA214AC68 /* WindowCapturePolicyTests.swift in Sources */,
 			);
@@ -317,6 +349,8 @@
 				BDF0673AEF9E7688C6820CB9 /* ActiveWindowCapturer.swift in Sources */,
 				D889D8BB4C4F7FC403CE5019 /* AppDelegate.swift in Sources */,
 				B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */,
+				67CEB24FDDC2669FADAEA515 /* BridgeJobPolicy.swift in Sources */,
+				9ACB463A8F0E71FC07CD443D /* BridgeModels.swift in Sources */,
 				8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */,
 				944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */,
 				4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */,
@@ -324,6 +358,8 @@
 				ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */,
 				7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */,
 				538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */,
+				FD8587B5AD8DE21B97B3BE10 /* LocalBridgeController.swift in Sources */,
+				910D9C7235FDBDBDB79FEFD0 /* LocalBridgeProcessor.swift in Sources */,
 				0560A778BE1F4A0F07452B05 /* MenuContentView.swift in Sources */,
 				D11A179A68D889B66D1D1CEF /* OverlayController.swift in Sources */,
 				204132CD863BD3EE2FC105D4 /* OverlayView.swift in Sources */,

@@ -1,7 +1,7 @@
 import ApplicationServices
 import Foundation
 
-struct SetTextTargetBinding: Equatable, Sendable {
+struct SetTextTargetBinding: Codable, Equatable, Sendable {
     let snapshotID: String
     let bundleID: String
     let applicationName: String
@@ -11,7 +11,7 @@ struct SetTextTargetBinding: Equatable, Sendable {
     let elementLabel: String?
 }
 
-struct SetTextActionPresentation: Equatable, Sendable {
+struct SetTextActionPresentation: Codable, Equatable, Sendable {
     let actionID: String
     let target: SetTextTargetBinding
     let proposedText: String
@@ -25,7 +25,7 @@ struct PendingSetTextAction {
     let element: AXUIElement
 }
 
-struct SetTextActionResult: Equatable, Sendable {
+struct SetTextActionResult: Codable, Equatable, Sendable {
     let actionID: String
     let snapshotID: String
     let completedAt: Date

@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1D
+## Current increment: Phase 1E
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D adds context-bound approval for one controlled text action.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E adds a local mocked bridge contract.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -23,6 +23,9 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - One approved `ui.set_text` demo action into the currently focused editable text field
 - Approval is bound to the original bundle ID, window ID, focused AX element, proposed text, and a ten-second freshness window
 - Text mutation is blocked for secure fields, unsupported focused elements, blocked applications, blocked windows, stale approval, and changed focus
+- Versioned local bridge job and result envelopes for `context.get_active_window` and `ui.set_text`
+- Local risk/input/expiry validation before capability execution
+- Mock bridge flow for `ui.set_text`: job received, approval requested, user approves, action receipt produced
 
 ## Privacy defaults
 
@@ -33,18 +36,18 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1D check
+## Manual Phase 1E check
 
 1. Open a harmless editable field, such as a blank TextEdit document.
 2. Focus the field and press `Option-Space`.
 3. Click `Prepare Action`.
-4. Confirm the displayed application, window, field, and exact text.
+4. Confirm the displayed bridge job ID, application, window, field, and exact text.
 5. Click `Approve & Type` within ten seconds.
-6. Confirm `Hello from Eclipse Mac` appears in the focused field.
+6. Confirm `Hello from Eclipse Mac` appears in the focused field and the overlay shows a bridge receipt.
 
 ## Next increment
 
-Add the local bridge shape: typed command envelopes, action receipts, and a mocked Hermes-to-Mac job flow that still routes every typed action through the local approval gate.
+Add local durable storage: SQLite-backed idempotency records, result outbox, and replay-safe handling for duplicate or expired jobs.
 
 ## UI development launch arguments
 

@@ -3,10 +3,12 @@ import SwiftUI
 struct OverlayView: View {
     @ObservedObject var runtime: RuntimeModel
     @ObservedObject private var textActions: SetTextActionController
+    @ObservedObject private var localBridge: LocalBridgeController
 
     init(runtime: RuntimeModel) {
         self.runtime = runtime
         textActions = runtime.setTextActions
+        localBridge = runtime.localBridge
     }
 
     var body: some View {
@@ -104,6 +106,12 @@ struct OverlayView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                if let jobID = localBridge.pendingJob?.jobID {
+                    Text(jobID)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
                 Text(pending.proposedText)
                     .font(.system(.callout, design: .rounded).weight(.medium))
                     .padding(9)
@@ -142,6 +150,11 @@ struct OverlayView: View {
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
                 Spacer()
+                if localBridge.latestResult?.status == .succeeded {
+                    Text("bridge receipt")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
                 Button("Done") {
                     runtime.resetTextAction()
                 }

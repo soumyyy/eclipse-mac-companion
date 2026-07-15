@@ -2,6 +2,12 @@ import Combine
 import Foundation
 
 @MainActor
+protocol SetTextActionControlling: AnyObject {
+    var pendingPresentation: SetTextActionPresentation? { get }
+    func prepareAction(text: String) throws
+}
+
+@MainActor
 final class SetTextActionController: ObservableObject {
     static let demoText = "Hello from Eclipse Mac"
 
@@ -11,21 +17,32 @@ final class SetTextActionController: ObservableObject {
 
     private let executor: SetTextActionExecutor
 
+    var pendingPresentation: SetTextActionPresentation? {
+        pendingAction?.presentation
+    }
+
     init(executor: SetTextActionExecutor = SetTextActionExecutor()) {
         self.executor = executor
     }
 
     func prepareDemoAction() throws {
-        errorMessage = nil
-        result = nil
-        pendingAction = try executor.prepare(proposedText: Self.demoText)
+        try prepareAction(text: Self.demoText)
     }
 
-    func approve() throws {
-        guard let pendingAction else { return }
+    func prepareAction(text: String) throws {
         errorMessage = nil
-        result = try executor.execute(pendingAction)
+        result = nil
+        pendingAction = try executor.prepare(proposedText: text)
+    }
+
+    @discardableResult
+    func approve() throws -> SetTextActionResult? {
+        guard let pendingAction else { return nil }
+        errorMessage = nil
+        let actionResult = try executor.execute(pendingAction)
+        result = actionResult
         self.pendingAction = nil
+        return actionResult
     }
 
     func cancel() {
@@ -45,3 +62,5 @@ final class SetTextActionController: ObservableObject {
         errorMessage = nil
     }
 }
+
+extension SetTextActionController: SetTextActionControlling {}
