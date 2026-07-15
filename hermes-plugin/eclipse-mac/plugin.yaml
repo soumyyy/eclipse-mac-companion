@@ -1,0 +1,7 @@
+manifest_version: 1
+name: eclipse-mac
+version: 0.1.0
+description: Native Hermes tools for controlling the local Eclipse Mac worker through the bridge.
+author: Soumya
+provides_tools:
+  - eclipse-mac
