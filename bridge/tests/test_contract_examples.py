@@ -24,7 +24,14 @@ class ContractExampleTests(unittest.TestCase):
         for path in (ROOT / "examples" / "jobs").glob("*.json"):
             job = json.loads(path.read_text())
             self.assertEqual(job["protocol_version"], "0.1")
-            self.assertIn(job["kind"], {"context.get_active_window", "ui.set_text"})
+            self.assertIn(job["kind"], {
+                "context.get_active_window",
+                "context.capture_window",
+                "notification.show",
+                "ui.set_text",
+                "ui.press_key",
+                "ui.click_element",
+            })
             self.assertIn(job["risk"], {"read", "reversible", "consequential"})
             self.assertTrue(job["job_id"].startswith("job_"))
             self.assertTrue(job["idempotency_key"].startswith("idem_"))
@@ -34,6 +41,18 @@ class ContractExampleTests(unittest.TestCase):
             if job["kind"] == "context.get_active_window":
                 self.assertEqual(job["risk"], "read")
                 self.assertEqual(job["input"], {})
+            if job["kind"] == "context.capture_window":
+                self.assertEqual(job["risk"], "read")
+                self.assertEqual(job["input"], {})
+            if job["kind"] == "notification.show":
+                self.assertEqual(job["risk"], "reversible")
+                self.assertTrue(job["input"]["title"])
+            if job["kind"] == "ui.press_key":
+                self.assertEqual(job["risk"], "reversible")
+                self.assertTrue(job["input"]["key"])
+            if job["kind"] == "ui.click_element":
+                self.assertEqual(job["risk"], "consequential")
+                self.assertTrue(job["input"]["element_role"])
 
     def test_result_examples_match_mvp_wire_contract(self):
         for path in (ROOT / "examples" / "results").glob("*.json"):

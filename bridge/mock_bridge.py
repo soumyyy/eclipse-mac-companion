@@ -21,9 +21,28 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 PROTOCOL_VERSION = "0.1"
-JOB_KINDS = {"context.get_active_window", "ui.set_text"}
+JOB_KINDS = {
+    "context.get_active_window",
+    "context.capture_window",
+    "notification.show",
+    "ui.set_text",
+    "ui.press_key",
+    "ui.click_element",
+}
 RISKS = {"read", "reversible", "consequential"}
 STATUSES = {"succeeded", "failed", "rejected", "expired", "pending_approval"}
+ALLOWED_KEYS = {
+    "escape",
+    "return",
+    "enter",
+    "tab",
+    "space",
+    "arrow_left",
+    "arrow_right",
+    "arrow_up",
+    "arrow_down",
+}
+ALLOWED_MODIFIERS = {"command", "option", "control", "shift"}
 
 
 def utc_now() -> datetime:
@@ -308,14 +327,44 @@ def validate_job(job: dict[str, Any]) -> None:
         raise ValueError("unsupported job kind")
     if job["risk"] not in RISKS:
         raise ValueError("unsupported risk")
-    if job["kind"] == "context.get_active_window" and job["risk"] != "read":
-        raise ValueError("context.get_active_window requires read risk")
-    if job["kind"] == "ui.set_text":
+    if job["kind"] in {"context.get_active_window", "context.capture_window"}:
+        if job["risk"] != "read":
+            raise ValueError(f"{job['kind']} requires read risk")
+        if job.get("input") not in ({}, None):
+            raise ValueError(f"{job['kind']} requires empty input")
+    elif job["kind"] == "notification.show":
+        if job["risk"] != "reversible":
+            raise ValueError("notification.show requires reversible risk")
+        title = job.get("input", {}).get("title")
+        body = job.get("input", {}).get("body")
+        if not isinstance(title, str) or not title:
+            raise ValueError("notification.show requires input.title")
+        if body is not None and not isinstance(body, str):
+            raise ValueError("notification.show input.body must be a string")
+    elif job["kind"] == "ui.set_text":
         if job["risk"] != "reversible":
             raise ValueError("ui.set_text requires reversible risk")
         text = job.get("input", {}).get("text")
         if not isinstance(text, str) or not text:
             raise ValueError("ui.set_text requires input.text")
+    elif job["kind"] == "ui.press_key":
+        if job["risk"] != "reversible":
+            raise ValueError("ui.press_key requires reversible risk")
+        key = job.get("input", {}).get("key")
+        if key not in ALLOWED_KEYS:
+            raise ValueError("ui.press_key requires an allowed input.key")
+        modifiers = job.get("input", {}).get("modifiers", [])
+        if not isinstance(modifiers, list) or any(modifier not in ALLOWED_MODIFIERS for modifier in modifiers):
+            raise ValueError("ui.press_key input.modifiers contains an unsupported modifier")
+    elif job["kind"] == "ui.click_element":
+        if job["risk"] != "consequential":
+            raise ValueError("ui.click_element requires consequential risk")
+        role = job.get("input", {}).get("element_role")
+        label = job.get("input", {}).get("element_label")
+        if not isinstance(role, str) or not role:
+            raise ValueError("ui.click_element requires input.element_role")
+        if label is not None and not isinstance(label, str):
+            raise ValueError("ui.click_element input.element_label must be a string")
 
 
 def validate_result(result: dict[str, Any]) -> None:

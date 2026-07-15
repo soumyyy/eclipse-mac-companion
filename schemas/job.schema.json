@@ -29,7 +29,11 @@
     "kind": {
       "enum": [
         "context.get_active_window",
-        "ui.set_text"
+        "context.capture_window",
+        "notification.show",
+        "ui.set_text",
+        "ui.press_key",
+        "ui.click_element"
       ]
     },
     "risk": {
@@ -47,6 +51,50 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 4000
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "key": {
+          "enum": [
+            "escape",
+            "return",
+            "enter",
+            "tab",
+            "space",
+            "arrow_left",
+            "arrow_right",
+            "arrow_up",
+            "arrow_down"
+          ]
+        },
+        "modifiers": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "command",
+              "option",
+              "control",
+              "shift"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 4
+        },
+        "element_role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "element_label": {
+          "type": "string",
+          "maxLength": 400
         }
       }
     },
@@ -64,7 +112,10 @@
       "if": {
         "properties": {
           "kind": {
-            "const": "context.get_active_window"
+            "enum": [
+              "context.get_active_window",
+              "context.capture_window"
+            ]
           }
         }
       },
@@ -75,6 +126,27 @@
           },
           "input": {
             "maxProperties": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "notification.show"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "risk": {
+            "const": "reversible"
+          },
+          "input": {
+            "required": [
+              "title"
+            ]
           }
         }
       }
@@ -95,6 +167,48 @@
           "input": {
             "required": [
               "text"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "ui.press_key"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "risk": {
+            "const": "reversible"
+          },
+          "input": {
+            "required": [
+              "key"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "ui.click_element"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "risk": {
+            "const": "consequential"
+          },
+          "input": {
+            "required": [
+              "element_role"
             ]
           }
         }

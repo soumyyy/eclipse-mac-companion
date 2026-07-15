@@ -28,21 +28,25 @@ final class RuntimeModel: ObservableObject {
     }
 
     func prepareDemoTextAction() {
-        localBridge.submitMockSetTextJob(text: SetTextActionController.demoText)
-        if let result = localBridge.latestResult, result.status == .pendingApproval {
-            state = .waitingForApproval
-            debugMessage = "Mock bridge job is waiting for approval"
-        } else if let error = localBridge.latestResult?.error {
-            state = .error
-            debugMessage = error.message
-            setTextActions.record(error: NSError(
-                domain: "EclipseMac.LocalBridge",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: error.message]
-            ))
-        } else {
-            state = .error
-            debugMessage = "Mock bridge job did not produce an approval"
+        state = .thinking
+        debugMessage = "Preparing mock bridge job"
+        Task {
+            await localBridge.submitMockSetTextJob(text: SetTextActionController.demoText)
+            if let result = localBridge.latestResult, result.status == .pendingApproval {
+                state = .waitingForApproval
+                debugMessage = "Mock bridge job is waiting for approval"
+            } else if let error = localBridge.latestResult?.error {
+                state = .error
+                debugMessage = error.message
+                setTextActions.record(error: NSError(
+                    domain: "EclipseMac.LocalBridge",
+                    code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: error.message]
+                ))
+            } else {
+                state = .error
+                debugMessage = "Mock bridge job did not produce an approval"
+            }
         }
     }
 

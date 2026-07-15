@@ -1,0 +1,13 @@
+{
+  "job_id": "job_notification_example",
+  "protocol_version": "0.1",
+  "device_id": "mac_soumya_local",
+  "kind": "notification.show",
+  "risk": "reversible",
+  "input": {
+    "title": "Eclipse Mac",
+    "body": "Bridge notification test"
+  },
+  "expires_at": "2026-07-15T12:00:30Z",
+  "idempotency_key": "idem_notification_example"
+}

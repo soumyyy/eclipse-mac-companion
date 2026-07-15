@@ -1,9 +1,66 @@
 import Foundation
+import UserNotifications
+
+@MainActor
+protocol LocalNotificationDelivering: AnyObject {
+    func deliver(title: String, body: String?) async throws -> BridgeNotificationReceipt
+}
+
+@MainActor
+final class UserNotificationDeliverer: LocalNotificationDelivering {
+    func deliver(title: String, body: String?) async throws -> BridgeNotificationReceipt {
+        let center = UNUserNotificationCenter.current()
+        let granted = try await requestAuthorization(center: center)
+        guard granted else {
+            throw BridgeProcessorError.notificationPermissionDenied
+        }
+
+        let identifier = "notif_\(UUID().uuidString.lowercased())"
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body ?? ""
+
+        try await addNotification(
+            center: center,
+            request: UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        )
+        return BridgeNotificationReceipt(notificationID: identifier, deliveredAt: Date())
+    }
+
+    private func requestAuthorization(center: UNUserNotificationCenter) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            center.requestAuthorization(options: [.alert, .sound]) { granted, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: granted)
+                }
+            }
+        }
+    }
+
+    private func addNotification(
+        center: UNUserNotificationCenter,
+        request: UNNotificationRequest
+    ) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            center.add(request) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
+                }
+            }
+        }
+    }
+}
 
 @MainActor
 final class LocalBridgeProcessor {
     private let deviceID: String
     private let collector: any ContextCollecting
+    private let capturer: any WindowCapturing
+    private let notifier: any LocalNotificationDelivering
     private let textActions: any SetTextActionControlling
     private let policy: BridgeJobPolicy
     private let store: any BridgeResultStoring
@@ -11,18 +68,22 @@ final class LocalBridgeProcessor {
     init(
         deviceID: String,
         collector: any ContextCollecting = AccessibilityContextCollector(),
+        capturer: any WindowCapturing = ActiveWindowCapturer(),
+        notifier: any LocalNotificationDelivering = UserNotificationDeliverer(),
         textActions: any SetTextActionControlling,
         policy: BridgeJobPolicy = .default,
         store: any BridgeResultStoring
     ) {
         self.deviceID = deviceID
         self.collector = collector
+        self.capturer = capturer
+        self.notifier = notifier
         self.textActions = textActions
         self.policy = policy
         self.store = store
     }
 
-    func process(_ job: BridgeJobEnvelope, now: Date = Date()) -> BridgeJobResultEnvelope {
+    func process(_ job: BridgeJobEnvelope, now: Date = Date()) async -> BridgeJobResultEnvelope {
         do {
             if let existingResult = try store.result(for: job.idempotencyKey) {
                 return existingResult
@@ -37,6 +98,44 @@ final class LocalBridgeProcessor {
                     for: job,
                     status: .succeeded,
                     output: .context(snapshot),
+                    completedAt: now
+                )
+
+            case .contextCaptureWindow:
+                let snapshot = try collector.capture()
+                let capture = try await capturer.capture(snapshot: snapshot)
+                return try persistedResult(
+                    for: job,
+                    status: .succeeded,
+                    output: .capture(capture.metadata),
+                    completedAt: now
+                )
+
+            case .notificationShow:
+                let receipt = try await notifier.deliver(
+                    title: try requiredNotificationTitle(from: job),
+                    body: job.input.body
+                )
+                return try persistedResult(
+                    for: job,
+                    status: .succeeded,
+                    output: .notification(receipt),
+                    completedAt: now
+                )
+
+            case .uiPressKey:
+                let snapshot = try collector.capture()
+                return try persistedResult(
+                    for: job,
+                    status: .pendingApproval,
+                    output: .automationApproval(
+                        automationApproval(
+                            for: job,
+                            snapshot: snapshot,
+                            summary: "Press \(keySummary(from: job)) in the current focused window",
+                            now: now
+                        )
+                    ),
                     completedAt: now
                 )
 
@@ -58,6 +157,22 @@ final class LocalBridgeProcessor {
                     for: job,
                     status: .pendingApproval,
                     output: .approval(approval),
+                    completedAt: now
+                )
+
+            case .uiClickElement:
+                let snapshot = try collector.capture()
+                return try persistedResult(
+                    for: job,
+                    status: .pendingApproval,
+                    output: .automationApproval(
+                        automationApproval(
+                            for: job,
+                            snapshot: snapshot,
+                            summary: "Click \(clickTargetSummary(from: job)) in the current window",
+                            now: now
+                        )
+                    ),
                     completedAt: now
                 )
             }
@@ -156,6 +271,53 @@ final class LocalBridgeProcessor {
         return text
     }
 
+    private func requiredNotificationTitle(from job: BridgeJobEnvelope) throws -> String {
+        let title = job.input.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !title.isEmpty else {
+            throw BridgeJobPolicyError.invalidInput("notification.show requires input.title")
+        }
+        return title
+    }
+
+    private func automationApproval(
+        for job: BridgeJobEnvelope,
+        snapshot: ContextSnapshot,
+        summary: String,
+        now: Date
+    ) -> BridgeAutomationApprovalRequest {
+        BridgeAutomationApprovalRequest(
+            approvalID: "appr_\(UUID().uuidString.lowercased())",
+            actionID: "act_\(UUID().uuidString.lowercased())",
+            kind: job.kind,
+            risk: job.risk,
+            summary: summary,
+            targetApp: snapshot.activeApp,
+            targetWindow: snapshot.window,
+            expiresAt: now.addingTimeInterval(SetTextActionPolicy.default.maximumApprovalAge)
+        )
+    }
+
+    private func keySummary(from job: BridgeJobEnvelope) -> String {
+        let modifiers = (job.input.modifiers ?? []).map { $0.lowercased() }
+        let key = job.input.key ?? "key"
+        return (modifiers + [key]).joined(separator: "+")
+    }
+
+    private func clickTargetSummary(from job: BridgeJobEnvelope) -> String {
+        let role = job.input.elementRole?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let label = job.input.elementLabel?.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch (role?.isEmpty == false ? role : nil, label?.isEmpty == false ? label : nil) {
+        case let (role?, label?):
+            return "\(role) labeled “\(label)”"
+        case let (role?, nil):
+            return "\(role)"
+        case let (nil, label?):
+            return "element labeled “\(label)”"
+        case (nil, nil):
+            return "target element"
+        }
+    }
+
     private func result(
         for job: BridgeJobEnvelope,
         status: BridgeJobStatus,
@@ -178,11 +340,14 @@ final class LocalBridgeProcessor {
 
 enum BridgeProcessorError: LocalizedError {
     case missingApprovalPresentation
+    case notificationPermissionDenied
 
     var errorDescription: String? {
         switch self {
         case .missingApprovalPresentation:
             "The text action did not produce an approval presentation."
+        case .notificationPermissionDenied:
+            "Notification permission is required to show local notifications."
         }
     }
 }

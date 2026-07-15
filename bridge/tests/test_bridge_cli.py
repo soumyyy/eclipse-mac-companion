@@ -58,6 +58,31 @@ class BridgeCLITests(unittest.TestCase):
         self.assertEqual(job["risk"], "reversible")
         self.assertEqual(job["input"]["text"], "Hello from CLI")
 
+    def test_create_new_mvp_jobs(self):
+        capture = self.run_cli("create-capture-window", "--device-id", "mac_cli_capture")
+        notification = self.run_cli(
+            "create-notification",
+            "--device-id",
+            "mac_cli_notification",
+            "--body",
+            "Body",
+            "Title",
+        )
+        key = self.run_cli("create-press-key", "--device-id", "mac_cli_key", "escape")
+        click = self.run_cli(
+            "create-click-element",
+            "--device-id",
+            "mac_cli_click",
+            "--element-label",
+            "Continue",
+            "AXButton",
+        )
+
+        self.assertEqual(capture["kind"], "context.capture_window")
+        self.assertEqual(notification["input"]["title"], "Title")
+        self.assertEqual(key["input"]["key"], "escape")
+        self.assertEqual(click["input"]["element_role"], "AXButton")
+
     def run_cli(self, *args):
         completed = subprocess.run(
             [

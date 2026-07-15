@@ -43,9 +43,33 @@ def main() -> int:
     context_parser = subparsers.add_parser("create-context", help="Queue context.get_active_window.")
     add_common_job_args(context_parser)
 
+    capture_parser = subparsers.add_parser("create-capture-window", help="Queue context.capture_window.")
+    add_common_job_args(capture_parser)
+
+    notification_parser = subparsers.add_parser("create-notification", help="Queue notification.show.")
+    add_common_job_args(notification_parser)
+    notification_parser.add_argument("title", help="Notification title.")
+    notification_parser.add_argument("--body", default="", help="Optional notification body.")
+
     text_parser = subparsers.add_parser("create-set-text", help="Queue ui.set_text.")
     add_common_job_args(text_parser)
     text_parser.add_argument("text", help="Text to request after Mac-side approval.")
+
+    key_parser = subparsers.add_parser("create-press-key", help="Queue ui.press_key.")
+    add_common_job_args(key_parser)
+    key_parser.add_argument("key", help="Allowed key, such as escape, return, tab, or arrow_left.")
+    key_parser.add_argument(
+        "--modifier",
+        action="append",
+        default=[],
+        choices=["command", "option", "control", "shift"],
+        help="Optional modifier. Can be passed more than once.",
+    )
+
+    click_parser = subparsers.add_parser("create-click-element", help="Queue ui.click_element.")
+    add_common_job_args(click_parser)
+    click_parser.add_argument("element_role", help="Accessibility role expected at click time.")
+    click_parser.add_argument("--element-label", help="Optional accessibility label expected at click time.")
 
     raw_parser = subparsers.add_parser("create-job", help="Queue a raw job JSON file.")
     raw_parser.add_argument("path", help="Path to JSON job/create request.")
@@ -91,12 +115,43 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
             risk="read",
             input_body={},
         ))
+    if args.command == "create-capture-window":
+        return request_json(args, "POST", "/jobs", body=job_body(
+            args,
+            kind="context.capture_window",
+            risk="read",
+            input_body={},
+        ))
+    if args.command == "create-notification":
+        return request_json(args, "POST", "/jobs", body=job_body(
+            args,
+            kind="notification.show",
+            risk="reversible",
+            input_body={"title": args.title, "body": args.body},
+        ))
     if args.command == "create-set-text":
         return request_json(args, "POST", "/jobs", body=job_body(
             args,
             kind="ui.set_text",
             risk="reversible",
             input_body={"text": args.text},
+        ))
+    if args.command == "create-press-key":
+        return request_json(args, "POST", "/jobs", body=job_body(
+            args,
+            kind="ui.press_key",
+            risk="reversible",
+            input_body={"key": args.key, "modifiers": args.modifier},
+        ))
+    if args.command == "create-click-element":
+        input_body = {"element_role": args.element_role}
+        if args.element_label:
+            input_body["element_label"] = args.element_label
+        return request_json(args, "POST", "/jobs", body=job_body(
+            args,
+            kind="ui.click_element",
+            risk="consequential",
+            input_body=input_body,
         ))
     if args.command == "create-job":
         with open(args.path, "r", encoding="utf-8") as handle:

@@ -1,0 +1,13 @@
+{
+  "job_id": "job_press_key_example",
+  "protocol_version": "0.1",
+  "device_id": "mac_soumya_local",
+  "kind": "ui.press_key",
+  "risk": "reversible",
+  "input": {
+    "key": "escape",
+    "modifiers": []
+  },
+  "expires_at": "2026-07-15T12:00:30Z",
+  "idempotency_key": "idem_press_key_example"
+}

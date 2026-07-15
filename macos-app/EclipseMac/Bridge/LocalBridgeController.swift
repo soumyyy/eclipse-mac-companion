@@ -15,6 +15,7 @@ final class LocalBridgeController: ObservableObject {
     @Published private(set) var lastQueuedJob: BridgeJobEnvelope?
     @Published private(set) var remoteQueuedJobs: [BridgeJobEnvelope] = []
     @Published private(set) var remoteResults: [BridgeJobResultEnvelope] = []
+    @Published private(set) var lastActivityRefreshAt: Date?
     @Published var bridgeBaseURLString: String
     @Published var bridgeBearerToken: String
 
@@ -66,27 +67,27 @@ final class LocalBridgeController: ObservableObject {
         pollingTask?.cancel()
     }
 
-    func submitMockSetTextJob(text: String) {
+    func submitMockSetTextJob(text: String) async {
         let job = BridgeJobEnvelope.mock(
             deviceID: deviceID,
             kind: .uiSetText,
             risk: .reversible,
             input: .setText(text)
         )
-        let result = processor.process(job)
+        let result = await processor.process(job)
         latestResult = result
         pendingJob = result.status == .pendingApproval ? job : nil
         refreshOutboxCount()
     }
 
-    func submitMockActiveWindowJob() {
+    func submitMockActiveWindowJob() async {
         let job = BridgeJobEnvelope.mock(
             deviceID: deviceID,
             kind: .contextGetActiveWindow,
             risk: .read,
             input: .empty
         )
-        latestResult = processor.process(job)
+        latestResult = await processor.process(job)
         pendingJob = nil
         refreshOutboxCount()
     }
@@ -123,6 +124,84 @@ final class LocalBridgeController: ObservableObject {
         )
     }
 
+    func queueCaptureWindowJob(ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
+        await queueJob(
+            BridgeCreateJobRequest(
+                deviceID: deviceID,
+                kind: .contextCaptureWindow,
+                risk: .read,
+                input: .empty,
+                ttlSeconds: ttlSeconds,
+                idempotencyKey: nil
+            ),
+            successMessage: "Queued capture job"
+        )
+    }
+
+    func queueNotificationJob(title: String, body: String = "", ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else {
+            bridgeMessage = "Enter a notification title before queueing"
+            return nil
+        }
+
+        return await queueJob(
+            BridgeCreateJobRequest(
+                deviceID: deviceID,
+                kind: .notificationShow,
+                risk: .reversible,
+                input: .notification(
+                    title: trimmedTitle,
+                    body: body.trimmingCharacters(in: .whitespacesAndNewlines)
+                ),
+                ttlSeconds: ttlSeconds,
+                idempotencyKey: nil
+            ),
+            successMessage: "Queued notification job"
+        )
+    }
+
+    func queuePressKeyJob(key: String, modifiers: [String] = [], ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
+        let normalizedKey = key.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalizedKey.isEmpty else {
+            bridgeMessage = "Enter a key before queueing"
+            return nil
+        }
+
+        return await queueJob(
+            BridgeCreateJobRequest(
+                deviceID: deviceID,
+                kind: .uiPressKey,
+                risk: .reversible,
+                input: .keyPress(key: normalizedKey, modifiers: modifiers),
+                ttlSeconds: ttlSeconds,
+                idempotencyKey: nil
+            ),
+            successMessage: "Queued key job"
+        )
+    }
+
+    func queueClickElementJob(role: String = "AXButton", label: String? = nil, ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
+        let trimmedRole = role.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedLabel = label?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedRole.isEmpty else {
+            bridgeMessage = "Enter an element role before queueing"
+            return nil
+        }
+
+        return await queueJob(
+            BridgeCreateJobRequest(
+                deviceID: deviceID,
+                kind: .uiClickElement,
+                risk: .consequential,
+                input: .clickElement(role: trimmedRole, label: trimmedLabel?.isEmpty == true ? nil : trimmedLabel),
+                ttlSeconds: ttlSeconds,
+                idempotencyKey: nil
+            ),
+            successMessage: "Queued click job"
+        )
+    }
+
     func queueSetTextJob(text: String, ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -143,6 +222,26 @@ final class LocalBridgeController: ObservableObject {
         )
     }
 
+    func queueCommandPhrase(_ phrase: String, ttlSeconds: Int = 60) async -> BridgeJobEnvelope? {
+        switch LocalBridgeCommandInterpreter.interpret(phrase) {
+        case .context:
+            return await queueContextJob(ttlSeconds: ttlSeconds)
+        case .capture:
+            return await queueCaptureWindowJob(ttlSeconds: ttlSeconds)
+        case .notification(let title, let body):
+            return await queueNotificationJob(title: title, body: body, ttlSeconds: ttlSeconds)
+        case .setText(let text):
+            return await queueSetTextJob(text: text, ttlSeconds: ttlSeconds)
+        case .pressKey(let key):
+            return await queuePressKeyJob(key: key, ttlSeconds: ttlSeconds)
+        case .click(let label):
+            return await queueClickElementJob(label: label, ttlSeconds: ttlSeconds)
+        case .unsupported:
+            bridgeMessage = "Try: get active window, capture window, notify Title | Body, type Hello, press escape, click Continue"
+            return nil
+        }
+    }
+
     func refreshRemoteStats() async -> BridgeStats? {
         if !usesInjectedTransport {
             guard saveBridgeBaseURL() else { return nil }
@@ -160,10 +259,12 @@ final class LocalBridgeController: ObservableObject {
         }
     }
 
-    func refreshRemoteActivity() async -> Bool {
+    func refreshRemoteActivity(updateMessage: Bool = true) async -> Bool {
         if !usesInjectedTransport {
             guard saveBridgeBaseURL() else { return false }
         }
+        let previousMessage = bridgeMessage
+        let previousStatus = bridgeStatus
         do {
             async let stats = transport.fetchStats()
             async let queuedJobs = transport.fetchQueuedJobs()
@@ -172,8 +273,14 @@ final class LocalBridgeController: ObservableObject {
             bridgeStats = try await stats
             remoteQueuedJobs = try await queuedJobs
             remoteResults = try await results
-            bridgeMessage = "Bridge activity refreshed"
-            bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Connected"
+            lastActivityRefreshAt = Date()
+            if updateMessage {
+                bridgeMessage = "Bridge activity refreshed"
+                bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Connected"
+            } else {
+                bridgeMessage = previousMessage
+                bridgeStatus = previousStatus
+            }
             return true
         } catch {
             lastTransportRequestFailed = true
@@ -227,7 +334,7 @@ final class LocalBridgeController: ObservableObject {
         do {
             let job = try await transport.createJob(request)
             lastQueuedJob = job
-            _ = await refreshRemoteActivity()
+            _ = await refreshRemoteActivity(updateMessage: false)
             bridgeMessage = "\(successMessage): \(job.jobID)"
             bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Job queued"
             return job
@@ -292,6 +399,11 @@ final class LocalBridgeController: ObservableObject {
         } else {
             bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Connected"
         }
+        let messageBeforeActivityRefresh = bridgeMessage
+        let statusBeforeActivityRefresh = bridgeStatus
+        _ = await refreshRemoteActivity(updateMessage: false)
+        bridgeMessage = messageBeforeActivityRefresh
+        bridgeStatus = statusBeforeActivityRefresh
         return normalPollingInterval
     }
 
@@ -303,7 +415,7 @@ final class LocalBridgeController: ObservableObject {
                 return nil
             }
 
-            let result = processor.process(job)
+            let result = await processor.process(job)
             latestResult = result
             pendingJob = result.status == .pendingApproval ? job : nil
             refreshOutboxCount()
@@ -380,5 +492,84 @@ private extension BridgeJobEnvelope {
             expiresAt: Date().addingTimeInterval(30),
             idempotencyKey: "idem_\(UUID().uuidString.lowercased())"
         )
+    }
+}
+
+private enum LocalBridgeCommand {
+    case context
+    case capture
+    case notification(title: String, body: String)
+    case setText(String)
+    case pressKey(String)
+    case click(String)
+    case unsupported
+}
+
+private enum LocalBridgeCommandInterpreter {
+    static func interpret(_ phrase: String) -> LocalBridgeCommand {
+        let trimmed = phrase.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return .unsupported }
+
+        let lowercased = trimmed.lowercased()
+        if lowercased.contains("capture") || lowercased.contains("screenshot") {
+            return .capture
+        }
+        if lowercased.contains("active window") || lowercased.contains("current window") || lowercased == "context" {
+            return .context
+        }
+        if let notification = parseNotification(trimmed) {
+            return notification
+        }
+        if let text = parseValue(trimmed, prefixes: ["type ", "write ", "insert text "]) {
+            return .setText(text)
+        }
+        if let key = parseValue(trimmed, prefixes: ["press ", "hit "]) {
+            return .pressKey(normalizeKey(key))
+        }
+        if let label = parseValue(trimmed, prefixes: ["click ", "tap "]) {
+            return .click(label)
+        }
+        return .unsupported
+    }
+
+    private static func parseNotification(_ phrase: String) -> LocalBridgeCommand? {
+        guard let raw = parseValue(phrase, prefixes: ["notify ", "notification ", "show notification "]) else {
+            return nil
+        }
+        let parts = raw.split(separator: "|", maxSplits: 1).map {
+            String($0).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        guard let title = parts.first, !title.isEmpty else { return nil }
+        let body = parts.count > 1 ? parts[1] : ""
+        return .notification(title: title, body: body)
+    }
+
+    private static func parseValue(_ phrase: String, prefixes: [String]) -> String? {
+        let lowercased = phrase.lowercased()
+        for prefix in prefixes where lowercased.hasPrefix(prefix) {
+            return String(phrase.dropFirst(prefix.count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+        }
+        return nil
+    }
+
+    private static func normalizeKey(_ key: String) -> String {
+        switch key.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "esc":
+            return "escape"
+        case "↩", "return":
+            return "return"
+        case "up", "arrow up", "up arrow":
+            return "arrow_up"
+        case "down", "arrow down", "down arrow":
+            return "arrow_down"
+        case "left", "arrow left", "left arrow":
+            return "arrow_left"
+        case "right", "arrow right", "right arrow":
+            return "arrow_right"
+        default:
+            return key.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        }
     }
 }

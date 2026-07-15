@@ -43,6 +43,59 @@
         "approval": {
           "$ref": "approval.schema.json"
         },
+        "automation_approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_id",
+            "action_id",
+            "kind",
+            "risk",
+            "summary",
+            "expires_at"
+          ],
+          "properties": {
+            "approval_id": {
+              "type": "string",
+              "pattern": "^appr_[a-z0-9_-]+$"
+            },
+            "action_id": {
+              "type": "string",
+              "pattern": "^act_[a-z0-9_-]+$"
+            },
+            "kind": {
+              "enum": [
+                "ui.press_key",
+                "ui.click_element"
+              ]
+            },
+            "risk": {
+              "enum": [
+                "reversible",
+                "consequential"
+              ]
+            },
+            "summary": {
+              "type": "string"
+            },
+            "target_app": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "target_window": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
         "action_result": {
           "type": "object",
           "additionalProperties": false,
@@ -70,6 +123,52 @@
               "minimum": 0
             }
           }
+        },
+        "capture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capture_id",
+            "snapshot_id",
+            "window_id",
+            "captured_at",
+            "pixel_width",
+            "pixel_height"
+          ],
+          "properties": {
+            "capture_id": {
+              "type": "string",
+              "pattern": "^cap_[a-z0-9_-]+$"
+            },
+            "snapshot_id": {
+              "type": "string",
+              "pattern": "^ctx_[a-z0-9_-]+$"
+            },
+            "window_id": {
+              "type": "integer"
+            },
+            "captured_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "pixel_width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pixel_height": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "notification": {
+          "type": "object"
+        },
+        "key_press": {
+          "type": "object"
+        },
+        "click": {
+          "type": "object"
         }
       }
     },

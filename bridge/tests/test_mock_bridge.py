@@ -55,6 +55,37 @@ class MockBridgeTests(unittest.TestCase):
         caught.exception.read()
         caught.exception.close()
 
+    def test_accepts_new_mvp_job_kinds(self):
+        cases = [
+            ("context.capture_window", "read", {}),
+            ("notification.show", "reversible", {"title": "Hello", "body": "From test"}),
+            ("ui.press_key", "reversible", {"key": "escape", "modifiers": []}),
+            ("ui.click_element", "consequential", {"element_role": "AXButton", "element_label": "Continue"}),
+        ]
+
+        for kind, risk, input_body in cases:
+            with self.subTest(kind=kind):
+                job = self.post("/jobs", {
+                    "device_id": "mac_test_new_kinds",
+                    "kind": kind,
+                    "risk": risk,
+                    "input": input_body,
+                }, expected_status=201)
+                self.assertEqual(job["kind"], kind)
+
+    def test_rejects_unsupported_key_press(self):
+        with self.assertRaises(HTTPError) as caught:
+            self.post("/jobs", {
+                "device_id": "mac_test",
+                "kind": "ui.press_key",
+                "risk": "reversible",
+                "input": {"key": "command_q", "modifiers": []},
+            })
+
+        self.assertEqual(caught.exception.code, 400)
+        caught.exception.read()
+        caught.exception.close()
+
     def test_accepts_result_and_replays_duplicate_by_idempotency_key(self):
         result = {
             "job_id": "job_test",

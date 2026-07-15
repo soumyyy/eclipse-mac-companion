@@ -67,7 +67,7 @@ Use that token in the Mac app:
 - Bearer token: value from `.bridge-token`
 - Save
 - Start Polling
-- Use the command composer to queue context or approved text jobs
+- Use the command composer to queue context, capture, notification, approved text, key, or click jobs
 - Click **Refresh Activity** to inspect queued jobs and recent bridge results from inside the app
 
 Create a remote test job:
@@ -90,7 +90,10 @@ export ECLIPSE_BRIDGE_TOKEN="$(ssh e 'cat ~/eclipse-mac-bridge/.bridge-token')"
 python3 bridge/bridge_cli.py health
 python3 bridge/bridge_cli.py stats
 python3 bridge/bridge_cli.py create-context
+python3 bridge/bridge_cli.py create-capture-window
+python3 bridge/bridge_cli.py create-notification 'Hello from Eclipse'
 python3 bridge/bridge_cli.py create-set-text 'Hello from the bridge'
+python3 bridge/bridge_cli.py create-press-key escape
 ```
 
 Read remote results:

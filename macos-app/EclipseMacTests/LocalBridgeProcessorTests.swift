@@ -1,3 +1,4 @@
+import CoreGraphics
 import XCTest
 @testable import EclipseMac
 
@@ -5,15 +6,17 @@ import XCTest
 final class LocalBridgeProcessorTests: XCTestCase {
     private let now = Date(timeIntervalSince1970: 1_000)
 
-    func testContextJobReturnsSnapshotResult() {
+    func testContextJobReturnsSnapshotResult() async {
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
 
-        let result = processor.process(
+        let result = await processor.process(
             job(kind: .contextGetActiveWindow, risk: .read, input: .empty),
             now: now
         )
@@ -23,16 +26,99 @@ final class LocalBridgeProcessorTests: XCTestCase {
         XCTAssertEqual(result.output?.context?.activeApp?.bundleID, "com.apple.TextEdit")
     }
 
-    func testSetTextJobReturnsPendingApprovalWithoutCompletingAction() {
+    func testCaptureWindowJobReturnsMetadataOnly() async {
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+
+        let result = await processor.process(
+            job(kind: .contextCaptureWindow, risk: .read, input: .empty),
+            now: now
+        )
+
+        XCTAssertEqual(result.status, .succeeded)
+        XCTAssertEqual(result.output?.capture?.captureID, "cap_test")
+        XCTAssertEqual(result.output?.capture?.snapshotID, "ctx_test")
+        XCTAssertEqual(result.output?.capture?.pixelWidth, 100)
+        XCTAssertNil(result.output?.context)
+    }
+
+    func testNotificationJobReturnsDeliveryReceipt() async {
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+
+        let result = await processor.process(
+            job(kind: .notificationShow, risk: .reversible, input: .notification(title: "Heads up", body: "Done")),
+            now: now
+        )
+
+        XCTAssertEqual(result.status, .succeeded)
+        XCTAssertEqual(result.output?.notification?.notificationID, "notif_test")
+    }
+
+    func testPressKeyJobReturnsAutomationApproval() async {
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+
+        let result = await processor.process(
+            job(kind: .uiPressKey, risk: .reversible, input: .keyPress(key: "escape")),
+            now: now
+        )
+
+        XCTAssertEqual(result.status, .pendingApproval)
+        XCTAssertEqual(result.output?.automationApproval?.kind, .uiPressKey)
+        XCTAssertEqual(result.output?.automationApproval?.targetApp?.bundleID, "com.apple.TextEdit")
+    }
+
+    func testClickElementJobReturnsAutomationApproval() async {
+        let processor = LocalBridgeProcessor(
+            deviceID: "mac_test",
+            collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
+            textActions: FakeTextActions(),
+            store: InMemoryBridgeResultStore()
+        )
+
+        let result = await processor.process(
+            job(kind: .uiClickElement, risk: .consequential, input: .clickElement(role: "AXButton", label: "Continue")),
+            now: now
+        )
+
+        XCTAssertEqual(result.status, .pendingApproval)
+        XCTAssertEqual(result.output?.automationApproval?.kind, .uiClickElement)
+        XCTAssertEqual(result.output?.automationApproval?.risk, .consequential)
+    }
+
+    func testSetTextJobReturnsPendingApprovalWithoutCompletingAction() async {
         let textActions = FakeTextActions()
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
 
-        let result = processor.process(
+        let result = await processor.process(
             job(kind: .uiSetText, risk: .reversible, input: .setText("Hello")),
             now: now
         )
@@ -47,6 +133,8 @@ final class LocalBridgeProcessorTests: XCTestCase {
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
             textActions: FakeTextActions(),
             store: InMemoryBridgeResultStore()
         )
@@ -65,18 +153,20 @@ final class LocalBridgeProcessorTests: XCTestCase {
         XCTAssertEqual(result.idempotencyKey, "idem_test")
     }
 
-    func testDuplicateSetTextJobReplaysPendingApprovalWithoutPreparingAgain() {
+    func testDuplicateSetTextJobReplaysPendingApprovalWithoutPreparingAgain() async {
         let textActions = FakeTextActions()
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
         let job = job(kind: .uiSetText, risk: .reversible, input: .setText("Hello"))
 
-        let first = processor.process(job, now: now)
-        let second = processor.process(job, now: now.addingTimeInterval(1))
+        let first = await processor.process(job, now: now)
+        let second = await processor.process(job, now: now.addingTimeInterval(1))
 
         XCTAssertEqual(first.status, .pendingApproval)
         XCTAssertEqual(second.status, .pendingApproval)
@@ -84,16 +174,18 @@ final class LocalBridgeProcessorTests: XCTestCase {
         XCTAssertEqual(textActions.prepareCount, 1)
     }
 
-    func testCompletedSetTextJobReplaysFinalReceipt() {
+    func testCompletedSetTextJobReplaysFinalReceipt() async {
         let textActions = FakeTextActions()
         let processor = LocalBridgeProcessor(
             deviceID: "mac_test",
             collector: FakeContextCollector(snapshot: snapshot()),
+            capturer: FakeWindowCapturer(),
+            notifier: FakeNotifier(),
             textActions: textActions,
             store: InMemoryBridgeResultStore()
         )
         let job = job(kind: .uiSetText, risk: .reversible, input: .setText("Hello"))
-        _ = processor.process(job, now: now)
+        _ = await processor.process(job, now: now)
         let actionResult = SetTextActionResult(
             actionID: "act_test",
             snapshotID: "ctx_test",
@@ -102,7 +194,7 @@ final class LocalBridgeProcessorTests: XCTestCase {
         )
         _ = processor.completionResult(for: job, actionResult: actionResult, completedAt: now)
 
-        let replay = processor.process(job, now: now.addingTimeInterval(2))
+        let replay = await processor.process(job, now: now.addingTimeInterval(2))
 
         XCTAssertEqual(replay.status, .succeeded)
         XCTAssertEqual(replay.output?.actionResult?.charactersWritten, 5)
@@ -151,6 +243,47 @@ private final class FakeContextCollector: ContextCollecting {
 
     func capture() throws -> ContextSnapshot {
         snapshot
+    }
+}
+
+@MainActor
+private final class FakeWindowCapturer: WindowCapturing {
+    func capture(snapshot: ContextSnapshot) async throws -> WindowCaptureResult {
+        WindowCaptureResult(
+            image: Self.image(),
+            metadata: WindowCaptureMetadata(
+                captureID: "cap_test",
+                snapshotID: snapshot.snapshotID,
+                windowID: snapshot.window?.id ?? 0,
+                capturedAt: Date(timeIntervalSince1970: 1_000),
+                pixelWidth: 100,
+                pixelHeight: 50
+            )
+        )
+    }
+
+    private static func image() -> CGImage {
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let context = CGContext(
+            data: nil,
+            width: 1,
+            height: 1,
+            bitsPerComponent: 8,
+            bytesPerRow: 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        )!
+        return context.makeImage()!
+    }
+}
+
+@MainActor
+private final class FakeNotifier: LocalNotificationDelivering {
+    func deliver(title: String, body: String?) async throws -> BridgeNotificationReceipt {
+        BridgeNotificationReceipt(
+            notificationID: "notif_test",
+            deliveredAt: Date(timeIntervalSince1970: 1_000)
+        )
     }
 }
 
