@@ -38,6 +38,12 @@ def main() -> int:
     )
     call_parser.add_argument("--wait", action="store_true", help="Wait for the Mac result.")
     call_parser.add_argument("--no-wait", action="store_true", help="Return after queueing.")
+    call_parser.add_argument(
+        "--timeout-seconds",
+        dest="call_timeout_seconds",
+        type=float,
+        help="Maximum time to wait for this call. Also accepted globally before the subcommand.",
+    )
     call_parser.add_argument("--no-cancel-on-timeout", action="store_true")
 
     args = parser.parse_args()
@@ -67,7 +73,7 @@ def main() -> int:
                 args.tool_name,
                 arguments=read_arguments(args.arguments),
                 wait=wait,
-                timeout_seconds=args.timeout_seconds,
+                timeout_seconds=args.call_timeout_seconds if args.call_timeout_seconds is not None else args.timeout_seconds,
                 cancel_on_timeout=not args.no_cancel_on_timeout,
             )
         else:
@@ -82,8 +88,11 @@ def main() -> int:
 
 def read_arguments(raw: str | None) -> dict[str, Any]:
     if raw is None:
-        stdin = sys.stdin.read()
-        raw = stdin if stdin.strip() else "{}"
+        if sys.stdin.isatty():
+            raw = "{}"
+        else:
+            stdin = sys.stdin.read()
+            raw = stdin if stdin.strip() else "{}"
     value = json.loads(raw)
     if not isinstance(value, dict):
         raise ValueError("Tool arguments must be a JSON object")

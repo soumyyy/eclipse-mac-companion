@@ -96,6 +96,36 @@ class HermesAdapterTests(unittest.TestCase):
         self.assertEqual(body["job"]["kind"], "ui.press_key")
         self.assertEqual(body["job"]["input"]["key"], "escape")
 
+    def test_tool_host_accepts_timeout_after_call_subcommand(self):
+        script = Path(__file__).resolve().parents[1] / "hermes_tool_host.py"
+
+        completed = run(
+            [
+                sys.executable,
+                str(script),
+                "--url",
+                self.base_url,
+                "--token",
+                "adapter_test_token",
+                "--device-id",
+                "mac_tool_host_timeout",
+                "call",
+                "mac.get_active_window",
+                "--arguments",
+                "{}",
+                "--wait",
+                "--timeout-seconds",
+                "0.01",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        body = json.loads(completed.stdout)
+        self.assertTrue(body["timed_out"])
+        self.assertTrue(body["cancellation"]["cancelled"])
+
     def test_adapter_cancels_queued_job_on_timeout(self):
         adapter = EclipseMacHermesAdapter(
             bridge_url=self.base_url,

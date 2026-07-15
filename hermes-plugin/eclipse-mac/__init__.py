@@ -164,16 +164,17 @@ def invoke_tool(tool_name: str, args: dict[str, Any]) -> str:
     wait = args.pop("wait", None)
     timeout_seconds = args.pop("timeout_seconds", None)
     command = ["call", tool_name, "--arguments", json.dumps(args, separators=(",", ":"))]
+    global_options: list[str] = []
     if wait is True:
         command.append("--wait")
     elif wait is False:
         command.append("--no-wait")
     if timeout_seconds is not None:
-        command.extend(["--timeout-seconds", str(timeout_seconds)])
-    return run_host(command)
+        global_options.extend(["--timeout-seconds", str(timeout_seconds)])
+    return run_host(command, global_options=global_options)
 
 
-def run_host(command: list[str]) -> str:
+def run_host(command: list[str], global_options: list[str] | None = None) -> str:
     host = os.environ.get("ECLIPSE_MAC_TOOL_HOST", DEFAULT_TOOL_HOST)
     bridge_url = os.environ.get("ECLIPSE_BRIDGE_URL", DEFAULT_BRIDGE_URL)
     device_id = os.environ.get("ECLIPSE_MAC_DEVICE_ID", DEFAULT_DEVICE_ID)
@@ -189,6 +190,7 @@ def run_host(command: list[str]) -> str:
     ]
     if token:
         full_command.extend(["--token", token])
+    full_command.extend(global_options or [])
     full_command.extend(command)
 
     completed = subprocess.run(
