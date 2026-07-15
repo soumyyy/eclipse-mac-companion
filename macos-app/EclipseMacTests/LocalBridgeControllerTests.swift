@@ -181,6 +181,26 @@ final class LocalBridgeControllerTests: XCTestCase {
         XCTAssertEqual(controller.bridgeMessage, "Enter text before queueing a text job")
     }
 
+    func testRefreshRemoteActivityLoadsStatsQueuedJobsAndResults() async {
+        let transport = FakeLocalBridgeTransport(nextJob: nil)
+        let controller = LocalBridgeController(
+            deviceID: "mac_test",
+            setTextActions: SetTextActionController(),
+            collector: FakeControllerContextCollector(snapshot: snapshot()),
+            store: InMemoryBridgeResultStore(),
+            transport: transport
+        )
+        _ = await controller.queueContextJob()
+
+        let refreshed = await controller.refreshRemoteActivity()
+
+        XCTAssertTrue(refreshed)
+        XCTAssertEqual(controller.bridgeStats, BridgeStats(queuedJobs: 1, results: 2))
+        XCTAssertEqual(controller.remoteQueuedJobs.map(\.jobID), ["job_created_1"])
+        XCTAssertEqual(controller.remoteResults.map(\.jobID), ["job_result_1", "job_result_2"])
+        XCTAssertEqual(controller.bridgeMessage, "Bridge activity refreshed")
+    }
+
     private func job(
         kind: BridgeJobKind,
         risk: BridgeRisk,
@@ -226,6 +246,7 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
     private(set) var fetchCount = 0
     private(set) var replayedResults: [BridgeJobResultEnvelope] = []
     private(set) var createdRequests: [BridgeCreateJobRequest] = []
+    private(set) var createdJobs: [BridgeJobEnvelope] = []
 
     init(nextJob: BridgeJobEnvelope?, fetchError: Error? = nil) {
         self.nextJob = nextJob
@@ -251,7 +272,7 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
 
     func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope {
         createdRequests.append(request)
-        return BridgeJobEnvelope(
+        let job = BridgeJobEnvelope(
             jobID: "job_created_\(createdRequests.count)",
             protocolVersion: BridgeProtocol.currentVersion,
             deviceID: request.deviceID,
@@ -261,10 +282,36 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
             expiresAt: Date().addingTimeInterval(TimeInterval(request.ttlSeconds)),
             idempotencyKey: request.idempotencyKey ?? "idem_created_\(createdRequests.count)"
         )
+        createdJobs.append(job)
+        return job
     }
 
     func fetchStats() async throws -> BridgeStats {
         BridgeStats(queuedJobs: createdRequests.count, results: 2)
+    }
+
+    func fetchQueuedJobs() async throws -> [BridgeJobEnvelope] {
+        createdJobs
+    }
+
+    func fetchResults() async throws -> [BridgeJobResultEnvelope] {
+        [
+            result(jobID: "job_result_1", status: .succeeded),
+            result(jobID: "job_result_2", status: .failed)
+        ]
+    }
+
+    private func result(jobID: String, status: BridgeJobStatus) -> BridgeJobResultEnvelope {
+        BridgeJobResultEnvelope(
+            jobID: jobID,
+            protocolVersion: BridgeProtocol.currentVersion,
+            deviceID: "mac_test",
+            status: status,
+            output: nil,
+            error: status == .failed ? BridgeErrorPayload(code: "test", message: "Test failure") : nil,
+            completedAt: Date(),
+            idempotencyKey: "idem_\(jobID)"
+        )
     }
 }
 

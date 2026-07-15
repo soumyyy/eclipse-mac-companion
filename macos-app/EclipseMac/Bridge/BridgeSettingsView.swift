@@ -51,9 +51,9 @@ struct BridgeSettingsView: View {
                     LabeledContent("Remote results", value: "\(stats.results)")
                 }
                 LabeledContent("Device ID", value: LocalBridgeController.defaultDeviceID)
-                Button("Refresh Stats") {
+                Button("Refresh Activity") {
                     Task {
-                        _ = await localBridge.refreshRemoteStats()
+                        _ = await localBridge.refreshRemoteActivity()
                     }
                 }
             }
@@ -88,6 +88,42 @@ struct BridgeSettingsView: View {
                 if let job = localBridge.lastQueuedJob {
                     LabeledContent("Last queued", value: job.jobID)
                     LabeledContent("Kind", value: job.kind.rawValue)
+                }
+            }
+
+            Section("Activity") {
+                if localBridge.remoteQueuedJobs.isEmpty {
+                    Text("No queued jobs visible on the bridge.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(Array(localBridge.remoteQueuedJobs.prefix(5)), id: \.jobID) { job in
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(job.kind.rawValue)
+                                .font(.subheadline.weight(.medium))
+                            Text(job.jobID)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+
+                if localBridge.remoteResults.isEmpty {
+                    Text("No remote results yet.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(Array(localBridge.remoteResults.suffix(5).reversed()), id: \.jobID) { result in
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(result.status.rawValue)
+                                .font(.subheadline.weight(.medium))
+                            Text(result.jobID)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
                 }
             }
 

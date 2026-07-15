@@ -6,6 +6,8 @@ protocol LocalBridgeTransporting: Sendable {
     func replayOutbox(_ results: [BridgeJobResultEnvelope]) async throws -> BridgeOutboxReplayResponse
     func createJob(_ request: BridgeCreateJobRequest) async throws -> BridgeJobEnvelope
     func fetchStats() async throws -> BridgeStats
+    func fetchQueuedJobs() async throws -> [BridgeJobEnvelope]
+    func fetchResults() async throws -> [BridgeJobResultEnvelope]
 }
 
 struct BridgePostResultResponse: Codable, Equatable, Sendable {
@@ -45,6 +47,14 @@ struct BridgeStats: Codable, Equatable, Sendable {
         case queuedJobs = "queued_jobs"
         case results
     }
+}
+
+private struct BridgeJobsResponse: Decodable {
+    let jobs: [BridgeJobEnvelope]
+}
+
+private struct BridgeResultsResponse: Decodable {
+    let results: [BridgeJobResultEnvelope]
 }
 
 final class LocalBridgeHTTPClient: LocalBridgeTransporting {
@@ -97,6 +107,16 @@ final class LocalBridgeHTTPClient: LocalBridgeTransporting {
     func fetchStats() async throws -> BridgeStats {
         let data = try await get(path: "stats")
         return try decoder.decode(BridgeStats.self, from: data)
+    }
+
+    func fetchQueuedJobs() async throws -> [BridgeJobEnvelope] {
+        let data = try await get(path: "jobs")
+        return try decoder.decode(BridgeJobsResponse.self, from: data).jobs
+    }
+
+    func fetchResults() async throws -> [BridgeJobResultEnvelope] {
+        let data = try await get(path: "results")
+        return try decoder.decode(BridgeResultsResponse.self, from: data).results
     }
 
     private func get(path: String) async throws -> Data {

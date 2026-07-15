@@ -68,6 +68,7 @@ Use that token in the Mac app:
 - Save
 - Start Polling
 - Use the command composer to queue context or approved text jobs
+- Click **Refresh Activity** to inspect queued jobs and recent bridge results from inside the app
 
 Create a remote test job:
 

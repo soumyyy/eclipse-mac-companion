@@ -13,6 +13,8 @@ final class LocalBridgeController: ObservableObject {
     @Published private(set) var isPolling = false
     @Published private(set) var bridgeStats: BridgeStats?
     @Published private(set) var lastQueuedJob: BridgeJobEnvelope?
+    @Published private(set) var remoteQueuedJobs: [BridgeJobEnvelope] = []
+    @Published private(set) var remoteResults: [BridgeJobResultEnvelope] = []
     @Published var bridgeBaseURLString: String
     @Published var bridgeBearerToken: String
 
@@ -158,6 +160,29 @@ final class LocalBridgeController: ObservableObject {
         }
     }
 
+    func refreshRemoteActivity() async -> Bool {
+        if !usesInjectedTransport {
+            guard saveBridgeBaseURL() else { return false }
+        }
+        do {
+            async let stats = transport.fetchStats()
+            async let queuedJobs = transport.fetchQueuedJobs()
+            async let results = transport.fetchResults()
+
+            bridgeStats = try await stats
+            remoteQueuedJobs = try await queuedJobs
+            remoteResults = try await results
+            bridgeMessage = "Bridge activity refreshed"
+            bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Connected"
+            return true
+        } catch {
+            lastTransportRequestFailed = true
+            bridgeMessage = error.localizedDescription
+            bridgeStatus = "Bridge unavailable"
+            return false
+        }
+    }
+
     @discardableResult
     func saveBridgeBaseURL() -> Bool {
         let trimmed = bridgeBaseURLString.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -202,9 +227,9 @@ final class LocalBridgeController: ObservableObject {
         do {
             let job = try await transport.createJob(request)
             lastQueuedJob = job
+            _ = await refreshRemoteActivity()
             bridgeMessage = "\(successMessage): \(job.jobID)"
             bridgeStatus = isPolling ? "Connected; polling every \(Int(normalPollingInterval))s" : "Job queued"
-            bridgeStats = try? await transport.fetchStats()
             return job
         } catch {
             lastTransportRequestFailed = true
