@@ -31,6 +31,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 RuntimeModel.shared.openSettings()
             }
         }
+        if ProcessInfo.processInfo.arguments.contains("--capture-window-once") {
+            runOneShotWindowCapture()
+        }
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
@@ -44,5 +47,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func toggleOverlay() {
         overlayController?.toggle()
+    }
+
+    private func runOneShotWindowCapture() {
+        Task { @MainActor in
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+                let snapshot = try AccessibilityContextCollector().capture()
+                let result = try await ActiveWindowCapturer().capture(snapshot: snapshot)
+                print(
+                    "Eclipse capture succeeded: window=\(result.metadata.windowID) " +
+                    "pixels=\(result.metadata.pixelWidth)x\(result.metadata.pixelHeight)"
+                )
+            } catch {
+                print("Eclipse capture failed: \(error.localizedDescription)")
+            }
+            NSApp.terminate(nil)
+        }
     }
 }

@@ -13,11 +13,45 @@ struct ContextDiagnosticsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Capture Snapshot") {
-                    model.capture()
+                HStack(spacing: 8) {
+                    Button("Capture Context") {
+                        model.capture()
+                    }
+                    Button {
+                        model.captureWindow()
+                    } label: {
+                        if model.isCapturingWindow {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Label("Capture Window", systemImage: "camera.viewfinder")
+                        }
+                    }
+                    .disabled(model.isCapturingWindow)
+                    .buttonStyle(.borderedProminent)
+                    .tint(EclipseTheme.violet)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(EclipseTheme.violet)
+            }
+
+            if let screenshot = model.screenshot,
+               let metadata = model.screenshotMetadata {
+                SectionCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Label("Memory-only window capture", systemImage: "rectangle.inset.filled")
+                                .font(.headline)
+                            Spacer()
+                            Text("\(metadata.pixelWidth) × \(metadata.pixelHeight)")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.tertiary)
+                        }
+                        Image(nsImage: screenshot)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: 210)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
+                }
             }
 
             if let errorMessage = model.errorMessage {

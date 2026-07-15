@@ -88,7 +88,10 @@ final class AccessibilityContextCollector: ContextCollecting {
             redactions.append(.truncatedText)
         }
 
-        let windowID = activeWindowID(processIdentifier: runningApplication.processIdentifier)
+        let windowID = activeWindowID(
+            for: windowElement,
+            processIdentifier: runningApplication.processIdentifier
+        )
         if policy.blocks(windowTitle: rawWindowTitle) {
             redactions.append(.blockedWindow)
             return snapshot(
@@ -198,7 +201,10 @@ final class AccessibilityContextCollector: ContextCollecting {
         return unsafeDowncast(value, to: AXUIElement.self)
     }
 
-    private func activeWindowID(processIdentifier: pid_t) -> UInt32? {
+    private func activeWindowID(
+        for windowElement: AXUIElement,
+        processIdentifier: pid_t
+    ) -> UInt32? {
         guard let windows = CGWindowListCopyWindowInfo(
             [.optionOnScreenOnly, .excludeDesktopElements],
             kCGNullWindowID
@@ -206,13 +212,66 @@ final class AccessibilityContextCollector: ContextCollecting {
             return nil
         }
 
-        return windows.first { window in
+        let applicationWindows = windows.filter { window in
             let ownerPID = window[kCGWindowOwnerPID as String] as? pid_t
             let layer = window[kCGWindowLayer as String] as? Int
             return ownerPID == processIdentifier && layer == 0
-        }.flatMap { window in
+        }
+
+        let focusedFrame = windowFrame(from: windowElement)
+        let matchingWindow = focusedFrame.flatMap { focusedFrame in
+            applicationWindows.first { window in
+                guard let rawBounds = window[kCGWindowBounds as String] as? [String: Any],
+                      let bounds = CGRect(dictionaryRepresentation: rawBounds as CFDictionary) else {
+                    return false
+                }
+                return bounds.approximatelyEquals(focusedFrame)
+            }
+        }
+
+        let resolvedWindow = matchingWindow ?? (applicationWindows.count == 1 ? applicationWindows[0] : nil)
+        return resolvedWindow.flatMap { window in
             (window[kCGWindowNumber as String] as? NSNumber)?.uint32Value
         }
+    }
+
+    private func windowFrame(from windowElement: AXUIElement) -> CGRect? {
+        guard let position = pointValue(from: windowElement, attribute: kAXPositionAttribute),
+              let size = sizeValue(from: windowElement, attribute: kAXSizeAttribute) else {
+            return nil
+        }
+        return CGRect(origin: position, size: size)
+    }
+
+    private func pointValue(from element: AXUIElement, attribute: String) -> CGPoint? {
+        guard let value = copiedValue(from: element, attribute: attribute),
+              CFGetTypeID(value) == AXValueGetTypeID() else {
+            return nil
+        }
+        let accessibilityValue = unsafeDowncast(value, to: AXValue.self)
+        guard AXValueGetType(accessibilityValue) == .cgPoint else { return nil }
+        var point = CGPoint.zero
+        return AXValueGetValue(accessibilityValue, .cgPoint, &point) ? point : nil
+    }
+
+    private func sizeValue(from element: AXUIElement, attribute: String) -> CGSize? {
+        guard let value = copiedValue(from: element, attribute: attribute),
+              CFGetTypeID(value) == AXValueGetTypeID() else {
+            return nil
+        }
+        let accessibilityValue = unsafeDowncast(value, to: AXValue.self)
+        guard AXValueGetType(accessibilityValue) == .cgSize else { return nil }
+        var size = CGSize.zero
+        return AXValueGetValue(accessibilityValue, .cgSize, &size) ? size : nil
+    }
+}
+
+private extension CGRect {
+    func approximatelyEquals(_ other: CGRect, tolerance: CGFloat = 2) -> Bool {
+        abs(minX - other.minX) <= tolerance &&
+            abs(minY - other.minY) <= tolerance &&
+            abs(width - other.width) <= tolerance &&
+            abs(height - other.height) <= tolerance
     }
 }
 
