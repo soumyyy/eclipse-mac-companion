@@ -1,0 +1,513 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0560A778BE1F4A0F07452B05 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C8CECF42DAFE4630027895 /* MenuContentView.swift */; };
+		0FD5B233DA562CF23B9466D8 /* PermissionCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3777045C3652EFC1133DDF85 /* PermissionCenter.swift */; };
+		204132CD863BD3EE2FC105D4 /* OverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839F440293B458A4B7E4333 /* OverlayView.swift */; };
+		3C3800B211D8E76D348F1398 /* AssistantStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51AD2474340A8C65E271916 /* AssistantStateTests.swift */; };
+		4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770AD420C5F18D3A824363B5 /* ContextModels.swift */; };
+		51BBD4073ABEAB1C54D3BACC /* RuntimeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B9E174095478517034A0F2 /* RuntimeModel.swift */; };
+		538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */; };
+		7BEF045D9277487F832171EF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24F948C4DAEDE2D78CFF283C /* SettingsView.swift */; };
+		7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */; };
+		B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */; };
+		B1D389E6698E3B996D20F67C /* PermissionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */; };
+		D11A179A68D889B66D1D1CEF /* OverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6FFF593D1D464DB816D46B /* OverlayController.swift */; };
+		D889D8BB4C4F7FC403CE5019 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761269DF84E6D2214A388CD4 /* AppDelegate.swift */; };
+		EA835672FD96A95082088364 /* PermissionDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4983A74E6734856020E39A /* PermissionDashboardView.swift */; };
+		ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D243FB00F0ECE23A0DA49C2F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1F9A0C36AF7A816F2C9387C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0BF5132394D2606AD2A59AA0;
+			remoteInfo = EclipseMac;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		24F948C4DAEDE2D78CFF283C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantState.swift; sourceTree = "<group>"; };
+		2D8D45C5E832E23364E83607 /* EclipseMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EclipseMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3777045C3652EFC1133DDF85 /* PermissionCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCenter.swift; sourceTree = "<group>"; };
+		3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionModels.swift; sourceTree = "<group>"; };
+		46C8CECF42DAFE4630027895 /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
+		4A4983A74E6734856020E39A /* PermissionDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDashboardView.swift; sourceTree = "<group>"; };
+		57B7B8B226E47E147328F409 /* EclipseMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EclipseMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		761269DF84E6D2214A388CD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		770AD420C5F18D3A824363B5 /* ContextModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextModels.swift; sourceTree = "<group>"; };
+		9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseTheme.swift; sourceTree = "<group>"; };
+		95B9E174095478517034A0F2 /* RuntimeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeModel.swift; sourceTree = "<group>"; };
+		A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyService.swift; sourceTree = "<group>"; };
+		A51AD2474340A8C65E271916 /* AssistantStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantStateTests.swift; sourceTree = "<group>"; };
+		C839F440293B458A4B7E4333 /* OverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayView.swift; sourceTree = "<group>"; };
+		DC6FFF593D1D464DB816D46B /* OverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayController.swift; sourceTree = "<group>"; };
+		E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseMacApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0385144C521790A0A45A05BB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				57B7B8B226E47E147328F409 /* EclipseMac.app */,
+				2D8D45C5E832E23364E83607 /* EclipseMacTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1EFC250D8F586E3D4C3570EC /* Context */ = {
+			isa = PBXGroup;
+			children = (
+				770AD420C5F18D3A824363B5 /* ContextModels.swift */,
+			);
+			path = Context;
+			sourceTree = "<group>";
+		};
+		8E9912F85461D2C8802FB441 /* EclipseMac */ = {
+			isa = PBXGroup;
+			children = (
+				A38F299F8C1AABBA99D387FB /* App */,
+				1EFC250D8F586E3D4C3570EC /* Context */,
+				A7AE6D85B97EEA85ECB0670B /* Design */,
+				ED081E622C33A24CE617F4C3 /* Overlay */,
+				B0F6355023FA2A11024BE166 /* Permissions */,
+				AEF144FE2B88D77148F80930 /* UI */,
+			);
+			path = EclipseMac;
+			sourceTree = "<group>";
+		};
+		A38F299F8C1AABBA99D387FB /* App */ = {
+			isa = PBXGroup;
+			children = (
+				761269DF84E6D2214A388CD4 /* AppDelegate.swift */,
+				E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */,
+				A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */,
+				95B9E174095478517034A0F2 /* RuntimeModel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A7AE6D85B97EEA85ECB0670B /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		AEF144FE2B88D77148F80930 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				46C8CECF42DAFE4630027895 /* MenuContentView.swift */,
+				24F948C4DAEDE2D78CFF283C /* SettingsView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		B0F6355023FA2A11024BE166 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				3777045C3652EFC1133DDF85 /* PermissionCenter.swift */,
+				4A4983A74E6734856020E39A /* PermissionDashboardView.swift */,
+				3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */,
+			);
+			path = Permissions;
+			sourceTree = "<group>";
+		};
+		D34546551693F4504323BBB2 /* macos-app */ = {
+			isa = PBXGroup;
+			children = (
+				8E9912F85461D2C8802FB441 /* EclipseMac */,
+				E88BED24CD83E6898DCBDE9E /* EclipseMacTests */,
+			);
+			path = "macos-app";
+			sourceTree = "<group>";
+		};
+		E793B5BE9724A11C1EBC7623 = {
+			isa = PBXGroup;
+			children = (
+				D34546551693F4504323BBB2 /* macos-app */,
+				0385144C521790A0A45A05BB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E88BED24CD83E6898DCBDE9E /* EclipseMacTests */ = {
+			isa = PBXGroup;
+			children = (
+				A51AD2474340A8C65E271916 /* AssistantStateTests.swift */,
+			);
+			path = EclipseMacTests;
+			sourceTree = "<group>";
+		};
+		ED081E622C33A24CE617F4C3 /* Overlay */ = {
+			isa = PBXGroup;
+			children = (
+				29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */,
+				DC6FFF593D1D464DB816D46B /* OverlayController.swift */,
+				C839F440293B458A4B7E4333 /* OverlayView.swift */,
+			);
+			path = Overlay;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		07EBE076D310810C40CB984A /* EclipseMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A7ACA050CF14728905FCF0DB /* Build configuration list for PBXNativeTarget "EclipseMacTests" */;
+			buildPhases = (
+				29C8F3D8E3E1DBF58D86C0AD /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CDF2CEE979C1663DB2334D7E /* PBXTargetDependency */,
+			);
+			name = EclipseMacTests;
+			packageProductDependencies = (
+			);
+			productName = EclipseMacTests;
+			productReference = 2D8D45C5E832E23364E83607 /* EclipseMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		0BF5132394D2606AD2A59AA0 /* EclipseMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F6C38177B433E1BD2EED97AE /* Build configuration list for PBXNativeTarget "EclipseMac" */;
+			buildPhases = (
+				78F03E07FF4504000F4A4255 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EclipseMac;
+			packageProductDependencies = (
+			);
+			productName = EclipseMac;
+			productReference = 57B7B8B226E47E147328F409 /* EclipseMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1F9A0C36AF7A816F2C9387C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					07EBE076D310810C40CB984A = {
+						ProvisioningStyle = Automatic;
+					};
+					0BF5132394D2606AD2A59AA0 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F10ACE3E2F1767B08D0F68FC /* Build configuration list for PBXProject "EclipseMac" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = E793B5BE9724A11C1EBC7623;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0385144C521790A0A45A05BB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0BF5132394D2606AD2A59AA0 /* EclipseMac */,
+				07EBE076D310810C40CB984A /* EclipseMacTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		29C8F3D8E3E1DBF58D86C0AD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C3800B211D8E76D348F1398 /* AssistantStateTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		78F03E07FF4504000F4A4255 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D889D8BB4C4F7FC403CE5019 /* AppDelegate.swift in Sources */,
+				B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */,
+				4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */,
+				ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */,
+				7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */,
+				538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */,
+				0560A778BE1F4A0F07452B05 /* MenuContentView.swift in Sources */,
+				D11A179A68D889B66D1D1CEF /* OverlayController.swift in Sources */,
+				204132CD863BD3EE2FC105D4 /* OverlayView.swift in Sources */,
+				0FD5B233DA562CF23B9466D8 /* PermissionCenter.swift in Sources */,
+				EA835672FD96A95082088364 /* PermissionDashboardView.swift in Sources */,
+				B1D389E6698E3B996D20F67C /* PermissionModels.swift in Sources */,
+				51BBD4073ABEAB1C54D3BACC /* RuntimeModel.swift in Sources */,
+				7BEF045D9277487F832171EF /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CDF2CEE979C1663DB2334D7E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0BF5132394D2606AD2A59AA0 /* EclipseMac */;
+			targetProxy = D243FB00F0ECE23A0DA49C2F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1E681C445D32660870465A01 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.soumya.eclipse-mac.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Eclipse Mac.app/Contents/MacOS/Eclipse Mac";
+			};
+			name = Release;
+		};
+		581BE95BD42E9EE8F36872B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Eclipse Mac";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start push-to-talk.";
+				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Eclipse Mac captures only the active window when you explicitly request it.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.soumya.eclipse-mac";
+				PRODUCT_MODULE_NAME = EclipseMac;
+				PRODUCT_NAME = "Eclipse Mac";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		5AFDEE2109B3CABB613F6C0B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Eclipse Mac";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start push-to-talk.";
+				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Eclipse Mac captures only the active window when you explicitly request it.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.soumya.eclipse-mac";
+				PRODUCT_MODULE_NAME = EclipseMac;
+				PRODUCT_NAME = "Eclipse Mac";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		98E7682ABB73964226ABE944 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.soumya.eclipse-mac.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Eclipse Mac.app/Contents/MacOS/Eclipse Mac";
+			};
+			name = Debug;
+		};
+		9E6E52562E27A0E5F8A5321E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		EC9411F6447DEFE61E0D3522 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A7ACA050CF14728905FCF0DB /* Build configuration list for PBXNativeTarget "EclipseMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				98E7682ABB73964226ABE944 /* Debug */,
+				1E681C445D32660870465A01 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F10ACE3E2F1767B08D0F68FC /* Build configuration list for PBXProject "EclipseMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9E6E52562E27A0E5F8A5321E /* Debug */,
+				EC9411F6447DEFE61E0D3522 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F6C38177B433E1BD2EED97AE /* Build configuration list for PBXNativeTarget "EclipseMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				581BE95BD42E9EE8F36872B7 /* Debug */,
+				5AFDEE2109B3CABB613F6C0B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1F9A0C36AF7A816F2C9387C /* Project object */;
+}

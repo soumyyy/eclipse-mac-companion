@@ -1,0 +1,48 @@
+name: EclipseMac
+options:
+  bundleIdPrefix: com.soumya
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    GENERATE_INFOPLIST_FILE: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+targets:
+  EclipseMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: macos-app/EclipseMac
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.soumya.eclipse-mac
+        PRODUCT_NAME: Eclipse Mac
+        PRODUCT_MODULE_NAME: EclipseMac
+        INFOPLIST_KEY_CFBundleDisplayName: Eclipse Mac
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Eclipse Mac uses the microphone only when you explicitly start push-to-talk.
+        INFOPLIST_KEY_NSScreenCaptureUsageDescription: Eclipse Mac captures only the active window when you explicitly request it.
+    scheme:
+      testTargets:
+        - EclipseMacTests
+  EclipseMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: macos-app/EclipseMacTests
+    dependencies:
+      - target: EclipseMac
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.soumya.eclipse-mac.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Eclipse Mac.app/Contents/MacOS/Eclipse Mac"
+        BUNDLE_LOADER: "$(TEST_HOST)"
