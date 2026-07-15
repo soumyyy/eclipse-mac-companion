@@ -32,6 +32,7 @@ Useful endpoints:
 
 - `GET /health`
 - `POST /jobs`
+- `POST /jobs/{job_id}/cancel`
 - `GET /jobs`
 - `GET /jobs/next?device_id=mac_soumya_local`
 - `POST /results`
@@ -60,6 +61,8 @@ python3 bridge/bridge_cli.py create-notification 'Hello from Eclipse' --body 'Br
 python3 bridge/bridge_cli.py create-set-text 'Hello from the bridge'
 python3 bridge/bridge_cli.py create-press-key escape
 python3 bridge/bridge_cli.py create-click-element AXButton --element-label Continue
+python3 bridge/bridge_cli.py wait-result job_abc --timeout-seconds 30
+python3 bridge/bridge_cli.py cancel job_abc --message 'No longer needed'
 ```
 
 Hermes adapter scaffold:
@@ -68,8 +71,12 @@ Hermes adapter scaffold:
 from hermes_adapter import EclipseMacHermesAdapter
 
 adapter = EclipseMacHermesAdapter()
-adapter.get_active_window()
+adapter.get_active_window(wait=True, timeout_seconds=10)
 adapter.type_text_with_approval("Hello", wait=False)
+
+# If wait=True times out, queued jobs are cancelled by default when the Mac has
+# not fetched them yet. The return shape includes timed_out and cancellation.
+adapter.press_key_with_approval("escape", wait=True, timeout_seconds=10)
 ```
 
 Minimal VPS profile:

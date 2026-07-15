@@ -112,6 +112,24 @@ class MockBridgeTests(unittest.TestCase):
         self.assertTrue(second["duplicate"])
         self.assertEqual(fetched["idempotency_key"], "idem_test")
 
+    def test_cancels_queued_job_and_stores_rejected_result(self):
+        job = self.post("/jobs", {
+            "device_id": "mac_cancel_test",
+            "kind": "context.get_active_window",
+            "risk": "read",
+            "input": {},
+        }, expected_status=201)
+
+        cancelled = self.post(f"/jobs/{job['job_id']}/cancel", {"message": "No longer needed"})
+        result = self.get(f"/results/{job['job_id']}")
+        jobs = self.get("/jobs")
+
+        self.assertTrue(cancelled["cancelled"])
+        self.assertEqual(cancelled["result"]["status"], "rejected")
+        self.assertEqual(cancelled["result"]["error"]["code"], "cancelled_before_delivery")
+        self.assertEqual(result["error"]["message"], "No longer needed")
+        self.assertFalse(any(item["job_id"] == job["job_id"] for item in jobs["jobs"]))
+
     def test_replays_outbox_batch(self):
         body = {
             "results": [
@@ -186,6 +204,25 @@ class MockBridgeTests(unittest.TestCase):
             duplicate, is_duplicate = second.save_result(result)
             self.assertTrue(is_duplicate)
             self.assertEqual(duplicate["job_id"], "job_persisted")
+
+    def test_sqlite_state_cancels_queued_job_and_persists_result(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = str(Path(directory) / "bridge.sqlite3")
+            first = SQLiteBridgeState(path)
+            job = first.create_job({
+                "device_id": "mac_test",
+                "kind": "context.get_active_window",
+                "risk": "read",
+                "input": {},
+            })
+
+            result, cancelled = first.cancel_job(job["job_id"], message="Timed out")
+            second = SQLiteBridgeState(path)
+
+            self.assertTrue(cancelled)
+            self.assertEqual(result["status"], "rejected")
+            self.assertEqual(second.stats(), {"queued_jobs": 0, "results": 1})
+            self.assertEqual(second.result(job["job_id"])["error"]["message"], "Timed out")
 
     def test_token_protected_bridge_rejects_and_accepts_authorized_requests(self):
         server = make_server(port=0, token="secret_test_token")

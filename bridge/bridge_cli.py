@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from typing import Any
 from urllib.error import HTTPError
 from urllib.parse import urlencode
@@ -39,6 +40,15 @@ def main() -> int:
 
     result_parser = subparsers.add_parser("result", help="Fetch one result by job ID.")
     result_parser.add_argument("job_id")
+
+    wait_parser = subparsers.add_parser("wait-result", help="Wait for one result by job ID.")
+    wait_parser.add_argument("job_id")
+    wait_parser.add_argument("--timeout-seconds", type=float, default=30)
+    wait_parser.add_argument("--poll-seconds", type=float, default=0.5)
+
+    cancel_parser = subparsers.add_parser("cancel", help="Cancel a queued job before the Mac fetches it.")
+    cancel_parser.add_argument("job_id")
+    cancel_parser.add_argument("--message", default="Job cancelled by operator")
 
     context_parser = subparsers.add_parser("create-context", help="Queue context.get_active_window.")
     add_common_job_args(context_parser)
@@ -108,6 +118,15 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
         return request_json(args, "GET", "/results")
     if args.command == "result":
         return request_json(args, "GET", f"/results/{args.job_id}")
+    if args.command == "wait-result":
+        return wait_for_result(args, args.job_id, timeout_seconds=args.timeout_seconds, poll_seconds=args.poll_seconds)
+    if args.command == "cancel":
+        return request_json(
+            args,
+            "POST",
+            f"/jobs/{args.job_id}/cancel",
+            body={"message": args.message},
+        )
     if args.command == "create-context":
         return request_json(args, "POST", "/jobs", body=job_body(
             args,
@@ -158,6 +177,26 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
             body = json.load(handle)
         return request_json(args, "POST", "/jobs", body=body)
     raise ValueError(f"Unsupported command: {args.command}")
+
+
+def wait_for_result(
+    args: argparse.Namespace,
+    job_id: str,
+    *,
+    timeout_seconds: float,
+    poll_seconds: float,
+) -> dict[str, Any]:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            return request_json(args, "GET", f"/results/{job_id}") or {}
+        except HTTPError as error:
+            if error.code != 404:
+                raise
+            error.read()
+            error.close()
+        time.sleep(poll_seconds)
+    raise TimeoutError(f"Timed out waiting for result {job_id}")
 
 
 def job_body(

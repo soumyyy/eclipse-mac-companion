@@ -83,6 +83,21 @@ class BridgeCLITests(unittest.TestCase):
         self.assertEqual(key["input"]["key"], "escape")
         self.assertEqual(click["input"]["element_role"], "AXButton")
 
+    def test_cancel_queued_job(self):
+        job = self.run_cli(
+            "create-context",
+            "--device-id",
+            "mac_cli_cancel",
+            "--idempotency-key",
+            "idem_cli_cancel",
+        )
+
+        cancelled = self.run_cli("cancel", job["job_id"], "--message", "CLI cancelled")
+
+        self.assertTrue(cancelled["cancelled"])
+        self.assertEqual(cancelled["result"]["status"], "rejected")
+        self.assertEqual(cancelled["result"]["error"]["message"], "CLI cancelled")
+
     def run_cli(self, *args):
         completed = subprocess.run(
             [

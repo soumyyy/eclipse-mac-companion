@@ -29,17 +29,72 @@ class EclipseMacHermesAdapter:
         self.device_id = device_id or os.environ.get("ECLIPSE_MAC_DEVICE_ID", "mac_soumya_local")
         self.timeout_seconds = timeout_seconds
 
-    def get_active_window(self, *, wait: bool = True) -> dict[str, Any]:
-        return self.enqueue_or_wait("context.get_active_window", "read", {}, wait=wait)
+    def get_active_window(
+        self,
+        *,
+        wait: bool = True,
+        timeout_seconds: float | None = None,
+        cancel_on_timeout: bool = True,
+    ) -> dict[str, Any]:
+        return self.enqueue_or_wait(
+            "context.get_active_window",
+            "read",
+            {},
+            wait=wait,
+            timeout_seconds=timeout_seconds,
+            cancel_on_timeout=cancel_on_timeout,
+        )
 
-    def capture_window(self, *, wait: bool = True) -> dict[str, Any]:
-        return self.enqueue_or_wait("context.capture_window", "read", {}, wait=wait)
+    def capture_window(
+        self,
+        *,
+        wait: bool = True,
+        timeout_seconds: float | None = None,
+        cancel_on_timeout: bool = True,
+    ) -> dict[str, Any]:
+        return self.enqueue_or_wait(
+            "context.capture_window",
+            "read",
+            {},
+            wait=wait,
+            timeout_seconds=timeout_seconds,
+            cancel_on_timeout=cancel_on_timeout,
+        )
 
-    def show_notification(self, title: str, body: str = "", *, wait: bool = False) -> dict[str, Any]:
-        return self.enqueue_or_wait("notification.show", "reversible", {"title": title, "body": body}, wait=wait)
+    def show_notification(
+        self,
+        title: str,
+        body: str = "",
+        *,
+        wait: bool = False,
+        timeout_seconds: float | None = None,
+        cancel_on_timeout: bool = True,
+    ) -> dict[str, Any]:
+        return self.enqueue_or_wait(
+            "notification.show",
+            "reversible",
+            {"title": title, "body": body},
+            wait=wait,
+            timeout_seconds=timeout_seconds,
+            cancel_on_timeout=cancel_on_timeout,
+        )
 
-    def type_text_with_approval(self, text: str, *, wait: bool = False) -> dict[str, Any]:
-        return self.enqueue_or_wait("ui.set_text", "reversible", {"text": text}, wait=wait)
+    def type_text_with_approval(
+        self,
+        text: str,
+        *,
+        wait: bool = False,
+        timeout_seconds: float | None = None,
+        cancel_on_timeout: bool = True,
+    ) -> dict[str, Any]:
+        return self.enqueue_or_wait(
+            "ui.set_text",
+            "reversible",
+            {"text": text},
+            wait=wait,
+            timeout_seconds=timeout_seconds,
+            cancel_on_timeout=cancel_on_timeout,
+        )
 
     def press_key_with_approval(
         self,
@@ -47,12 +102,16 @@ class EclipseMacHermesAdapter:
         modifiers: list[str] | None = None,
         *,
         wait: bool = False,
+        timeout_seconds: float | None = None,
+        cancel_on_timeout: bool = True,
     ) -> dict[str, Any]:
         return self.enqueue_or_wait(
             "ui.press_key",
             "reversible",
             {"key": key, "modifiers": modifiers or []},
             wait=wait,
+            timeout_seconds=timeout_seconds,
+            cancel_on_timeout=cancel_on_timeout,
         )
 
     def click_element_with_approval(
@@ -61,11 +120,20 @@ class EclipseMacHermesAdapter:
         element_label: str | None = None,
         *,
         wait: bool = False,
+        timeout_seconds: float | None = None,
+        cancel_on_timeout: bool = True,
     ) -> dict[str, Any]:
         input_body: dict[str, Any] = {"element_role": element_role}
         if element_label:
             input_body["element_label"] = element_label
-        return self.enqueue_or_wait("ui.click_element", "consequential", input_body, wait=wait)
+        return self.enqueue_or_wait(
+            "ui.click_element",
+            "consequential",
+            input_body,
+            wait=wait,
+            timeout_seconds=timeout_seconds,
+            cancel_on_timeout=cancel_on_timeout,
+        )
 
     def enqueue_or_wait(
         self,
@@ -74,11 +142,27 @@ class EclipseMacHermesAdapter:
         input_body: dict[str, Any],
         *,
         wait: bool,
+        timeout_seconds: float | None = None,
+        cancel_on_timeout: bool = True,
     ) -> dict[str, Any]:
         job = self.create_job(kind=kind, risk=risk, input_body=input_body)
         if not wait:
-            return {"job": job, "result": None}
-        return {"job": job, "result": self.wait_for_result(job["job_id"])}
+            return {"job": job, "result": None, "timed_out": False, "cancellation": None}
+        try:
+            return {
+                "job": job,
+                "result": self.wait_for_result(job["job_id"], timeout_seconds=timeout_seconds),
+                "timed_out": False,
+                "cancellation": None,
+            }
+        except TimeoutError:
+            cancellation = self.cancel_job(job["job_id"]) if cancel_on_timeout else None
+            return {
+                "job": job,
+                "result": None,
+                "timed_out": True,
+                "cancellation": cancellation,
+            }
 
     def create_job(self, *, kind: str, risk: str, input_body: dict[str, Any]) -> dict[str, Any]:
         return self.request_json(
@@ -93,8 +177,11 @@ class EclipseMacHermesAdapter:
             },
         )
 
-    def wait_for_result(self, job_id: str) -> dict[str, Any]:
-        deadline = time.monotonic() + self.timeout_seconds
+    def cancel_job(self, job_id: str, message: str = "Timed out waiting for Mac result") -> dict[str, Any]:
+        return self.request_json("POST", f"/jobs/{job_id}/cancel", {"message": message})
+
+    def wait_for_result(self, job_id: str, timeout_seconds: float | None = None) -> dict[str, Any]:
+        deadline = time.monotonic() + (timeout_seconds if timeout_seconds is not None else self.timeout_seconds)
         while time.monotonic() < deadline:
             try:
                 return self.request_json("GET", f"/results/{job_id}")

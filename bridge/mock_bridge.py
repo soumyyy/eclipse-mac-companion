@@ -92,6 +92,20 @@ class BridgeState:
                     return self.jobs.pop(index)
         return None
 
+    def cancel_job(self, job_id: str, message: str = "Job cancelled before delivery") -> tuple[dict[str, Any] | None, bool]:
+        with self.lock:
+            existing = self.results_by_job_id.get(job_id)
+            if existing is not None:
+                return existing, False
+            for index, job in enumerate(self.jobs):
+                if job["job_id"] == job_id:
+                    self.jobs.pop(index)
+                    result = cancellation_result(job, message=message)
+                    self.results_by_job_id[result["job_id"]] = result
+                    self.results_by_idempotency_key[result["idempotency_key"]] = result
+                    return result, True
+        return None, False
+
     def save_result(self, result: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         validate_result(result)
         with self.lock:
@@ -189,6 +203,50 @@ class SQLiteBridgeState:
                 return None
             connection.execute("DELETE FROM jobs WHERE id = ?", (row["id"],))
             return json.loads(row["job_json"])
+
+    def cancel_job(self, job_id: str, message: str = "Job cancelled before delivery") -> tuple[dict[str, Any] | None, bool]:
+        with self.lock, self._connect() as connection:
+            existing = connection.execute(
+                """
+                SELECT result_json
+                FROM results
+                WHERE job_id = ?
+                LIMIT 1
+                """,
+                (job_id,),
+            ).fetchone()
+            if existing is not None:
+                return json.loads(existing["result_json"]), False
+
+            row = connection.execute(
+                """
+                SELECT id, job_json
+                FROM jobs
+                WHERE job_id = ?
+                LIMIT 1
+                """,
+                (job_id,),
+            ).fetchone()
+            if row is None:
+                return None, False
+
+            job = json.loads(row["job_json"])
+            connection.execute("DELETE FROM jobs WHERE id = ?", (row["id"],))
+            result = cancellation_result(job, message=message)
+            connection.execute(
+                """
+                INSERT INTO results (
+                    job_id, idempotency_key, result_json, created_at
+                ) VALUES (?, ?, ?, ?)
+                """,
+                (
+                    result["job_id"],
+                    result["idempotency_key"],
+                    encode_json(result),
+                    isoformat(utc_now()),
+                ),
+            )
+            return result, True
 
     def save_result(self, result: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         validate_result(result)
@@ -305,6 +363,21 @@ class SQLiteBridgeState:
 
 def encode_json(value: dict[str, Any]) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def cancellation_result(job: dict[str, Any], message: str) -> dict[str, Any]:
+    return {
+        "job_id": job["job_id"],
+        "protocol_version": PROTOCOL_VERSION,
+        "device_id": job["device_id"],
+        "status": "rejected",
+        "error": {
+            "code": "cancelled_before_delivery",
+            "message": message,
+        },
+        "completed_at": isoformat(utc_now()),
+        "idempotency_key": job["idempotency_key"],
+    }
 
 
 def validate_job(job: dict[str, Any]) -> None:
@@ -439,6 +512,17 @@ class BridgeHandler(BaseHTTPRequestHandler):
             if parsed.path == "/jobs":
                 job = self.server.state.create_job(body)
                 self.respond(job, status=201)
+                return
+            if parsed.path.startswith("/jobs/") and parsed.path.endswith("/cancel"):
+                job_id = parsed.path.split("/")[-2]
+                result, cancelled = self.server.state.cancel_job(
+                    job_id,
+                    message=body.get("message", "Job cancelled before delivery"),
+                )
+                if result is None:
+                    self.error(404, "queued job not found")
+                    return
+                self.respond({"cancelled": cancelled, "result": result})
                 return
             if parsed.path == "/results":
                 result, duplicate = self.server.state.save_result(body)

@@ -94,6 +94,8 @@ python3 bridge/bridge_cli.py create-capture-window
 python3 bridge/bridge_cli.py create-notification 'Hello from Eclipse'
 python3 bridge/bridge_cli.py create-set-text 'Hello from the bridge'
 python3 bridge/bridge_cli.py create-press-key escape
+python3 bridge/bridge_cli.py wait-result job_abc --timeout-seconds 30
+python3 bridge/bridge_cli.py cancel job_abc --message 'No longer needed'
 ```
 
 Read remote results:

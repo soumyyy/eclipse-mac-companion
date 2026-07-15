@@ -36,6 +36,35 @@ class HermesAdapterTests(unittest.TestCase):
         self.assertEqual(response["job"]["kind"], "notification.show")
         self.assertEqual(response["job"]["device_id"], "mac_adapter_test")
         self.assertIsNone(response["result"])
+        self.assertFalse(response["timed_out"])
+
+    def test_adapter_cancels_queued_job_on_timeout(self):
+        adapter = EclipseMacHermesAdapter(
+            bridge_url=self.base_url,
+            token="adapter_test_token",
+            device_id="mac_adapter_timeout",
+            timeout_seconds=0.01,
+        )
+
+        response = adapter.get_active_window(wait=True)
+
+        self.assertTrue(response["timed_out"])
+        self.assertIsNone(response["result"])
+        self.assertTrue(response["cancellation"]["cancelled"])
+        self.assertEqual(response["cancellation"]["result"]["status"], "rejected")
+
+    def test_adapter_can_leave_timed_out_job_queued(self):
+        adapter = EclipseMacHermesAdapter(
+            bridge_url=self.base_url,
+            token="adapter_test_token",
+            device_id="mac_adapter_no_cancel",
+            timeout_seconds=0.01,
+        )
+
+        response = adapter.capture_window(wait=True, cancel_on_timeout=False)
+
+        self.assertTrue(response["timed_out"])
+        self.assertIsNone(response["cancellation"])
 
 
 if __name__ == "__main__":

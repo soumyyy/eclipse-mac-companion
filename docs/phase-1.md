@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1S
+## Current increment: Phase 1T
 
-Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O added an in-app bridge command composer. Phase 1P added in-app bridge activity/history. Phase 1Q expanded the typed bridge primitives and added the first local command surface. Phase 1R enabled approved `ui.press_key` execution. Phase 1S enables strict approved `ui.click_element` execution.
+Phase 1A established the native shell. Phase 1B added privacy-filtered local context collection. Phase 1C added active-window capture. Phase 1D added context-bound approval for one controlled text action. Phase 1E added a local mocked bridge contract. Phase 1F added SQLite-backed idempotency and a result outbox. Phase 1G added shared schemas and a local mock bridge API. Phase 1H connected the Mac app to that local bridge over HTTP. Phase 1I added bridge configuration and explicit automatic polling. Phase 1J made the bridge path auth-ready for local or VPS testing. Phase 1K deployed the development bridge on the VPS behind Cloudflare Tunnel. Phase 1L moved bridge tokens to Keychain and removed demo clutter from the visible UI. Phase 1M added durable SQLite storage to the VPS bridge. Phase 1N added operator commands for creating and inspecting bridge work. Phase 1O added an in-app bridge command composer. Phase 1P added in-app bridge activity/history. Phase 1Q expanded the typed bridge primitives and added the first local command surface. Phase 1R enabled approved `ui.press_key` execution. Phase 1S enabled strict approved `ui.click_element` execution. Phase 1T adds Hermes/tool-facing timeout and cancellation behavior.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -53,12 +53,14 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Main overlay focused on bridge status and polling; demo/debug controls moved out of the primary surface
 - Durable bridge-side SQLite storage for queued jobs and results via `ECLIPSE_BRIDGE_DB`
 - Authenticated bridge inspection endpoints for queued jobs and stats
+- Authenticated queued-job cancellation endpoint that removes undelivered jobs and stores rejected cancellation receipts
 - `bridge/bridge_cli.py` operator CLI for health, stats, jobs, results, context, capture, notification, text, key, and click job creation
+- Operator CLI support for `wait-result` and queued-job `cancel`
 - In-app command composer for queueing typed jobs to the configured bridge
 - Local phrase command box mapping simple commands like `capture window`, `notify Title | Body`, `press escape`, and `type Hello` to typed bridge jobs
 - In-app bridge activity panel showing queued jobs and recent remote results from the configured bridge, with expandable details
 - Automatic bridge activity refresh after polling/outbox cycles without overwriting the primary bridge status
-- `bridge/hermes_adapter.py` thin Hermes-facing scaffold that translates Hermes tool calls into typed bridge jobs and optional result waits
+- `bridge/hermes_adapter.py` thin Hermes-facing scaffold that translates Hermes tool calls into typed bridge jobs, optional result waits, timeout reporting, and queued-job cancellation on timeout
 
 ## Privacy defaults
 
@@ -69,7 +71,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations require context-bound user approval.
 
-## Manual Phase 1S check
+## Manual Phase 1T check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
 2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
@@ -82,10 +84,11 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 9. Remote check: set the bridge URL to `https://bridge.eclipsn.com`, enter the VPS token from `~/eclipse-mac-bridge/.bridge-token`, save, start polling, and queue a remote job from Settings.
 10. Operator check: run `python3 bridge/bridge_cli.py stats`, `create-capture-window`, `create-notification`, `create-press-key escape`, and `create-click-element AXButton --element-label Continue` with `ECLIPSE_BRIDGE_URL` and `ECLIPSE_BRIDGE_TOKEN` set.
 11. Confirm **Refresh Activity** reflects queued jobs and stored results in the Activity section.
+12. Timeout/cancel check: queue a job, run `python3 bridge/bridge_cli.py cancel <job_id>`, and confirm `GET /results/<job_id>` returns a `rejected` cancellation receipt.
 
 ## Next increment
 
-Add a first Hermes/tool-facing workflow that uses the real read/capture/type/key/click primitives end to end, with clear timeout and cancellation behavior.
+Add a real Hermes host/tool integration around the adapter, or wire the adapter into the actual Hermes process if its local interface is available.
 
 ## UI development launch arguments
 
