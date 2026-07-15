@@ -8,6 +8,18 @@ Hermes should feel like it can inspect or perform one concrete Mac action at a t
 
 The user should not need to understand bridge jobs, outbox receipts, idempotency keys, or polling.
 
+The interaction model should feel cursor-native: Eclipse appears near the user's work, explains what it sees, and asks for approval beside the thing being acted on instead of pulling the user into a separate chat window.
+
+## HeyClicky-inspired target
+
+The product target is a Mac companion with three modes:
+
+- Ask mode: user invokes Eclipse near the cursor and asks a screen-aware question.
+- Guide mode: Eclipse points to or describes the next UI element without taking over.
+- Agent mode: Eclipse sends longer work to Hermes and reports progress while the user keeps working.
+
+Eclipse should keep its stricter local approval model for state-changing actions. The goal is not silent remote control; the goal is a useful companion that can see, explain, and ask permission at the exact moment it needs to act.
+
 ## Default user flow
 
 1. The user asks Hermes for something about their Mac.

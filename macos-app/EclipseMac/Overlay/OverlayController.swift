@@ -30,11 +30,24 @@ final class OverlayController {
     }
 
     func show() {
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else { return }
+        let mouseLocation = NSEvent.mouseLocation
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouseLocation) }) ?? NSScreen.main ?? NSScreen.screens.first else { return }
         let visibleFrame = screen.visibleFrame
+        let preferredOrigin = NSPoint(
+            x: mouseLocation.x + 18,
+            y: mouseLocation.y - panel.frame.height - 18
+        )
         let origin = NSPoint(
-            x: visibleFrame.midX - panel.frame.width / 2,
-            y: visibleFrame.maxY - panel.frame.height - 72
+            x: Self.clamp(
+                preferredOrigin.x,
+                lower: visibleFrame.minX + 12,
+                upper: visibleFrame.maxX - panel.frame.width - 12
+            ),
+            y: Self.clamp(
+                preferredOrigin.y,
+                lower: visibleFrame.minY + 12,
+                upper: visibleFrame.maxY - panel.frame.height - 12
+            )
         )
         panel.setFrameOrigin(origin)
         NSApp.activate(ignoringOtherApps: true)
@@ -43,6 +56,10 @@ final class OverlayController {
 
     func hide() {
         panel.orderOut(nil)
+    }
+
+    private static func clamp(_ value: CGFloat, lower: CGFloat, upper: CGFloat) -> CGFloat {
+        min(max(value, lower), upper)
     }
 }
 
