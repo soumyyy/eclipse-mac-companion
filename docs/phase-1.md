@@ -44,6 +44,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 - Persisted bridge base URL, defaulting to `http://127.0.0.1:8765`
 - Overlay bridge status showing connected, waiting-for-approval, stopped, invalid URL, and unavailable states
 - Explicit polling loop that fetches jobs, replays the outbox, waits three seconds on success, and backs off to eight seconds on transport failure
+- Bridge polling starts automatically when the app opens, so the Mac worker is available without manually pressing **Start Polling**
 - Optional bearer-token bridge auth in the Mac client and development mock bridge
 - `ECLIPSE_BRIDGE_TOKEN`/`--token` support for running the bridge in protected mode
 - Minimal VPS deployment profile: HTTPS, token auth, and environment-specific bridge URL
@@ -82,7 +83,7 @@ Phase 1A established the native shell. Phase 1B added privacy-filtered local con
 ## Manual Phase 1V check
 
 1. Run `python3 bridge/mock_bridge.py --port 8765`.
-2. Open the app overlay, confirm the bridge URL is `http://127.0.0.1:8765`, then click **Start Polling**.
+2. Open the app overlay and confirm polling starts automatically against the configured bridge URL.
 3. Open **Settings → Bridge** and click **Refresh Activity**.
 4. Queue **Active Window**, **Capture Window**, **Press Escape**, or enter `type Hello` in the command box.
 5. Wait for the polling loop to fetch it. If the job is `ui.set_text`, review the pending action and approve it. If the job is `ui.press_key`, approve it to post the allowed key event. If the job is `ui.click_element`, approve only when the role/label target is correct.

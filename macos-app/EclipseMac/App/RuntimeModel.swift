@@ -145,6 +145,13 @@ final class RuntimeModel: ObservableObject {
         debugMessage = localBridge.bridgeMessage
     }
 
+    func startLocalBridgePollingOnLaunch() {
+        guard !localBridge.isPolling else { return }
+        localBridge.startPolling()
+        state = localBridge.isPolling ? .idle : .error
+        debugMessage = localBridge.bridgeMessage
+    }
+
     func toggleLocalBridgePolling() {
         if localBridge.isPolling {
             localBridge.stopPolling()

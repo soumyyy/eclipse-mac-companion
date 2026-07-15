@@ -22,6 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         RuntimeModel.shared.permissions.refresh()
 
+        if !ProcessInfo.processInfo.arguments.contains("--capture-window-once") {
+            RuntimeModel.shared.startLocalBridgePollingOnLaunch()
+        }
+
         if ProcessInfo.processInfo.arguments.contains("--show-overlay") {
             overlayController.show()
         }
