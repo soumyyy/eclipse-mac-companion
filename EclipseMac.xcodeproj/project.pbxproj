@@ -9,13 +9,19 @@
 /* Begin PBXBuildFile section */
 		0560A778BE1F4A0F07452B05 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C8CECF42DAFE4630027895 /* MenuContentView.swift */; };
 		0FD5B233DA562CF23B9466D8 /* PermissionCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3777045C3652EFC1133DDF85 /* PermissionCenter.swift */; };
+		1CAB9C02309AC2FA468404A5 /* ContextPrivacyPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5964EC146B72E306F8E2CD7B /* ContextPrivacyPolicy.swift */; };
 		204132CD863BD3EE2FC105D4 /* OverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839F440293B458A4B7E4333 /* OverlayView.swift */; };
+		356BF9304CCC8773CF064727 /* ContextSnapshotCodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */; };
 		3C3800B211D8E76D348F1398 /* AssistantStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51AD2474340A8C65E271916 /* AssistantStateTests.swift */; };
 		4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770AD420C5F18D3A824363B5 /* ContextModels.swift */; };
 		51BBD4073ABEAB1C54D3BACC /* RuntimeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B9E174095478517034A0F2 /* RuntimeModel.swift */; };
 		538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */; };
 		7BEF045D9277487F832171EF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24F948C4DAEDE2D78CFF283C /* SettingsView.swift */; };
 		7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */; };
+		8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21F8AB925ED95F0619058326 /* ContextDiagnosticsModel.swift */; };
+		87E3F465D75AA6025A97BC1F /* AccessibilityContextCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64A42AB2744E24305E16E352 /* AccessibilityContextCollector.swift */; };
+		944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84F11827BB0332409EDBED7 /* ContextDiagnosticsView.swift */; };
+		9AB239821488E361C0242242 /* ContextPrivacyPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */; };
 		B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */; };
 		B1D389E6698E3B996D20F67C /* PermissionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */; };
 		D11A179A68D889B66D1D1CEF /* OverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6FFF593D1D464DB816D46B /* OverlayController.swift */; };
@@ -35,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		21F8AB925ED95F0619058326 /* ContextDiagnosticsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextDiagnosticsModel.swift; sourceTree = "<group>"; };
 		24F948C4DAEDE2D78CFF283C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		29C66EE9B2CD918FADF9F5F4 /* AssistantState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantState.swift; sourceTree = "<group>"; };
 		2D8D45C5E832E23364E83607 /* EclipseMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EclipseMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -42,14 +49,19 @@
 		3A1FF6A9BAFCC35112ACEB4A /* PermissionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionModels.swift; sourceTree = "<group>"; };
 		46C8CECF42DAFE4630027895 /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
 		4A4983A74E6734856020E39A /* PermissionDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDashboardView.swift; sourceTree = "<group>"; };
+		502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSnapshotCodingTests.swift; sourceTree = "<group>"; };
 		57B7B8B226E47E147328F409 /* EclipseMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EclipseMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5964EC146B72E306F8E2CD7B /* ContextPrivacyPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextPrivacyPolicy.swift; sourceTree = "<group>"; };
+		64A42AB2744E24305E16E352 /* AccessibilityContextCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityContextCollector.swift; sourceTree = "<group>"; };
 		761269DF84E6D2214A388CD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		770AD420C5F18D3A824363B5 /* ContextModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextModels.swift; sourceTree = "<group>"; };
 		9385508EC5A8785D7C31DA47 /* EclipseTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseTheme.swift; sourceTree = "<group>"; };
 		95B9E174095478517034A0F2 /* RuntimeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeModel.swift; sourceTree = "<group>"; };
 		A3D7F4B33648287865D10DCA /* GlobalHotKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyService.swift; sourceTree = "<group>"; };
 		A51AD2474340A8C65E271916 /* AssistantStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantStateTests.swift; sourceTree = "<group>"; };
+		C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextPrivacyPolicyTests.swift; sourceTree = "<group>"; };
 		C839F440293B458A4B7E4333 /* OverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayView.swift; sourceTree = "<group>"; };
+		C84F11827BB0332409EDBED7 /* ContextDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextDiagnosticsView.swift; sourceTree = "<group>"; };
 		DC6FFF593D1D464DB816D46B /* OverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayController.swift; sourceTree = "<group>"; };
 		E3A4F18E45ADC9E074CCD332 /* EclipseMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EclipseMacApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -67,7 +79,11 @@
 		1EFC250D8F586E3D4C3570EC /* Context */ = {
 			isa = PBXGroup;
 			children = (
+				64A42AB2744E24305E16E352 /* AccessibilityContextCollector.swift */,
+				21F8AB925ED95F0619058326 /* ContextDiagnosticsModel.swift */,
+				C84F11827BB0332409EDBED7 /* ContextDiagnosticsView.swift */,
 				770AD420C5F18D3A824363B5 /* ContextModels.swift */,
+				5964EC146B72E306F8E2CD7B /* ContextPrivacyPolicy.swift */,
 			);
 			path = Context;
 			sourceTree = "<group>";
@@ -144,6 +160,8 @@
 			isa = PBXGroup;
 			children = (
 				A51AD2474340A8C65E271916 /* AssistantStateTests.swift */,
+				C39BDEAABEDA229286D0EA28 /* ContextPrivacyPolicyTests.swift */,
+				502C20378A57CEF2BC835BA7 /* ContextSnapshotCodingTests.swift */,
 			);
 			path = EclipseMacTests;
 			sourceTree = "<group>";
@@ -239,6 +257,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				3C3800B211D8E76D348F1398 /* AssistantStateTests.swift in Sources */,
+				9AB239821488E361C0242242 /* ContextPrivacyPolicyTests.swift in Sources */,
+				356BF9304CCC8773CF064727 /* ContextSnapshotCodingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,9 +266,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87E3F465D75AA6025A97BC1F /* AccessibilityContextCollector.swift in Sources */,
 				D889D8BB4C4F7FC403CE5019 /* AppDelegate.swift in Sources */,
 				B0D1D3C81BCEA86E70EEC298 /* AssistantState.swift in Sources */,
+				8728A6BBB41788F9F86C2921 /* ContextDiagnosticsModel.swift in Sources */,
+				944068C1304679E761FC2CF3 /* ContextDiagnosticsView.swift in Sources */,
 				4F0D2DFBE40A083D2B36ADC8 /* ContextModels.swift in Sources */,
+				1CAB9C02309AC2FA468404A5 /* ContextPrivacyPolicy.swift in Sources */,
 				ED261F01B53AA84989E7910A /* EclipseMacApp.swift in Sources */,
 				7DFC219C64355150C0D4A78D /* EclipseTheme.swift in Sources */,
 				538709E9CBAFB4C0A5F33DE5 /* GlobalHotKeyService.swift in Sources */,

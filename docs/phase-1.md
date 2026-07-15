@@ -1,8 +1,8 @@
 # Phase 1 — Native Mac Foundation
 
-## Current increment: Phase 1A
+## Current increment: Phase 1B
 
-This increment establishes the native shell before local context is collected.
+Phase 1A established the native shell. Phase 1B adds privacy-filtered local context collection.
 
 - Menu-bar application named **Eclipse Mac**
 - Compact command-style popover and floating overlay
@@ -12,6 +12,10 @@ This increment establishes the native shell before local context is collected.
 - Buttons to request access or open the relevant System Settings pane
 - Typed context snapshot models
 - No network transport and no context leaves the Mac
+- Active application and focused-window collection through Accessibility
+- Focused element role, label, value preview, and selected text
+- Secure-field redaction, text truncation, and application/window blocklists
+- Local sanitized JSON diagnostics
 
 ## Privacy defaults
 
@@ -22,9 +26,9 @@ This increment establishes the native shell before local context is collected.
 - Microphone permission is visible for planning, but audio capture is not implemented.
 - UI mutations will require context-bound user approval.
 
-## Next increment: Phase 1B
+## Next increment: Phase 1C
 
-Implement an Accessibility context collector and JSON diagnostics view. The collector must apply redaction, truncation, and blocked-application policy before returning a snapshot.
+Implement active-window capture with ScreenCaptureKit. Captures remain on demand and memory-only.
 
 ## UI development launch arguments
 

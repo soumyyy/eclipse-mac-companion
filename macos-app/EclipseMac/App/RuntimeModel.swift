@@ -8,6 +8,7 @@ final class RuntimeModel: ObservableObject {
     @Published var state: AssistantState = .idle
     @Published var debugMessage = "Ready on this Mac"
     let permissions = PermissionCenter()
+    let contextDiagnostics = ContextDiagnosticsModel()
 
     private init() {}
 
