@@ -15,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         self.overlayController = overlayController
         self.hotKeyService = hotKeyService
-        hotKeyService.registerOptionSpace()
+        hotKeyService.registerCommandOptionSpace()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(toggleOverlay),

@@ -15,10 +15,14 @@ struct OverlayView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
+        VStack(alignment: .leading, spacing: overlayPresentation == .buddy ? 0 : 16) {
+            if overlayPresentation == .buddy {
+                buddyButton
+            } else {
+                header
+            }
 
-            if isExpanded {
+            if overlayPresentation == .approval {
                 if let pending = textActions.pendingAction?.presentation {
                     approvalCard(pending)
                 } else if let automationApproval = localBridge.pendingAutomationApproval {
@@ -26,11 +30,11 @@ struct OverlayView: View {
                 } else if let result = textActions.result {
                     resultCard(result)
                 }
-            } else {
+            } else if overlayPresentation == .companion {
                 companionCard
             }
         }
-        .padding(isExpanded ? 22 : 16)
+        .padding(overlayPresentation == .buddy ? 10 : overlayPresentation == .approval ? 22 : 16)
         .frame(width: overlaySize.width, height: overlaySize.height, alignment: .topLeading)
         .background(.ultraThinMaterial)
         .background(EclipseTheme.canvas.opacity(0.32))
@@ -45,35 +49,78 @@ struct OverlayView: View {
         .padding(8)
     }
 
-    private var isExpanded: Bool {
-        textActions.pendingAction != nil ||
-            textActions.result != nil ||
-            localBridge.pendingAutomationApproval != nil
+    private var overlayPresentation: CompanionOverlayPresentation {
+        runtime.overlayPresentation
     }
 
     private var overlaySize: CGSize {
-        isExpanded ? CGSize(width: 540, height: 380) : CGSize(width: 430, height: 246)
+        switch overlayPresentation {
+        case .buddy:
+            CGSize(width: 238, height: 74)
+        case .companion:
+            CGSize(width: 430, height: 246)
+        case .approval:
+            CGSize(width: 540, height: 380)
+        }
     }
 
     private var header: some View {
         HStack(spacing: 14) {
-            EclipseOrb(state: runtime.state, size: isExpanded ? 46 : 38)
+            EclipseOrb(state: runtime.state, size: overlayPresentation == .approval ? 46 : 38)
             VStack(alignment: .leading, spacing: 3) {
                 Text(runtime.state.title)
-                    .font(.system(size: isExpanded ? 17 : 15, weight: .semibold, design: .rounded))
+                    .font(.system(size: overlayPresentation == .approval ? 17 : 15, weight: .semibold, design: .rounded))
                 Text(runtime.debugMessage)
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             Spacer(minLength: 8)
-            Text("⌥ Space")
+            if overlayPresentation == .companion {
+                Button {
+                    runtime.collapseCompanion()
+                } label: {
+                    Image(systemName: "minus")
+                }
+                .buttonStyle(.borderless)
+                .help("Collapse to buddy")
+            }
+            Text("⌘⌥ Space")
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 6)
                 .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
         }
+    }
+
+    private var buddyButton: some View {
+        HStack(spacing: 10) {
+            EclipseOrb(state: runtime.state, size: 38)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Eclipse")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                Text(localBridge.isPolling ? "Hermes ready" : "Bridge paused")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            Button {
+                runtime.expandCompanion()
+            } label: {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 26, height: 26)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help("Expand Eclipse")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private var companionCard: some View {

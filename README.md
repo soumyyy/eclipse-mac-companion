@@ -747,7 +747,7 @@ open EclipseMac.xcodeproj
 
 Select the `EclipseMac` target, choose your Apple Developer Team under Signing &
 Capabilities, and run the app. Eclipse Mac is a menu-bar utility, so it does not
-show a Dock icon. Press `Option-Space` to toggle its local overlay.
+show a Dock icon. Press `Command-Option-Space` to toggle its cursor-side buddy.
 
 See [`docs/phase-1.md`](docs/phase-1.md) for the active increment and privacy
 defaults.

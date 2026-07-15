@@ -84,10 +84,10 @@ Eclipse: Started. I’ll keep working in the background and notify you when ther
 ### 2A — Companion shell
 
 - Add a compact cursor-side buddy/orb state separate from the full approval overlay.
-- Keep the existing menu-bar app and `Option-Space`.
+- Keep the existing menu-bar app and use `Command-Option-Space` for the cursor buddy.
 - Show compact states: idle, listening, thinking, guiding, needs approval, agent running, error.
 - Keep full settings/debug surfaces out of the primary experience.
-- Added first implementation: when no approval is pending, the cursor-side overlay opens as a compact companion with an “Ask Hermes” composer and bridge health summary. The Mac packages local screen context for Hermes instead of answering locally.
+- Added first implementation: `⌘⌥ Space` opens a tiny cursor-side buddy. The buddy has an expand control for the larger companion card with an “Ask Hermes” composer and bridge health summary. The Mac packages local screen context for Hermes instead of answering locally.
 
 Exit check: pressing the hotkey shows a small Eclipse companion near the cursor without opening Settings.
 

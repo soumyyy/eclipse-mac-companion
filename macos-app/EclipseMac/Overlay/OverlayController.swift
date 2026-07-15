@@ -1,15 +1,17 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
 final class OverlayController {
     private let runtime: RuntimeModel
     private let panel: NSPanel
+    private var cancellables = Set<AnyCancellable>()
 
     init(runtime: RuntimeModel) {
         self.runtime = runtime
         panel = InputCapablePanel(
-            contentRect: NSRect(origin: .zero, size: Self.compactSize),
+            contentRect: NSRect(origin: .zero, size: Self.buddySize),
             styleMask: [.titled, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -25,6 +27,7 @@ final class OverlayController {
         panel.titlebarAppearsTransparent = true
         panel.isMovableByWindowBackground = true
         panel.contentView = NSHostingView(rootView: OverlayView(runtime: runtime))
+        installResizeObserver()
     }
 
     func toggle() {
@@ -32,7 +35,7 @@ final class OverlayController {
     }
 
     func show() {
-        resizeForCurrentState()
+        resizeForCurrentState(animate: false)
         let mouseLocation = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouseLocation) }) ?? NSScreen.main ?? NSScreen.screens.first else { return }
         let visibleFrame = screen.visibleFrame
@@ -65,18 +68,36 @@ final class OverlayController {
         min(max(value, lower), upper)
     }
 
-    private func resizeForCurrentState() {
-        let size = runtime.prefersExpandedOverlay ? Self.expandedSize : Self.compactSize
+    private func installResizeObserver() {
+        runtime.objectWillChange
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.resizeForCurrentState(animate: true)
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func resizeForCurrentState(animate: Bool) {
+        let size = switch runtime.overlayPresentation {
+        case .buddy:
+            Self.buddySize
+        case .companion:
+            Self.companionSize
+        case .approval:
+            Self.approvalSize
+        }
         guard panel.frame.size != size else { return }
         panel.setFrame(
             NSRect(origin: panel.frame.origin, size: size),
             display: true,
-            animate: panel.isVisible
+            animate: animate && panel.isVisible
         )
     }
 
-    private static let compactSize = NSSize(width: 430, height: 246)
-    private static let expandedSize = NSSize(width: 540, height: 380)
+    private static let buddySize = NSSize(width: 238, height: 74)
+    private static let companionSize = NSSize(width: 430, height: 246)
+    private static let approvalSize = NSSize(width: 540, height: 380)
 }
 
 private final class InputCapablePanel: NSPanel {

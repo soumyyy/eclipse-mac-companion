@@ -10,7 +10,7 @@ final class GlobalHotKeyService {
         self.action = action
     }
 
-    func registerOptionSpace() {
+    func registerCommandOptionSpace() {
         unregister()
 
         var eventType = EventTypeSpec(
@@ -40,7 +40,7 @@ final class GlobalHotKeyService {
         let identifier = EventHotKeyID(signature: OSType(0x45434C50), id: 1)
         RegisterEventHotKey(
             UInt32(kVK_Space),
-            UInt32(optionKey),
+            UInt32(cmdKey | optionKey),
             identifier,
             GetApplicationEventTarget(),
             0,

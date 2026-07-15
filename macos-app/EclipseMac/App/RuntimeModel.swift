@@ -10,15 +10,21 @@ final class RuntimeModel: ObservableObject {
     @Published var companionPrompt = ""
     @Published var companionLastPrompt = ""
     @Published var companionContextSummary = "Ask Hermes about the screen you are on."
+    @Published var companionExpanded = false
     let permissions = PermissionCenter()
     let contextDiagnostics = ContextDiagnosticsModel()
     let setTextActions: SetTextActionController
     let localBridge: LocalBridgeController
 
-    var prefersExpandedOverlay: Bool {
+    var needsApprovalOverlay: Bool {
         setTextActions.pendingAction != nil ||
             setTextActions.result != nil ||
             localBridge.pendingAutomationApproval != nil
+    }
+
+    var overlayPresentation: CompanionOverlayPresentation {
+        if needsApprovalOverlay { return .approval }
+        return companionExpanded ? .companion : .buddy
     }
 
     private init() {
@@ -34,6 +40,14 @@ final class RuntimeModel: ObservableObject {
 
     func openSettings() {
         NotificationCenter.default.post(name: .openEclipseSettings, object: nil)
+    }
+
+    func expandCompanion() {
+        companionExpanded = true
+    }
+
+    func collapseCompanion() {
+        companionExpanded = false
     }
 
     func prepareCompanionAskForHermes() {
@@ -211,4 +225,10 @@ final class RuntimeModel: ObservableObject {
             debugMessage = localBridge.bridgeMessage
         }
     }
+}
+
+enum CompanionOverlayPresentation: Equatable {
+    case buddy
+    case companion
+    case approval
 }
