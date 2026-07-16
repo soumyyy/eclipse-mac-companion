@@ -17,6 +17,7 @@ struct MenuBarLabel: View {
 
 struct MenuContentView: View {
     @ObservedObject var runtime: RuntimeModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -36,7 +37,11 @@ struct MenuContentView: View {
             Divider().opacity(0.55)
 
             VStack(spacing: 7) {
-                MenuActionButton(title: "Show Eclipse", symbol: "sparkles", shortcut: "⌥ Space") {
+                MenuActionButton(title: "Open Chat", symbol: "message.badge.waveform") {
+                    openWindow(id: "eclipse-chat")
+                    MenuBarController.activateAppForWindowPresentation()
+                }
+                MenuActionButton(title: "Show Orb", symbol: "sparkles", shortcut: "⌥ Space") {
                     NotificationCenter.default.post(name: .toggleEclipseOverlay, object: nil)
                 }
                 SettingsLink {

@@ -2,7 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var runtime: RuntimeModel
-    @State private var selection: SettingsDestination? = .permissions
+    @ObservedObject var appSettings: AppSettings
+    @State private var selection: SettingsDestination? = .hermes
 
     var body: some View {
         NavigationSplitView {
@@ -13,6 +14,8 @@ struct SettingsView: View {
                     .padding(.bottom, 12)
 
                 List(selection: $selection) {
+                    Label("Hermes", systemImage: "brain.head.profile")
+                        .tag(SettingsDestination.hermes)
                     Label("Permissions", systemImage: "hand.raised")
                         .tag(SettingsDestination.permissions)
                     Label("Diagnostics", systemImage: "waveform.path.ecg")
@@ -32,6 +35,8 @@ struct SettingsView: View {
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
         } detail: {
             switch selection ?? .permissions {
+            case .hermes:
+                HermesSettingsView(settings: appSettings)
             case .permissions:
                 PermissionDashboardView(permissionCenter: runtime.permissions)
             case .diagnostics:
@@ -44,6 +49,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsDestination: Hashable {
+    case hermes
     case permissions
     case diagnostics
     case bridge
