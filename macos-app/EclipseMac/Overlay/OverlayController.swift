@@ -38,8 +38,13 @@ final class OverlayController {
     func show() {
         resizeForCurrentState(animate: false)
         positionForCurrentPresentation()
-        NSApp.activate(ignoringOtherApps: true)
-        panel.makeKeyAndOrderFront(nil)
+        panel.ignoresMouseEvents = runtime.overlayPresentation == .buddy
+        if runtime.overlayPresentation == .buddy {
+            panel.orderFrontRegardless()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+            panel.makeKeyAndOrderFront(nil)
+        }
         updateCursorFollowing()
     }
 
@@ -72,6 +77,7 @@ final class OverlayController {
             Self.approvalSize
         }
         guard panel.frame.size != size else { return }
+        panel.ignoresMouseEvents = runtime.overlayPresentation == .buddy
         panel.setFrame(
             NSRect(origin: panel.frame.origin, size: size),
             display: true,
@@ -158,7 +164,7 @@ final class OverlayController {
         NSScreen.screens.first(where: { $0.frame.contains(point) }) ?? NSScreen.main ?? NSScreen.screens.first
     }
 
-    private static let buddySize = NSSize(width: 238, height: 74)
+    private static let buddySize = NSSize(width: 30, height: 30)
     private static let companionSize = NSSize(width: 430, height: 246)
     private static let approvalSize = NSSize(width: 540, height: 380)
 }

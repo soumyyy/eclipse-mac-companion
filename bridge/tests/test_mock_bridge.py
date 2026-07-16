@@ -337,6 +337,52 @@ class MockBridgeTests(unittest.TestCase):
             else:
                 os.environ["ECLIPSE_HERMES_ASK_URL"] = original_url
 
+    def test_v1_proxy_does_not_require_bridge_token(self):
+        original_urlopen = mock_bridge.urlopen
+        captured = {}
+
+        class FakeResponse:
+            status = 200
+            headers = {"content-type": "application/json"}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return b'{"status":"ok"}'
+
+        def fake_urlopen(request, timeout):
+            captured["url"] = request.full_url
+            captured["authorization"] = request.headers.get("Authorization")
+            captured["session_key"] = request.headers.get("X-hermes-session-key")
+            captured["timeout"] = timeout
+            return FakeResponse()
+
+        mock_bridge.urlopen = fake_urlopen
+        try:
+            request = Request(
+                f"{self.base_url}/v1/responses",
+                data=b'{"input":"hello"}',
+                headers={
+                    "Authorization": "Bearer hermes-token",
+                    "Content-Type": "application/json",
+                    "X-Hermes-Session-Key": "eclipse-mac-main",
+                },
+                method="POST",
+            )
+            with urlopen(request) as response:
+                body = json.loads(response.read().decode())
+
+            self.assertEqual(body["status"], "ok")
+            self.assertEqual(captured["url"], "http://127.0.0.1:8642/v1/responses")
+            self.assertEqual(captured["authorization"], "Bearer hermes-token")
+            self.assertEqual(captured["session_key"], "eclipse-mac-main")
+        finally:
+            mock_bridge.urlopen = original_urlopen
+
     def test_replays_outbox_batch(self):
         body = {
             "results": [

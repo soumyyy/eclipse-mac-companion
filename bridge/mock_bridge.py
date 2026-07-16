@@ -772,6 +772,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 "auth_required": self.server.token is not None,
             })
             return
+        if parsed.path.startswith("/v1/"):
+            self.proxy_hermes_api(parsed.path, method="GET")
+            return
         if not self.authorized():
             self.auth_error()
             return
@@ -809,6 +812,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/v1/"):
+            self.proxy_hermes_api(parsed.path, method="POST")
+            return
         if not self.authorized():
             self.auth_error()
             return
@@ -863,6 +869,36 @@ class BridgeHandler(BaseHTTPRequestHandler):
         except URLError as exc:
             self.error(502, f"Hermes ask backend unavailable: {exc.reason}")
 
+    def proxy_hermes_api(self, path: str, method: str) -> None:
+        body = None
+        if method != "GET":
+            content_length = int(self.headers.get("content-length", "0"))
+            body = self.rfile.read(content_length) if content_length > 0 else None
+
+        target = f"http://127.0.0.1:8642{path}"
+        request = Request(target, data=body, method=method)
+        for header in ("authorization", "content-type", "accept", "x-hermes-session-key"):
+            value = self.headers.get(header)
+            if value:
+                request.add_header(header, value)
+
+        try:
+            with urlopen(request, timeout=90) as response:
+                payload = response.read()
+                self.respond_proxy(payload, status=response.status, content_type=response.headers.get("content-type"))
+        except HTTPError as exc:
+            payload = exc.read()
+            self.respond_proxy(
+                payload or encode_json({"error": {"message": f"Hermes returned HTTP {exc.code}"}}).encode("utf-8"),
+                status=exc.code,
+                content_type=exc.headers.get("content-type") if exc.headers else "application/json",
+            )
+        except URLError as exc:
+            self.respond(
+                {"error": {"code": "hermes_api_unavailable", "message": f"Hermes API unavailable: {exc.reason}"}},
+                status=502,
+            )
+
     def read_json(self) -> dict[str, Any]:
         content_length = int(self.headers.get("content-length", "0"))
         raw = self.rfile.read(content_length)
@@ -880,6 +916,13 @@ class BridgeHandler(BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
+
+    def respond_proxy(self, body: bytes, status: int, content_type: str | None) -> None:
+        self.send_response(status)
+        self.send_header("content-type", content_type or "application/json")
+        self.send_header("content-length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def error(self, status: int, message: str) -> None:
         self.respond({"error": {"code": "mock_bridge_error", "message": message}}, status=status)

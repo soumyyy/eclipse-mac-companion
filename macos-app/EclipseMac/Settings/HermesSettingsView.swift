@@ -2,30 +2,32 @@ import SwiftUI
 
 struct HermesSettingsView: View {
     @ObservedObject var settings: AppSettings
-    @State private var tokenDraft = ""
     @State private var isTesting = false
     @State private var statusMessage: String?
     @State private var statusIsError = false
 
     var body: some View {
         Form {
-            Section("Hermes API") {
-                TextField("Base URL", text: $settings.hermesBaseURLString)
-                    .textFieldStyle(.roundedBorder)
-                    .help("Examples: http://127.0.0.1:8642/v1, http://<tailscale-ip>:8642/v1, https://eclipse-api.example.com/v1")
-
-                TextField("Conversation ID", text: $settings.conversationID)
-                    .textFieldStyle(.roundedBorder)
-
-                SecureField("API_SERVER_KEY", text: $tokenDraft)
-                    .textFieldStyle(.roundedBorder)
-                    .onAppear {
-                        tokenDraft = settings.apiToken
-                    }
-
+            Section("Hermes API - fixed for this app") {
+                LabeledContent("Base URL") {
+                    Text(settings.hermesBaseURLString)
+                        .textSelection(.enabled)
+                        .foregroundStyle(.secondary)
+                }
+                LabeledContent("Conversation") {
+                    Text(settings.trimmedConversationID)
+                        .textSelection(.enabled)
+                        .foregroundStyle(.secondary)
+                }
+                LabeledContent("Token") {
+                    Text(settings.apiToken.isEmpty ? "Missing from Keychain" : "Loaded from Keychain")
+                        .foregroundStyle(settings.apiToken.isEmpty ? .red : .green)
+                }
                 HStack {
-                    Button("Save Token to Keychain") {
-                        saveToken()
+                    Button("Reload token") {
+                        settings.reloadTokenFromKeychain()
+                        statusIsError = settings.apiToken.isEmpty
+                        statusMessage = settings.tokenStatus
                     }
                     Button("Test connection") {
                         testConnection()
@@ -39,10 +41,6 @@ struct HermesSettingsView: View {
             }
 
             Section("Status") {
-                LabeledContent("Token") {
-                    Text(settings.tokenStatus)
-                        .foregroundStyle(.secondary)
-                }
                 LabeledContent("Session header") {
                     Text("X-Hermes-Session-Key: \(settings.trimmedConversationID)")
                         .textSelection(.enabled)
@@ -71,17 +69,6 @@ struct HermesSettingsView: View {
         .navigationTitle("Hermes")
     }
 
-    private func saveToken() {
-        do {
-            try settings.saveToken(tokenDraft)
-            statusIsError = false
-            statusMessage = "Token saved."
-        } catch {
-            statusIsError = true
-            statusMessage = error.localizedDescription
-        }
-    }
-
     private func testConnection() {
         isTesting = true
         statusMessage = nil
@@ -99,4 +86,3 @@ struct HermesSettingsView: View {
         }
     }
 }
-

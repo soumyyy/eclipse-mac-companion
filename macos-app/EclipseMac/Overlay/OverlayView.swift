@@ -17,38 +17,38 @@ struct OverlayView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: overlayPresentation == .buddy ? 0 : 16) {
-            if overlayPresentation == .buddy {
-                buddyButton
-            } else {
+        if overlayPresentation == .buddy {
+            buddyDot
+        } else {
+            VStack(alignment: .leading, spacing: 16) {
                 header
-            }
 
-            if overlayPresentation == .approval {
-                if let pending = textActions.pendingAction?.presentation {
-                    approvalCard(pending)
-                } else if let automationApproval = localBridge.pendingAutomationApproval {
-                    automationApprovalCard(automationApproval)
-                } else if let result = textActions.result {
-                    resultCard(result)
+                if overlayPresentation == .approval {
+                    if let pending = textActions.pendingAction?.presentation {
+                        approvalCard(pending)
+                    } else if let automationApproval = localBridge.pendingAutomationApproval {
+                        automationApprovalCard(automationApproval)
+                    } else if let result = textActions.result {
+                        resultCard(result)
+                    }
+                } else if overlayPresentation == .companion {
+                    companionCard
                 }
-            } else if overlayPresentation == .companion {
-                companionCard
             }
+            .padding(overlayPresentation == .approval ? 22 : 16)
+            .frame(width: overlaySize.width, height: overlaySize.height, alignment: .topLeading)
+            .background(.ultraThinMaterial)
+            .background(EclipseTheme.canvas.opacity(0.32))
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .stroke(.white.opacity(0.18), lineWidth: 1)
+            }
+            .onReceive(timer) { value in
+                now = value
+            }
+            .padding(8)
         }
-        .padding(overlayPresentation == .buddy ? 10 : overlayPresentation == .approval ? 22 : 16)
-        .frame(width: overlaySize.width, height: overlaySize.height, alignment: .topLeading)
-        .background(.ultraThinMaterial)
-        .background(EclipseTheme.canvas.opacity(0.32))
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(.white.opacity(0.18), lineWidth: 1)
-        }
-        .onReceive(timer) { value in
-            now = value
-        }
-        .padding(8)
     }
 
     private var overlayPresentation: CompanionOverlayPresentation {
@@ -58,12 +58,25 @@ struct OverlayView: View {
     private var overlaySize: CGSize {
         switch overlayPresentation {
         case .buddy:
-            CGSize(width: 238, height: 74)
+            CGSize(width: 30, height: 30)
         case .companion:
             CGSize(width: 430, height: 246)
         case .approval:
             CGSize(width: 540, height: 380)
         }
+    }
+
+    private var buddyDot: some View {
+        EclipseOrb(state: runtime.state, size: 18)
+            .padding(6)
+            .background(.black.opacity(0.28), in: Circle())
+            .overlay {
+                Circle()
+                    .stroke(.white.opacity(0.18), lineWidth: 1)
+            }
+            .shadow(color: runtime.state.tint.opacity(0.32), radius: 10, y: 3)
+            .frame(width: overlaySize.width, height: overlaySize.height)
+            .accessibilityLabel("Eclipse companion active")
     }
 
     private var header: some View {
@@ -94,35 +107,6 @@ struct OverlayView: View {
                 .padding(.vertical, 6)
                 .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
         }
-    }
-
-    private var buddyButton: some View {
-        HStack(spacing: 10) {
-            EclipseOrb(state: runtime.state, size: 38)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Eclipse")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                Text(localBridge.isPolling ? "Hermes ready" : "Bridge paused")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 4)
-            Button {
-                runtime.expandCompanion()
-            } label: {
-                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .frame(width: 26, height: 26)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help("Expand Eclipse")
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private var companionCard: some View {

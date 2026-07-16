@@ -6,7 +6,7 @@ final class ChatViewModel: ObservableObject {
     @Published private(set) var messages: [ChatMessage] = [
         ChatMessage(
             role: .system,
-            text: "Connected to Hermes Agent. Configure your Base URL and API token in Settings, then send a message."
+            text: "Connected to Hermes Agent through Eclipse. Hermes remains the brain; this window is only the native companion client."
         )
     ]
     @Published var draft = ""

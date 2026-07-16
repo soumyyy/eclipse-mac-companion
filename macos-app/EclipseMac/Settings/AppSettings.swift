@@ -2,15 +2,11 @@ import Foundation
 
 @MainActor
 final class AppSettings: ObservableObject {
-    static let defaultBaseURLString = "http://127.0.0.1:8642/v1"
+    static let defaultBaseURLString = "https://bridge.eclipsn.com/v1"
     static let defaultConversationID = "eclipse-mac-main"
 
-    @Published var hermesBaseURLString: String {
-        didSet { defaults.set(hermesBaseURLString, forKey: Self.baseURLDefaultsKey) }
-    }
-    @Published var conversationID: String {
-        didSet { defaults.set(conversationID, forKey: Self.conversationIDDefaultsKey) }
-    }
+    @Published private(set) var hermesBaseURLString: String
+    @Published private(set) var conversationID: String
     @Published private(set) var apiToken: String
     @Published private(set) var tokenStatus: String
 
@@ -28,8 +24,10 @@ final class AppSettings: ObservableObject {
     ) {
         self.defaults = defaults
         self.keychain = keychain
-        hermesBaseURLString = defaults.string(forKey: Self.baseURLDefaultsKey) ?? Self.defaultBaseURLString
-        conversationID = defaults.string(forKey: Self.conversationIDDefaultsKey) ?? Self.defaultConversationID
+        hermesBaseURLString = Self.defaultBaseURLString
+        conversationID = Self.defaultConversationID
+        defaults.set(Self.defaultBaseURLString, forKey: Self.baseURLDefaultsKey)
+        defaults.set(Self.defaultConversationID, forKey: Self.conversationIDDefaultsKey)
         do {
             let savedToken = try keychain.string(service: Self.keychainService, account: Self.keychainAccount) ?? ""
             apiToken = savedToken
@@ -60,6 +58,17 @@ final class AppSettings: ObservableObject {
         try keychain.save(trimmed, service: Self.keychainService, account: Self.keychainAccount)
         apiToken = trimmed
         tokenStatus = "API token saved to Keychain"
+    }
+
+    func reloadTokenFromKeychain() {
+        do {
+            let savedToken = try keychain.string(service: Self.keychainService, account: Self.keychainAccount) ?? ""
+            apiToken = savedToken
+            tokenStatus = savedToken.isEmpty ? "No API token saved" : "API token loaded from Keychain"
+        } catch {
+            apiToken = ""
+            tokenStatus = error.localizedDescription
+        }
     }
 
     func makeHermesClient(session: URLSession = .shared) throws -> HermesClient {
