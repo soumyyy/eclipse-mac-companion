@@ -13,6 +13,7 @@ import json
 import os
 import sqlite3
 import threading
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -578,12 +579,19 @@ def forward_companion_ask(backend_url: str, request_body: dict[str, Any]) -> dic
         headers=headers,
         method="POST",
     )
+    backend_started_at = time.perf_counter()
     with urlopen(request, timeout=30) as response:
         raw = response.read()
+    backend_latency_ms = round((time.perf_counter() - backend_started_at) * 1000)
     value = json.loads(raw.decode("utf-8")) if raw else {}
     if not isinstance(value, dict):
         raise ValueError("Hermes ask backend must return a JSON object")
-    return normalize_companion_ask_backend_response(value, request_body["context"])
+    return normalize_companion_ask_backend_response(
+        value,
+        request_body["context"],
+        client_timings=request_body.get("client_timings"),
+        bridge_backend_ms=backend_latency_ms,
+    )
 
 
 def should_use_openai_chat_completions(backend_url: str) -> bool:
@@ -595,6 +603,7 @@ def should_use_openai_chat_completions(backend_url: str) -> bool:
 
 def openai_chat_completions_payload(request_body: dict[str, Any]) -> dict[str, Any]:
     context = request_body["context"]
+    screenshot = request_body.get("screenshot")
     active_app = context.get("active_app") or {}
     window = context.get("window") or {}
     focused = context.get("focused_element") or {}
@@ -634,17 +643,35 @@ def openai_chat_completions_payload(request_body: dict[str, Any]) -> dict[str, A
         "Current Mac context:\n"
         + "\n".join(context_lines)
     )
+    user_content: str | list[dict[str, Any]] = user_prompt
+    if isinstance(screenshot, dict) and screenshot.get("data_base64"):
+        mime_type = str(screenshot.get("mime_type") or "image/jpeg")
+        user_content = [
+            {"type": "text", "text": user_prompt},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{mime_type};base64,{screenshot['data_base64']}",
+                    "detail": "auto",
+                },
+            },
+        ]
     return {
         "model": os.environ.get("ECLIPSE_HERMES_ASK_MODEL", "eclipse-mac"),
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
+            {"role": "user", "content": user_content},
         ],
         "stream": False,
     }
 
 
-def normalize_companion_ask_backend_response(value: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+def normalize_companion_ask_backend_response(
+    value: dict[str, Any],
+    context: dict[str, Any],
+    client_timings: dict[str, Any] | None = None,
+    bridge_backend_ms: int | None = None,
+) -> dict[str, Any]:
     if "answer" in value:
         answer = value["answer"]
         response_id = value.get("response_id")
@@ -667,13 +694,32 @@ def normalize_companion_ask_backend_response(value: dict[str, Any], context: dic
         raise ValueError("Hermes ask backend response requires answer or choices")
     if answer is None:
         raise ValueError("Hermes ask backend response requires non-empty answer")
-    return {
+    response = {
         "response_id": str(response_id or prefixed_id("ask")),
         "answer": str(answer),
         "mode": str(mode),
         "created_at": str(created_at or isoformat(utc_now())),
         "context_summary": context_summary or companion_context_summary(context),
     }
+    timings = normalized_ask_timings(client_timings, bridge_backend_ms)
+    if timings:
+        response["timings"] = timings
+    return response
+
+
+def normalized_ask_timings(
+    client_timings: dict[str, Any] | None,
+    bridge_backend_ms: int | None,
+) -> dict[str, int]:
+    timings: dict[str, int] = {}
+    if isinstance(client_timings, dict):
+        for key in ("context_capture_ms", "screenshot_capture_ms", "screenshot_encode_ms"):
+            value = client_timings.get(key)
+            if isinstance(value, int) and value >= 0:
+                timings[key] = value
+    if bridge_backend_ms is not None and bridge_backend_ms >= 0:
+        timings["bridge_backend_ms"] = bridge_backend_ms
+    return timings
 
 
 def validate_companion_ask(request: dict[str, Any]) -> None:
@@ -689,6 +735,28 @@ def validate_companion_ask(request: dict[str, Any]) -> None:
         raise ValueError("ask prompt must be a non-empty string")
     if not isinstance(request["context"], dict):
         raise ValueError("ask context must be a JSON object")
+    screenshot = request.get("screenshot")
+    if screenshot is not None:
+        validate_companion_screenshot(screenshot)
+
+
+def validate_companion_screenshot(screenshot: Any) -> None:
+    if not isinstance(screenshot, dict):
+        raise ValueError("ask screenshot must be a JSON object")
+    required = {"capture_id", "mime_type", "data_base64", "width", "height", "captured_at"}
+    missing = required - screenshot.keys()
+    if missing:
+        raise ValueError(f"ask screenshot missing fields: {', '.join(sorted(missing))}")
+    if screenshot["mime_type"] not in {"image/jpeg", "image/png"}:
+        raise ValueError("ask screenshot mime_type must be image/jpeg or image/png")
+    if not isinstance(screenshot["data_base64"], str) or not screenshot["data_base64"]:
+        raise ValueError("ask screenshot data_base64 must be a non-empty string")
+    if len(screenshot["data_base64"]) > 8_000_000:
+        raise ValueError("ask screenshot data_base64 exceeds 8MB limit")
+    if not isinstance(screenshot["width"], int) or screenshot["width"] <= 0:
+        raise ValueError("ask screenshot width must be positive")
+    if not isinstance(screenshot["height"], int) or screenshot["height"] <= 0:
+        raise ValueError("ask screenshot height must be positive")
 
 
 class BridgeHandler(BaseHTTPRequestHandler):

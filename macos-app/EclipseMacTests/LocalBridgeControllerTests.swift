@@ -527,7 +527,8 @@ private final class FakeLocalBridgeTransport: LocalBridgeTransporting, @unchecke
             answer: "Hermes received: \(request.prompt)",
             mode: "test",
             createdAt: Date(),
-            contextSummary: request.context.activeApp?.name
+            contextSummary: request.context.activeApp?.name,
+            timings: nil
         )
     }
 

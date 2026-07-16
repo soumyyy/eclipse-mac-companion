@@ -206,6 +206,34 @@ class MockBridgeTests(unittest.TestCase):
         self.assertIn("Active app: Notes", payload["messages"][1]["content"])
         self.assertIn("Selected text: Important selected text", payload["messages"][1]["content"])
 
+    def test_builds_multimodal_payload_when_screenshot_is_present(self):
+        payload = openai_chat_completions_payload({
+            "protocol_version": "0.1",
+            "device_id": "mac_ask_test",
+            "prompt": "What is on screen?",
+            "sent_at": "2026-07-15T12:00:00Z",
+            "context": {
+                "active_app": {"bundle_id": "com.apple.Preview", "name": "Preview"},
+                "window": {"title": "Screenshot"},
+                "focused_element": {"role": "AXWindow", "label": None},
+                "visible_elements": [],
+            },
+            "screenshot": {
+                "capture_id": "cap_test",
+                "mime_type": "image/jpeg",
+                "data_base64": "abcd",
+                "width": 640,
+                "height": 480,
+                "captured_at": "2026-07-15T12:00:00Z",
+            },
+        })
+
+        content = payload["messages"][1]["content"]
+        self.assertIsInstance(content, list)
+        self.assertEqual(content[0]["type"], "text")
+        self.assertEqual(content[1]["type"], "image_url")
+        self.assertEqual(content[1]["image_url"]["url"], "data:image/jpeg;base64,abcd")
+
     def test_normalizes_openai_chat_completion_response(self):
         response = normalize_companion_ask_backend_response(
             {
@@ -230,6 +258,52 @@ class MockBridgeTests(unittest.TestCase):
         self.assertEqual(response["answer"], "This is the Hermes answer.")
         self.assertEqual(response["mode"], "hermes")
         self.assertEqual(response["context_summary"], "Notes · Meeting notes · Body")
+
+    def test_normalizes_ask_timings(self):
+        response = normalize_companion_ask_backend_response(
+            {
+                "id": "chatcmpl_test",
+                "choices": [{"message": {"content": "ok"}}],
+            },
+            {
+                "active_app": {"name": "Notes"},
+                "window": {"title": "Meeting notes"},
+                "focused_element": {"label": "Body"},
+            },
+            client_timings={
+                "context_capture_ms": 12,
+                "screenshot_capture_ms": 34,
+                "screenshot_encode_ms": 5,
+            },
+            bridge_backend_ms=456,
+        )
+
+        self.assertEqual(response["timings"]["context_capture_ms"], 12)
+        self.assertEqual(response["timings"]["screenshot_capture_ms"], 34)
+        self.assertEqual(response["timings"]["screenshot_encode_ms"], 5)
+        self.assertEqual(response["timings"]["bridge_backend_ms"], 456)
+
+    def test_rejects_invalid_companion_screenshot(self):
+        with self.assertRaises(HTTPError) as caught:
+            self.post("/ask", {
+                "protocol_version": "0.1",
+                "device_id": "mac_ask_test",
+                "prompt": "What is on screen?",
+                "sent_at": "2026-07-15T12:00:00Z",
+                "context": {},
+                "screenshot": {
+                    "capture_id": "cap_test",
+                    "mime_type": "application/octet-stream",
+                    "data_base64": "abcd",
+                    "width": 640,
+                    "height": 480,
+                    "captured_at": "2026-07-15T12:00:00Z",
+                },
+            })
+
+        self.assertEqual(caught.exception.code, 400)
+        caught.exception.read()
+        caught.exception.close()
 
     def test_replays_outbox_batch(self):
         body = {

@@ -313,7 +313,12 @@ final class LocalBridgeController: ObservableObject {
         }
     }
 
-    func askCompanion(prompt: String, context: ContextSnapshot) async -> BridgeCompanionAskResponse? {
+    func askCompanion(
+        prompt: String,
+        context: ContextSnapshot,
+        screenshot: BridgeCompanionScreenshotAttachment? = nil,
+        clientTimings: BridgeCompanionAskClientTimings? = nil
+    ) async -> BridgeCompanionAskResponse? {
         if !usesInjectedTransport {
             guard saveBridgeBaseURL() else { return nil }
         }
@@ -323,6 +328,8 @@ final class LocalBridgeController: ObservableObject {
             deviceID: deviceID,
             prompt: prompt,
             context: context,
+            screenshot: screenshot,
+            clientTimings: clientTimings,
             sentAt: Date()
         )
 

@@ -119,6 +119,8 @@ struct BridgeCompanionAskRequest: Codable, Equatable, Sendable {
     let deviceID: String
     let prompt: String
     let context: ContextSnapshot
+    let screenshot: BridgeCompanionScreenshotAttachment?
+    let clientTimings: BridgeCompanionAskClientTimings?
     let sentAt: Date
 
     enum CodingKeys: String, CodingKey {
@@ -126,7 +128,53 @@ struct BridgeCompanionAskRequest: Codable, Equatable, Sendable {
         case deviceID = "device_id"
         case prompt
         case context
+        case screenshot
+        case clientTimings = "client_timings"
         case sentAt = "sent_at"
+    }
+}
+
+struct BridgeCompanionScreenshotAttachment: Codable, Equatable, Sendable {
+    let captureID: String
+    let mimeType: String
+    let dataBase64: String
+    let width: Int
+    let height: Int
+    let capturedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case captureID = "capture_id"
+        case mimeType = "mime_type"
+        case dataBase64 = "data_base64"
+        case width
+        case height
+        case capturedAt = "captured_at"
+    }
+}
+
+struct BridgeCompanionAskClientTimings: Codable, Equatable, Sendable {
+    let contextCaptureMS: Int?
+    let screenshotCaptureMS: Int?
+    let screenshotEncodeMS: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case contextCaptureMS = "context_capture_ms"
+        case screenshotCaptureMS = "screenshot_capture_ms"
+        case screenshotEncodeMS = "screenshot_encode_ms"
+    }
+}
+
+struct BridgeCompanionAskTimings: Codable, Equatable, Sendable {
+    let contextCaptureMS: Int?
+    let screenshotCaptureMS: Int?
+    let screenshotEncodeMS: Int?
+    let bridgeBackendMS: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case contextCaptureMS = "context_capture_ms"
+        case screenshotCaptureMS = "screenshot_capture_ms"
+        case screenshotEncodeMS = "screenshot_encode_ms"
+        case bridgeBackendMS = "bridge_backend_ms"
     }
 }
 
@@ -136,6 +184,7 @@ struct BridgeCompanionAskResponse: Codable, Equatable, Sendable {
     let mode: String
     let createdAt: Date
     let contextSummary: String?
+    let timings: BridgeCompanionAskTimings?
 
     enum CodingKeys: String, CodingKey {
         case responseID = "response_id"
@@ -143,6 +192,7 @@ struct BridgeCompanionAskResponse: Codable, Equatable, Sendable {
         case mode
         case createdAt = "created_at"
         case contextSummary = "context_summary"
+        case timings
     }
 }
 

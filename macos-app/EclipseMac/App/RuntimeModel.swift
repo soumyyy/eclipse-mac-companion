@@ -79,18 +79,48 @@ final class RuntimeModel: ObservableObject {
         companionResponseText = nil
 
         do {
+            let contextStartedAt = Date()
             let snapshot = try AccessibilityContextCollector().capture()
+            let contextCaptureMS = Self.elapsedMilliseconds(since: contextStartedAt)
             let appName = snapshot.activeApp?.name ?? "Unknown app"
             let windowTitle = snapshot.window?.title?.isEmpty == false ? snapshot.window?.title : "active window"
             let focused = snapshot.focusedElement?.label ?? snapshot.focusedElement?.role ?? "no focused element"
-            companionContextSummary = "Sending to Hermes · \(appName) · \(windowTitle ?? "active window") · \(focused)"
+            companionContextSummary = "Capturing screen for Hermes · \(appName) · \(windowTitle ?? "active window") · \(focused)"
 
             Task {
-                if let response = await localBridge.askCompanion(prompt: prompt, context: snapshot) {
+                let captureStartedAt = Date()
+                var screenshot: BridgeCompanionScreenshotAttachment?
+                var screenshotCaptureMS: Int?
+                var screenshotEncodeMS: Int?
+
+                do {
+                    let capture = try await ActiveWindowCapturer(maximumPixelDimension: 1_280).capture(snapshot: snapshot)
+                    screenshotCaptureMS = Self.elapsedMilliseconds(since: captureStartedAt)
+                    let encodeStartedAt = Date()
+                    screenshot = try Self.screenshotAttachment(from: capture)
+                    screenshotEncodeMS = Self.elapsedMilliseconds(since: encodeStartedAt)
+                    companionContextSummary = "Sending visual context to Hermes · \(appName) · \(windowTitle ?? "active window")"
+                } catch {
+                    screenshotCaptureMS = Self.elapsedMilliseconds(since: captureStartedAt)
+                    debugMessage = "Screenshot unavailable; sending text context"
+                }
+
+                let timings = BridgeCompanionAskClientTimings(
+                    contextCaptureMS: contextCaptureMS,
+                    screenshotCaptureMS: screenshotCaptureMS,
+                    screenshotEncodeMS: screenshotEncodeMS
+                )
+
+                if let response = await localBridge.askCompanion(
+                    prompt: prompt,
+                    context: snapshot,
+                    screenshot: screenshot,
+                    clientTimings: timings
+                ) {
                     companionContextSummary = response.contextSummary ?? companionContextSummary
                     companionResponseText = response.answer
                     state = .idle
-                    debugMessage = response.mode == "hermes" ? "Hermes responded" : "Bridge returned Hermes scaffold"
+                    debugMessage = Self.companionDebugMessage(response: response, usedScreenshot: screenshot != nil)
                 } else {
                     state = .error
                     debugMessage = localBridge.bridgeMessage
@@ -103,6 +133,42 @@ final class RuntimeModel: ObservableObject {
             companionContextSummary = "Could not collect context for Hermes: \(error.localizedDescription)"
             companionResponseText = nil
         }
+    }
+
+    private static func screenshotAttachment(from result: WindowCaptureResult) throws -> BridgeCompanionScreenshotAttachment {
+        guard let data = NSBitmapImageRep(cgImage: result.image).representation(
+            using: .jpeg,
+            properties: [.compressionFactor: 0.68]
+        ) else {
+            throw WindowCaptureError.captureFailed
+        }
+        return BridgeCompanionScreenshotAttachment(
+            captureID: result.metadata.captureID,
+            mimeType: "image/jpeg",
+            dataBase64: data.base64EncodedString(),
+            width: result.metadata.pixelWidth,
+            height: result.metadata.pixelHeight,
+            capturedAt: result.metadata.capturedAt
+        )
+    }
+
+    private static func companionDebugMessage(
+        response: BridgeCompanionAskResponse,
+        usedScreenshot: Bool
+    ) -> String {
+        let path = usedScreenshot ? "vision" : "text"
+        let latency = response.timings.flatMap { timings -> String? in
+            guard let bridgeBackendMS = timings.bridgeBackendMS else { return nil }
+            return " · Hermes \(bridgeBackendMS)ms"
+        } ?? ""
+        if response.mode == "hermes" {
+            return "Hermes responded via \(path)\(latency)"
+        }
+        return "Bridge returned Hermes scaffold"
+    }
+
+    private static func elapsedMilliseconds(since startedAt: Date) -> Int {
+        max(0, Int(Date().timeIntervalSince(startedAt) * 1_000))
     }
 
     func prepareDemoTextAction() {
