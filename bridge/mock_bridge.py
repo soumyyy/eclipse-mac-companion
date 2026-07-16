@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
+from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
@@ -857,6 +858,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
             self.error(404, "not found")
         except ValueError as exc:
             self.error(400, str(exc))
+        except HTTPError as exc:
+            self.error(502, f"Hermes ask backend returned HTTP {exc.code}")
+        except URLError as exc:
+            self.error(502, f"Hermes ask backend unavailable: {exc.reason}")
 
     def read_json(self) -> dict[str, Any]:
         content_length = int(self.headers.get("content-length", "0"))

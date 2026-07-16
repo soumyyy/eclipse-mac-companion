@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -10,6 +11,7 @@ from urllib.request import Request, urlopen
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import mock_bridge  # noqa: E402
 from mock_bridge import (  # noqa: E402
     SQLiteBridgeState,
     normalize_companion_ask_backend_response,
@@ -304,6 +306,36 @@ class MockBridgeTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 400)
         caught.exception.read()
         caught.exception.close()
+
+    def test_backend_http_error_returns_json_502(self):
+        original_url = os.environ.get("ECLIPSE_HERMES_ASK_URL")
+        original_forward = mock_bridge.forward_companion_ask
+
+        def failing_forward(_backend_url, _request_body):
+            raise HTTPError(_backend_url, 502, "Bad Gateway", hdrs=None, fp=None)
+
+        os.environ["ECLIPSE_HERMES_ASK_URL"] = "http://backend.example.test/ask"
+        mock_bridge.forward_companion_ask = failing_forward
+        try:
+            with self.assertRaises(HTTPError) as caught:
+                self.post("/ask", {
+                    "protocol_version": "0.1",
+                    "device_id": "mac_ask_test",
+                    "prompt": "What is on screen?",
+                    "sent_at": "2026-07-15T12:00:00Z",
+                    "context": {},
+                })
+
+            self.assertEqual(caught.exception.code, 502)
+            body = json.loads(caught.exception.read().decode())
+            self.assertIn("Hermes ask backend returned HTTP 502", body["error"]["message"])
+            caught.exception.close()
+        finally:
+            mock_bridge.forward_companion_ask = original_forward
+            if original_url is None:
+                os.environ.pop("ECLIPSE_HERMES_ASK_URL", None)
+            else:
+                os.environ["ECLIPSE_HERMES_ASK_URL"] = original_url
 
     def test_replays_outbox_batch(self):
         body = {
