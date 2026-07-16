@@ -58,7 +58,7 @@ struct OverlayView: View {
     private var overlaySize: CGSize {
         switch overlayPresentation {
         case .buddy:
-            CGSize(width: 30, height: 30)
+            CGSize(width: 28, height: 28)
         case .companion:
             CGSize(width: 430, height: 246)
         case .approval:
@@ -67,14 +67,16 @@ struct OverlayView: View {
     }
 
     private var buddyDot: some View {
-        EclipseOrb(state: runtime.state, size: 18)
-            .padding(6)
-            .background(.black.opacity(0.28), in: Circle())
+        Text("AI")
+            .font(.system(size: 9, weight: .black, design: .rounded))
+            .foregroundStyle(.black.opacity(0.78))
+            .frame(width: 24, height: 24)
+            .background(.white, in: Circle())
             .overlay {
                 Circle()
-                    .stroke(.white.opacity(0.18), lineWidth: 1)
+                    .stroke(.black.opacity(0.08), lineWidth: 1)
             }
-            .shadow(color: runtime.state.tint.opacity(0.32), radius: 10, y: 3)
+            .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
             .frame(width: overlaySize.width, height: overlaySize.height)
             .accessibilityLabel("Eclipse companion active")
     }

@@ -10,7 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let overlayController = OverlayController(runtime: RuntimeModel.shared)
         let hotKeyService = GlobalHotKeyService { [weak overlayController] in
-            overlayController?.toggle()
+            overlayController?.summonVoiceInput()
         }
 
         self.overlayController = overlayController
@@ -18,7 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeyService.registerOptionSpace()
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(toggleOverlay),
+            selector: #selector(summonVoiceInput),
             name: .toggleEclipseOverlay,
             object: nil
         )
@@ -52,8 +52,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeyService?.unregister()
     }
 
-    @objc private func toggleOverlay() {
-        overlayController?.toggle()
+    @objc private func summonVoiceInput() {
+        overlayController?.summonVoiceInput()
     }
 
     private func installApprovalPresentationHandler(overlayController: OverlayController) {

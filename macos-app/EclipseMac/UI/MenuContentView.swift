@@ -41,7 +41,7 @@ struct MenuContentView: View {
                     openWindow(id: "eclipse-chat")
                     MenuBarController.activateAppForWindowPresentation()
                 }
-                MenuActionButton(title: "Show Orb", symbol: "sparkles", shortcut: "⌥ Space") {
+                MenuActionButton(title: "Talk to Eclipse", symbol: "mic.fill", shortcut: "⌥ Space") {
                     NotificationCenter.default.post(name: .toggleEclipseOverlay, object: nil)
                 }
                 SettingsLink {

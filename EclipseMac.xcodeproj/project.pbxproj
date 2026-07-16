@@ -576,9 +576,9 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Eclipse Mac";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start push-to-talk.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start voice input with Option-Space or the microphone button.";
 				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Eclipse Mac captures only the active window when you explicitly request it.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Eclipse Mac uses speech recognition only after you press the microphone button.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Eclipse Mac uses speech recognition only after you explicitly start voice input with Option-Space or the microphone button.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -598,9 +598,9 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Eclipse Mac";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start push-to-talk.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Eclipse Mac uses the microphone only when you explicitly start voice input with Option-Space or the microphone button.";
 				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Eclipse Mac captures only the active window when you explicitly request it.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Eclipse Mac uses speech recognition only after you press the microphone button.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Eclipse Mac uses speech recognition only after you explicitly start voice input with Option-Space or the microphone button.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

@@ -48,6 +48,15 @@ final class RuntimeModel: ObservableObject {
         companionExpanded = true
     }
 
+    func summonCompanionVoiceInput() {
+        guard !needsApprovalOverlay else {
+            debugMessage = "Review the pending action before starting voice input"
+            return
+        }
+        companionExpanded = true
+        startCompanionVoiceInputIfNeeded()
+    }
+
     func collapseCompanion() {
         companionExpanded = false
     }
@@ -62,10 +71,19 @@ final class RuntimeModel: ObservableObject {
             state = .idle
             debugMessage = transcript.isEmpty ? "Voice stopped" : "Voice transcript ready for Hermes"
         } else {
+            startCompanionVoiceInputIfNeeded()
+        }
+    }
+
+    private func startCompanionVoiceInputIfNeeded() {
+        guard !speech.isListening else {
             state = .listening
             debugMessage = "Listening for a Hermes prompt"
-            speech.startListening()
+            return
         }
+        state = .listening
+        debugMessage = "Listening for a Hermes prompt"
+        speech.startListening()
     }
 
     func prepareCompanionAskForHermes() {

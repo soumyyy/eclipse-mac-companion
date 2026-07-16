@@ -35,6 +35,11 @@ final class OverlayController {
         panel.isVisible ? hide() : show()
     }
 
+    func summonVoiceInput() {
+        runtime.summonCompanionVoiceInput()
+        show()
+    }
+
     func show() {
         resizeForCurrentState(animate: false)
         positionForCurrentPresentation()
@@ -108,9 +113,9 @@ final class OverlayController {
 
     private func startCursorFollowing() {
         guard cursorFollowTimer == nil else { return }
-        cursorFollowTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+        cursorFollowTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.positionBuddyNearCursor(allowFreezeNearPanel: true)
+                self?.positionBuddyNearCursor(allowFreezeNearPanel: false)
             }
         }
     }
@@ -164,7 +169,7 @@ final class OverlayController {
         NSScreen.screens.first(where: { $0.frame.contains(point) }) ?? NSScreen.main ?? NSScreen.screens.first
     }
 
-    private static let buddySize = NSSize(width: 30, height: 30)
+    private static let buddySize = NSSize(width: 28, height: 28)
     private static let companionSize = NSSize(width: 430, height: 246)
     private static let approvalSize = NSSize(width: 540, height: 380)
 }

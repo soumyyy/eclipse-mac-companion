@@ -48,24 +48,41 @@ final class SpeechTranscriptionController: ObservableObject {
     }
 
     private func requestPermissions() async -> Bool {
-        let speechStatus = await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status)
-            }
-        }
-
+        let speechStatus = await speechAuthorizationStatus()
         guard speechStatus == .authorized else {
             errorMessage = Self.message(for: speechStatus)
             return false
         }
 
-        let microphoneAllowed = await AVCaptureDevice.requestAccess(for: .audio)
-        guard microphoneAllowed else {
+        guard await microphoneAccessAllowed() else {
             errorMessage = "Microphone permission is required for push-to-talk."
             return false
         }
 
         return true
+    }
+
+    private func speechAuthorizationStatus() async -> SFSpeechRecognizerAuthorizationStatus {
+        let currentStatus = SFSpeechRecognizer.authorizationStatus()
+        guard currentStatus == .notDetermined else { return currentStatus }
+        return await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+    }
+
+    private func microphoneAccessAllowed() async -> Bool {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            return true
+        case .notDetermined:
+            return await AVCaptureDevice.requestAccess(for: .audio)
+        case .denied, .restricted:
+            return false
+        @unknown default:
+            return false
+        }
     }
 
     private func beginRecognition() throws {
